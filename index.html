@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karma Credit – Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: radial-gradient(ellipse at 70% 20%, #20205a 0%, #101024 60%, #060613 100%);
+      color: #f4f5ff;
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+    .starfield {
+      pointer-events: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0;
+    }
+    .card {
+      background: rgba(0, 0, 0, 0.95);
+      border: 1.5px solid #272755cc;
+      box-shadow: 0 8px 40px 0 #000d;
+      border-radius: 1.1rem;
+      backdrop-filter: blur(4px);
+    }
+    .fancy-bank-title {
+      background: linear-gradient(90deg, #658dff 30%, #6e4bf7 60%, #bb78f0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-family: 'Montserrat', serif;
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, #0d1022 0%, #2f1953 100%);
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      padding: 0.9em 0;
+      border-radius: 0.7em;
+      font-size: 1.14rem;
+      box-shadow: 0 0 8px #1115, 0 1px 2px #0007;
+      transition: filter 0.18s, box-shadow 0.18s;
+    }
+    .btn-primary:hover, .btn-primary:focus {
+      filter: brightness(1.1) drop-shadow(0 0 10px #a7c0ff99);
+      box-shadow: 0 0 24px #6e4bf7bb, 0 1px 2px #0007;
+      outline: none;
+    }
+    .input-bank {
+      background: #1f2157ee;
+      color: #fff;
+      border: 1.5px solid #393a58;
+      font-size: 1.02rem;
+      border-radius: 0.5em;
+      padding: 0.75em 1em;
+      transition: border-color 0.16s;
+      outline: none;
+      margin-bottom: 0.2em;
+    }
+    .input-bank:focus {
+      border-color: #5f75ff;
+      box-shadow: 0 0 0 2px #1f164699;
+    }
+    .login-feedback {
+      font-size: 1rem;
+      min-height: 1.7em;
+    }
+    .logo-img {
+      display: block;
+      margin: 0 auto 1.1em auto;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      box-shadow: 0 0 18px 3px #00000000;
+      object-fit: cover;
+      background: #00000000;
+    }
+    /* Hide scrollbar for background, allow on form */
+    ::-webkit-scrollbar { width: 0 !important; }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body class="flex items-center justify-center h-screen">
+  <!-- Animated star background -->
+  <canvas class="starfield" id="starfield"></canvas>
+  <div class="w-full max-w-sm p-8 card z-10 relative shadow-xl">
+    <!-- Logo image (replace with your file) -->
+    <img src="https://i.postimg.cc/KcLVGFWY/logo6.png" alt="Karma Credit Logo" class="logo-img mb-1">
+    <img src="https://i.postimg.cc/pXHx23DN/logo11.png" alt="Karma Credit" class="title-img mb-1 drop-shadow-lg">
+    <!-- Feedback message area -->
+    <div id="loginFeedback" class="login-feedback text-center mb-2"></div>
+    <!-- Logout section (hidden by default) -->
+    <div id="logoutSection" class="mb-4 text-center" style="display:none;">
+      <button id="logoutBtn" class="btn-primary w-full">Logout</button>
+    </div>
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label for="username" class="block mb-1 text-sm tracking-wider text-indigo-300">State ID</label>
+        <input
+          type="text"
+          id="username"
+          class="input-bank w-full"
+          autocomplete="username"
+          required
+        />
+      </div>
+      <div>
+        <label for="password" class="block mb-1 text-sm tracking-wider text-indigo-300">Password</label>
+        <input
+          type="password"
+          id="password"
+          class="input-bank w-full"
+          autocomplete="current-password"
+          required
+        />
+      </div>
+      <button
+        type="submit"
+        class="btn-primary w-full mt-1"
+      >Login</button>
+    </form>
+    <div class="mt-4 text-center">
+      <a href="contact_no_user.html" class="text-blue-300 hover:underline">Contact us without an account</a>
+    </div>
+  </div>
+  <script>
+    // Starfield effect for fancy night sky
+    const starColors = ["#cad6ff", "#7b6ffc", "#99a6e6", "#fff6fa"];
+    const canvas = document.getElementById("starfield");
+    const ctx = canvas.getContext("2d");
+    let w, h, stars = [];
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < 120; i++) {
+        stars.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 0.7 + 0.3,
+          alpha: Math.random() * 0.6 + 0.2,
+          tw: Math.random() * 2 * Math.PI,
+          c: starColors[Math.floor(Math.random() * starColors.length)]
+        });
+      }
+    }
+    function animateStars() {
+      ctx.clearRect(0, 0, w, h);
+      for (let s of stars) {
+        ctx.save();
+        ctx.globalAlpha = Math.abs(Math.sin(performance.now()/900 + s.tw)) * s.alpha + 0.12;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
+        ctx.fillStyle = s.c;
+        ctx.shadowColor = s.c;
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.restore();
+      }
+      requestAnimationFrame(animateStars);
+    }
+    resize(); initStars(); animateStars();
+    // re-init on resize
+    window.addEventListener('resize', () => { resize(); initStars(); });
+
+    // 1) Initialize Supabase client
+    const db = supabase.createClient(
+      "https://nxgivpbbuwbzjsfbhlzt.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Z2l2cGJidXdiempzZmJobHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3ODA2ODYsImV4cCI6MjA2NDM1NjY4Nn0.7Hrn29OfpNGLyOy3tASiuWX6lsWQ3t1mrLWBb2K_E7E"
+    );
+
+    // Show logout if already logged in
+    const logoutSection = document.getElementById("logoutSection");
+    const feedbackEl = document.getElementById("loginFeedback");
+    if (localStorage.getItem("karmaUser")) {
+      logoutSection.style.display = "block";
+      document.getElementById("logoutBtn").onclick = function() {
+        localStorage.removeItem("karmaUser");
+        feedbackEl.textContent = "Logged out successfully.";
+        feedbackEl.className = "login-feedback text-green-300";
+        logoutSection.style.display = "none";
+      };
+    }
+
+    // Feedback helper
+    function showLoginFeedback(msg, isError = false) {
+      feedbackEl.textContent = msg;
+      feedbackEl.className = isError ? "login-feedback text-red-300" : "login-feedback text-green-300";
+      setTimeout(() => { feedbackEl.textContent = ""; }, 3500);
+    }
+
+    // Unified login function
+    async function login(stateId, password) {
+      // Admin shortcut
+      if (stateId === "admin" && password === "masterkey") {
+        window.location.href = "admin.html";
+        return;
+      }
+      // Query Supabase 'users' table
+      const { data, error } = await db
+        .from("users")
+        .select("*")
+        .eq("id", stateId)
+        .single();
+      if (error || !data) {
+        showLoginFeedback("User not found.", true);
+        return;
+      }
+      if (data.password !== password) {
+        showLoginFeedback("Incorrect password.", true);
+        return;
+      }
+      // Save and redirect
+      localStorage.setItem("karmaUser", JSON.stringify(data));
+      showLoginFeedback("Login successful! Redirecting...");
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 800);
+    }
+    // Form handler
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      login(user, pass);
+    });
+  </script>
+</body>
+</html>

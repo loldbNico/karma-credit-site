@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karma Credit – Apply Loan</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: radial-gradient(ellipse at 60% 18%, #160e47 0%, #030207 60%, #000000 100%);
+      color: #e5e2e4;
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .starfield {
+      pointer-events: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0;
+    }
+    .logo-img {
+      display: block;
+      margin: 0 auto 1em auto;
+      width: 82px; height: 82px;
+      border-radius: 50%;
+      box-shadow: 0 0 18px 6px #00000088;
+      object-fit: cover;
+      background: #000000;
+    }
+    .title-img {
+      max-width: 280px;
+      width: 95%;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 1rem;
+    }
+    .logout-absolute {
+      position: fixed;
+      top: 18px;
+      right: 28px;
+      z-index: 50;
+    }
+    @media (max-width: 640px) {
+      .logout-absolute { top: 6px; right: 5vw; }
+      .logo-img { width: 56px; height: 56px; }
+      .title-img { max-width: 150px; }
+      .card { padding: 1.2rem 0.6rem; }
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, #5f568f 0%, #4b4181 100%);
+      color: #e5e2e4;
+      font-weight: bold;
+      border: 1.5px solid #fff;
+      padding: 0.8em 2em;
+      border-radius: 0.7em;
+      font-size: 1.12rem;
+      box-shadow: 0 0 8px #4b418144, 0 1px 2px #0007;
+      transition: filter 0.16s, box-shadow 0.18s;
+      margin-left: 0.6em;
+      margin-right: 0.2em;
+      margin-bottom: 0.1em;
+    }
+    .btn-primary:hover, .btn-primary:focus {
+      filter: brightness(1.08) drop-shadow(0 0 10px #8c84ac77);
+      box-shadow: 0 0 22px #8c84ac88, 0 1px 2px #0007;
+      outline: none;
+    }
+    #menuBtn.drawer-open {
+      display: none !important;
+    }
+    body { background: #09061c; color: #e5e2e4; font-family: 'Montserrat', Arial, sans-serif;}
+    .card { background: linear-gradient(120deg, #0c0a0f 0%, #160f3d 100%);
+            border: 1.7px solid #4b4181; border-radius: 1.15rem; margin-bottom: 2.1rem; }
+    .gold { color: #8c84ac; }
+    .menu-btn { position: fixed; top: 18px; left: 28px; z-index: 50; }
+    .logout-absolute { position: fixed; top: 18px; right: 28px; z-index: 50; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const db = supabase.createClient(
+      "https://nxgivpbbuwbzjsfbhlzt.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Z2l2cGJidXdiempzZmJobHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3ODA2ODYsImV4cCI6MjA2NDM1NjY4Nn0.7Hrn29OfpNGLyOy3tASiuWX6lsWQ3t1mrLWBb2K_E7E"
+    );
+    const user = JSON.parse(localStorage.getItem("karmaUser")||"{}");
+    if (!user.id) window.location.href = "index.html";
+
+    // Drawer menu open/close logic
+    const menuBtn = document.getElementById('menuBtn');
+    const drawer = document.getElementById('drawerMenu');
+    const drawerBg = document.getElementById('drawerMenuBg');
+    function openDrawer() {
+      drawer.style.transform = "translateX(0)";
+      drawerBg.classList.remove("hidden");
+      setTimeout(() => drawerBg.style.opacity = "1", 10);
+    }
+    function closeDrawer() {
+      drawer.style.transform = "translateX(-100%)";
+      drawerBg.classList.add("hidden");
+      drawerBg.style.opacity = "0";
+    }
+    menuBtn.onclick = openDrawer;
+    drawerBg.onclick = closeDrawer;
+    // Prevent background scroll while menu open
+    drawerBg.addEventListener("wheel", e => e.preventDefault(), { passive: false });
+    // Dynamic Vault/Loan options
+    const vaultMenuBtn = document.getElementById("vaultMenuBtn");
+    const loanMenuBtn = document.getElementById("loanMenuBtn");
+    if (typeof user !== "undefined" && user && user.vault_id) {
+      vaultMenuBtn.textContent = "Vault Info";
+      vaultMenuBtn.onclick = () => { window.location.href = "vault.html"; };
+    } else {
+      vaultMenuBtn.textContent = "Open a Vault Account";
+      vaultMenuBtn.onclick = () => { window.location.href = "create_vault.html"; };
+    }
+    if (typeof user !== "undefined" && user && user.loan_id) {
+      loanMenuBtn.textContent = "Loan Info";
+      loanMenuBtn.onclick = () => { window.location.href = "loan.html"; };
+    } else {
+      loanMenuBtn.textContent = "Apply for a Loan";
+      loanMenuBtn.onclick = () => { window.location.href = "apply_loan.html"; };
+    }
+    // ESC key closes menu
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+    document.getElementById("loanRequestForm").onsubmit = async function(e) {
+      e.preventDefault();
+      const amt = +document.getElementById("loanAmount").value;
+      const notes = document.getElementById("loanNotes").value;
+      // Insert into 'loan_requests' (create this table if needed)
+      const { error } = await db.from("loan_requests").insert({
+        user_id: user.id, requested_amount: amt, notes: notes, status: 'Pending', created_at: new Date().toISOString()
+      });
+      if (!error) {
+        document.getElementById("loanRequestMsg").textContent = "Request submitted!";
+        document.getElementById("loanRequestMsg").className = "text-green-400 mt-2";
+      } else {
+        document.getElementById("loanRequestMsg").textContent = "Failed to submit!";
+        document.getElementById("loanRequestMsg").className = "text-pink-300 mt-2";
+      }
+    };
+    document.getElementById('logoutBtn').onclick = function() {
+      localStorage.removeItem("karmaUser");
+      window.location.href = "index.html";
+    };
+  </script>
+</head>
+<body class="relative min-h-screen pt-3 pb-6 px-1 sm:px-0 flex flex-col items-center">
+  <canvas class="starfield" id="starfield"></canvas>
+  <button id="logoutBtn" class="btn-primary logout-absolute">Logout</button>
+  <button id="menuBtn"
+    class="btn-primary fixed z-50 top-6 left-6 logout-absolute"
+    aria-label="Open menu"
+    style="box-shadow: 0 2px 8px #0008; left: 28px; right: auto; top: 18px; min-width: 90px; padding: 0.8em 2em; font-size: 1.12rem; border-radius: 0.7em;"
+  >
+    Menu
+  </button>
+
+  <!-- Drawer menu -->
+  <div id="drawerMenuBg"
+    class="fixed inset-0 z-40 bg-black bg-opacity-50 hidden"
+    style="backdrop-filter: blur(3px);"></div>
+  <aside id="drawerMenu"
+    class="fixed top-0 left-0 h-full w-64 bg-[#0c0a0f] border-r border-[#4b4181] shadow-2xl z-50 transform -translate-x-full transition-transform duration-200"
+    style="box-shadow: 2px 0 20px #000a;">
+    <div class="flex flex-col items-start p-6 space-y-2 h-full">
+      <a href="dashboard.html" class="mb-6 flex items-center" onclick="closeDrawer()">
+        <span class="text-xl font-bold gold ml-14">Karma Credit</span>
+      </a>
+      <button id="vaultMenuBtn" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold"></button>
+      <button id="loanMenuBtn" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold"></button>
+      <a href="edit_user.html" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold">Edit User Details</a>
+      <a href="contact.html" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold">Contact Us</a>
+      <div class="flex-grow"></div>
+      <button onclick="closeDrawer()" class="text-xs text-gray-400 mt-6">Close</button>
+    </div>
+  </aside>
+
+  <div class="w-full max-w-lg mx-auto mt-12 p-6">
+    <a href="dashboard.html">
+      <img src="https://i.postimg.cc/KcLVGFWY/logo6.png" class="logo-img w-20 h-20 rounded-full mx-auto mb-2"/>
+      <img src="https://i.postimg.cc/pXHx23DN/logo11.png" class="title-img max-w-xs mx-auto mb-6"/>
+    </a>
+    <div class="card p-7">
+      <h1 class="text-2xl gold font-bold mb-4">Apply for a Loan</h1>
+      <form id="loanRequestForm" class="space-y-5">
+        <div>
+          <label class="block mb-1 text-sm gold">Loan Amount ($)</label>
+          <input type="number" id="loanAmount" class="w-full px-4 py-2 rounded bg-[#1a1a2b]" required>
+        </div>
+        <div>
+          <label class="block mb-1 text-sm gold">Loan Reason / Notes</label>
+          <textarea id="loanNotes" class="w-full px-4 py-2 rounded bg-[#1a1a2b]" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn-primary w-full mt-2">Submit Loan Request</button>
+        <div id="loanRequestMsg" class="mt-2 text-center"></div>
+      </form>
+    </div>
+    <a href="dashboard.html" class="text-blue-300 hover:underline">&larr; Back to Summary</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karma Credit – Admin Panel</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: 'Roboto', sans-serif;
+    }
+    .gold {
+      color: #d4af37;
+    }
+    .card {
+      background-color: #111;
+      border: 1px solid #333;
+    }
+    label {
+      display: block;
+      font-size: 0.75rem;
+      color: #999;
+      margin-bottom: 0.25rem;
+    }
+    input,
+    select {
+      background-color: #1a1a1a;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      width: 100%;
+    }
+    fieldset {
+      border: 1px solid #333;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    legend {
+      padding: 0 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #d4af37;
+    }
+    .error {
+      color: #ff4d4d;
+    }
+    .success {
+      color: #4dff88;
+    }
+    #statusMsg {
+      min-height: 1.5rem;
+    }
+    .user-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem;
+      border: 1px solid #333;
+      border-radius: 0.5rem;
+    }
+    .user-info {
+      flex: 1;
+    }
+    .buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn-edit,
+    .btn-delete {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+      border: none;
+      border-radius: 0.25rem;
+      cursor: pointer;
+    }
+    .btn-edit {
+      background-color: #d4af37;
+      color: #000;
+    }
+    .btn-edit:hover {
+      opacity: 0.8;
+    }
+    .btn-delete {
+      background-color: #ff4d4d;
+      color: #000;
+    }
+    .btn-delete:hover {
+      opacity: 0.8;
+    }
+    /* Vault Transactions section */
+    #transactionSection {
+      margin-top: 2rem;
+    }
+    #transactionSection h2 {
+      color: #d4af37;
+      margin-bottom: 0.5rem;
+    }
+    #transactionList {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #333;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      background-color: #1a1a1a;
+    }
+    .txn-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid #333;
+      font-size: 0.875rem;
+    }
+    .txn-row:last-child {
+      border-bottom: none;
+    }
+    #transactionForm {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    #transactionForm input {
+      flex: 1;
+    }
+    #addTxnBtn {
+      background-color: #4dff88;
+      color: #000;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+    }
+    #addTxnBtn:hover {
+      opacity: 0.9;
+    }
+    /* Installments Table (unchanged) */
+    #installmentSection {
+      margin-top: 2rem;
+    }
+    #installmentSection h2 {
+      color: #d4af37;
+      margin-bottom: 0.5rem;
+    }
+    table.installments {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+    }
+    table.installments th,
+    table.installments td {
+      border: 1px solid #333;
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+    }
+    table.installments th {
+      background-color: #222;
+      color: #ddd;
+    }
+    .pay-btn,
+    .unmark-btn {
+      border: none;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    .pay-btn {
+      background-color: #4dff88;
+      color: #000;
+    }
+    .pay-btn:hover {
+      opacity: 0.9;
+    }
+    .unmark-btn {
+      background-color: #ffcc00;
+      color: #000;
+    }
+    .unmark-btn:hover {
+      opacity: 0.9;
+    }
+    .paid-label {
+      color: #4dff88;
+      font-weight: bold;
+    }
+    .overdue-label {
+      color: #ff4d4d;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body class="p-6">
+  <h1 class="text-3xl gold font-bold mb-6">Karma Credit Admin Panel</h1>
+
+  <!-- Status message -->
+  <div id="statusMsg" class="mb-4"></div>
+  <div id="admin-feedback" class="mb-4 text-center text-sm font-semibold"></div>
+
+  <!-- Add/Edit User Form -->
+  <div class="card p-6 rounded-xl">
+    <form id="userForm" class="space-y-6">
+      <!-- ACCOUNT INFO -->
+      <fieldset>
+        <legend>Account Info</legend>
+        <label for="id">State ID</label>
+        <input type="text" id="id" name="id" required />
+        <label for="password">Password</label>
+        <input type="text" id="password" name="password" required />
+        <label for="full_name">Full Name</label>
+        <input type="text" id="full_name" name="full_name" required />
+        <label for="phone">Phone</label>
+        <input type="text" id="phone" name="phone" required />
+      </fieldset>
+
+      <!-- VAULT INFO -->
+      <fieldset>
+        <legend>Vault Info</legend>
+        <label for="vault_id">Vault ID</label>
+        <input type="text" id="vault_id" name="vault_id" />
+      </fieldset>
+
+      <!-- LOAN INFO (unchanged) -->
+      <fieldset>
+        <legend>Loan Info</legend>
+        <label for="loan_id">Loan ID</label>
+        <input type="text" id="loan_id" name="loan_id" />
+        <label for="loan_amount">Loan Amount</label>
+        <input type="number" id="loan_amount" name="loan_amount" />
+        <label for="loan_start">Loan Start Date</label>
+        <input type="date" id="loan_start" name="loan_start" />
+        <label for="installment_count">Installment Count</label>
+        <input type="number" id="installment_count" name="installment_count" />
+        <label for="loan_interest_rate">Loan Interest Rate (%)</label>
+        <input type="number" step="0.01" id="loan_interest_rate" name="loan_interest_rate" />
+      </fieldset>
+
+      <!-- OTHER INFO (unchanged) -->
+      <fieldset>
+        <legend>Other Info</legend>
+        <label for="credit_score">Credit Score</label>
+        <input type="number" id="credit_score" name="credit_score" />
+        <label for="shadow_vault">Shadow Vault</label>
+        <input type="text" id="shadow_vault" name="shadow_vault" />
+      </fieldset>
+
+      <button type="submit" class="bg-yellow-600 text-black px-4 py-2 rounded font-bold hover:opacity-90">Save User</button>
+    </form>
+  </div>
+
+  <!-- Current Users List -->
+  <div class="card p-6 mt-6 rounded-xl">
+    <h2 class="text-xl gold font-semibold mb-4">Current Users</h2>
+    <div id="userList" class="space-y-2"></div>
+  </div>
+
+  <!-- Vault Transactions Section (now used for all deposits/withdrawals) -->
+  <div
+    id="transactionSection"
+    class="card p-6 mt-6 rounded-xl"
+    style="display: none;"
+  >
+    <h2 class="text-xl gold font-semibold mb-4">
+      Vault Transaction History
+    </h2>
+    <div id="transactionList"></div>
+    <form id="transactionForm" class="flex gap-2 mt-4">
+      <input type="date" id="txn_date" required style="flex: 2;" />
+      <input
+        type="number"
+        id="txn_amount"
+        placeholder="Amount"
+        step="1"
+        required
+        style="flex: 1;"
+      />
+      <button id="addTxnBtn" type="submit">Add</button>
+    </form>
+  </div>
+
+  <!-- Installments Section (unchanged) -->
+  <div
+    id="installmentSection"
+    class="card p-6 mt-6 rounded-xl"
+    style="display: none;"
+  >
+    <h2 class="text-xl gold font-semibold mb-4">Loan Installments</h2>
+    <table class="installments">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Due Date</th>
+          <th>Principal</th>
+          <th>Interest</th>
+          <th>Payment</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="installmentList">
+        <!-- Filled in with JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Initialize Supabase client
+    const db = supabase.createClient(
+      "https://nxgivpbbuwbzjsfbhlzt.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Z2l2cGJidXdiempzZmJobHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3ODA2ODYsImV4cCI6MjA2NDM1NjY4Nn0.7Hrn29OfpNGLyOy3tASiuWX6lsWQ3t1mrLWBb2K_E7E"
+    );
+
+    const statusMsg = document.getElementById("statusMsg");
+    const userForm = document.getElementById("userForm");
+    const userList = document.getElementById("userList");
+
+    const transactionSection = document.getElementById("transactionSection");
+    const transactionList = document.getElementById("transactionList");
+    const transactionForm = document.getElementById("transactionForm");
+
+    const installmentSection = document.getElementById("installmentSection");
+    const installmentList = document.getElementById("installmentList");
+
+    let currentEditingUserId = null;
+    let currentLoanId = null;
+
+    // ─────────── 1) Load & display all users ───────────
+    async function loadUsers() {
+      statusMsg.textContent = "Loading users...";
+      statusMsg.className = "";
+      try {
+        const { data, error } = await db.from("users").select("*");
+        if (error) {
+          statusMsg.textContent = "Error loading users: " + error.message;
+          statusMsg.className = "error";
+          return;
+        }
+        statusMsg.textContent = "Users loaded successfully.";
+        statusMsg.className = "success";
+
+        userList.innerHTML = "";
+        data.forEach((user) => {
+          const row = document.createElement("div");
+          row.className = "user-row";
+
+          const info = document.createElement("div");
+          info.className = "user-info";
+          info.innerHTML = `<strong>${user.id}</strong> – ${
+            user.full_name || "(no name)"
+          }`;
+
+          const buttons = document.createElement("div");
+          buttons.className = "buttons";
+
+          const editBtn = document.createElement("button");
+          editBtn.textContent = "Edit";
+          editBtn.className = "btn-edit";
+          editBtn.addEventListener("click", () => populateForm(user));
+          buttons.appendChild(editBtn);
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.textContent = "Delete";
+          deleteBtn.className = "btn-delete";
+          deleteBtn.addEventListener("click", () =>
+            confirmDelete(user.id, user.full_name)
+          );
+          buttons.appendChild(deleteBtn);
+
+          row.appendChild(info);
+          row.appendChild(buttons);
+          userList.appendChild(row);
+        });
+      } catch (err) {
+        console.error("loadUsers error:", err);
+        statusMsg.textContent = "Unexpected error loading users.";
+        statusMsg.className = "error";
+      }
+    }
+
+    // ─────────── 2) Populate form for editing a user ───────────
+    function populateForm(user) {
+      currentEditingUserId = user.id;
+      currentLoanId = user.loan_id;
+
+      // Show transaction & installment sections once a user is selected
+      transactionSection.style.display = "block";
+      installmentSection.style.display = "block";
+
+      // Fill form fields
+      userForm.id.value = user.id || "";
+      userForm.password.value = user.password || "";
+      userForm.full_name.value = user.full_name || "";
+      userForm.phone.value = user.phone || "";
+      userForm.vault_id.value = user.vault_id || "";
+      userForm.loan_id.value = user.loan_id || "";
+      userForm.loan_amount.value = user.loan_amount ?? "";
+      userForm.loan_start.value = user.loan_start || "";
+      userForm.installment_count.value = user.installment_count ?? "";
+      userForm.loan_interest_rate.value = user.loan_interest_rate ?? "";
+      userForm.credit_score.value = user.credit_score ?? "";
+      userForm.shadow_vault.value = user.shadow_vault ?? "";
+
+      loadTransactions(user.id);
+      loadInstallments(user.id, user.loan_id);
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      statusMsg.textContent = `Editing user "${user.id}". Make changes and click Save.`;
+      statusMsg.className = "";
+    }
+
+    // ─────────── 3) Confirm + delete a user (including cascades) ───────────
+    async function confirmDelete(userId, fullName) {
+      const message =
+        `Are you sure you want to delete:\n\n` +
+        `• ${fullName || "(no name)"}\n` +
+        `• ID: ${userId}\n\n` +
+        `This will also remove any related transactions & installments.`;
+      if (!confirm(message)) return;
+
+      statusMsg.textContent = `Deleting user \"${userId}\"…`;
+      statusMsg.className = "";
+
+      try {
+        // 1) Delete loan_installments for this user
+        const { error: liError } = await db
+          .from("loan_installments")
+          .delete()
+          .eq("user_id", userId);
+        if (liError) {
+          console.error("Error deleting installments:", liError);
+          showAdminFeedback("Could not delete installments: " + liError.message, true);
+          statusMsg.textContent = "Deletion aborted.";
+          statusMsg.className = "error";
+          return;
+        }
+
+        // 2) Delete vault_transactions for this user
+        const { error: vtError } = await db
+          .from("vault_transactions")
+          .delete()
+          .eq("user_id", userId);
+        if (vtError) {
+          console.error("Error deleting transactions:", vtError);
+          showAdminFeedback("Could not delete transactions: " + vtError.message, true);
+          statusMsg.textContent = "Deletion aborted.";
+          statusMsg.className = "error";
+          return;
+        }
+
+        // 3) Finally delete the user row
+        const { data: deleted, error: delError } = await db
+          .from("users")
+          .delete()
+          .eq("id", userId);
+
+        if (delError) {
+          console.error("Error deleting user:", delError);
+          showAdminFeedback("Failed to delete user: " + delError.message, true);
+          statusMsg.textContent = "Deletion failed.";
+          statusMsg.className = "error";
+          return;
+        }
+
+        showAdminFeedback(`User \"${userId}\" deleted successfully.`);
+        statusMsg.textContent = `User \"${userId}\" deleted successfully.`;
+        statusMsg.className = "success";
+
+        // 4) Reload the user list and clear the edit panel if needed
+        await loadUsers();
+        if (currentEditingUserId === userId) {
+          transactionSection.style.display = "none";
+          installmentSection.style.display = "none";
+          currentEditingUserId = null;
+          currentLoanId = null;
+        }
+      } catch (err) {
+        console.error("confirmDelete error:", err);
+        showAdminFeedback("Unexpected error deleting user.", true);
+        statusMsg.textContent = "Error deleting user.";
+        statusMsg.className = "error";
+      }
+    }
+
+    // ─────────── 4) Save (upsert) user ───────────
+    userForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusMsg.textContent = "Saving user...";
+      statusMsg.className = "";
+
+      const form = e.target;
+      const payload = {
+        id: form.id.value.trim(),
+        password: form.password.value.trim(),
+        full_name: form.full_name.value.trim() || null,
+        phone: form.phone.value.trim() || null,
+        vault_id: form.vault_id.value.trim() || null,
+        loan_id: form.loan_id.value.trim() || null,
+        loan_amount:
+          form.loan_amount.value !== ""
+            ? +form.loan_amount.value
+            : null,
+        loan_start: form.loan_start.value || null,
+        installment_count:
+          form.installment_count.value !== ""
+            ? +form.installment_count.value
+            : null,
+        loan_interest_rate:
+          form.loan_interest_rate.value !== ""
+            ? +form.loan_interest_rate.value
+            : null,
+        credit_score:
+          form.credit_score.value !== ""
+            ? +form.credit_score.value
+            : null,
+        shadow_vault:
+          form.shadow_vault.value !== ""
+            ? +form.shadow_vault.value
+            : null,
+      };
+
+      try {
+        // Upsert user
+        const { data: userData, error: userError } = await db
+          .from("users")
+          .upsert(payload)
+          .single();
+        if (userError) {
+          showAdminFeedback(`Failed to save user: ${userError.message}`, true);
+          statusMsg.textContent = `Failed to save user: ${userError.message}`;
+          statusMsg.className = "error";
+          return;
+        }
+
+        showAdminFeedback("User saved successfully.");
+        statusMsg.textContent = "User saved successfully.";
+        statusMsg.className = "success";
+        currentEditingUserId = null;
+        currentLoanId = payload.loan_id || null;
+        form.reset();
+        await loadUsers();
+
+        // Regenerate installments if loan fields present
+        if (
+          payload.loan_id &&
+          payload.loan_amount != null &&
+          payload.loan_start &&
+          payload.installment_count
+        ) {
+          await regenerateInstallments(
+            payload.id,
+            payload.loan_id,
+            payload.loan_amount,
+            payload.loan_interest_rate,
+            payload.installment_count,
+            payload.loan_start,
+            payload.full_name
+          );
+        }
+
+        // Reload installments if open
+        if (payload.id && payload.loan_id) {
+          loadInstallments(payload.id, payload.loan_id);
+        }
+      } catch (err) {
+        console.error("upsert error:", err);
+        showAdminFeedback("Unexpected error saving user.", true);
+        statusMsg.textContent = "Unexpected error saving user.";
+        statusMsg.className = "error";
+      }
+    });
+
+    // ───────── 5) Vault Transactions: Load, Display, Add ─────────
+    async function loadTransactions(userId) {
+      transactionList.innerHTML = "";
+      try {
+        const { data, error } = await db
+          .from("vault_transactions")
+          .select("*")
+          .eq("user_id", userId)
+          .order("date", { ascending: false });
+        if (error) {
+          showAdminFeedback("Error loading transactions: " + error.message, true);
+          transactionList.innerHTML =
+            "<p class='error'>Error loading transactions</p>";
+          return;
+        }
+        if (!data.length) {
+          transactionList.innerHTML =
+            "<p style='font-size:0.875rem;'>No transactions yet</p>";
+          return;
+        }
+        data.forEach((txn) => {
+          const row = document.createElement("div");
+          row.className = "txn-row";
+          const dateCell = document.createElement("span");
+          dateCell.textContent = txn.date;
+          const amountCell = document.createElement("span");
+          amountCell.textContent = txn.amount.toLocaleString(undefined, {
+            style: "currency",
+            currency: "USD",
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+          });
+          amountCell.style.color = txn.amount < 0 ? "#ff4d4d" : "#4dff88";
+          // DELETE BUTTON
+          const delBtn = document.createElement("button");
+          delBtn.className = "btn-delete";
+          delBtn.style.marginLeft = "1em";
+          delBtn.textContent = "Delete";
+          delBtn.onclick = async () => {
+            if (confirm(`Delete transaction on ${txn.date} for ${amountCell.textContent}?`)) {
+              const { error } = await db
+                .from("vault_transactions")
+                .delete()
+                .eq("id", txn.id);
+              if (error) {
+                showAdminFeedback("Failed to delete transaction: " + error.message, true);
+              } else {
+                showAdminFeedback("Transaction deleted.");
+                loadTransactions(userId); // reload after delete
+              }
+            }
+          };
+          row.appendChild(dateCell);
+          row.appendChild(amountCell);
+          row.appendChild(delBtn);
+          transactionList.appendChild(row);
+        });
+      } catch (err) {
+        console.error("loadTransactions error:", err);
+        showAdminFeedback("Unexpected error loading transactions.", true);
+        transactionList.innerHTML =
+          "<p class='error'>Unexpected error loading transactions</p>";
+      }
+    }
+
+
+    transactionForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const dateInput = document.getElementById("txn_date").value;
+      const amountInput = parseFloat(
+        document.getElementById("txn_amount").value
+      );
+      if (!currentEditingUserId) {
+        showAdminFeedback("No user selected.", true);
+        return;
+      }
+      if (!dateInput || isNaN(amountInput)) {
+        showAdminFeedback("Date and amount are required.", true);
+        return;
+      }
+      const payload = {
+        user_id: currentEditingUserId,
+        date: dateInput,
+        amount: amountInput,
+      };
+      try {
+        const { data, error } = await db
+          .from("vault_transactions")
+          .insert(payload);
+        if (error) {
+          showAdminFeedback(`Failed to save transaction: ${error.message}`, true);
+          return;
+        }
+        showAdminFeedback("Transaction saved.");
+        transactionForm.reset();
+        loadTransactions(currentEditingUserId);
+      } catch (err) {
+        console.error("insert transaction error:", err);
+        showAdminFeedback("Unexpected error saving transaction.", true);
+      }
+    });
+
+    // ───────── 6) Installments: Generate, Load, Mark/Unmark Paid ─────────
+    async function regenerateInstallments(
+      userId,
+      loanId,
+      principal,
+      ratePct,
+      count,
+      startStr,
+      fullName
+    ) {
+      // 1) Delete existing installments for this loan
+      await db.from("loan_installments").delete().eq("loan_id", loanId);
+
+      // 2) Build equal‐principal + equal‐interest schedule
+      function buildEqualSchedule(P, ratePct, n, startStr, fullName, userId, loanId) {
+        const r = (ratePct || 0) / 100;
+        const basePrincipal = Math.floor(P / n);
+        const remainder = P - basePrincipal * n;
+        const interestPerInstallment = Math.round(P * r * 100) / 100;
+
+        const schedule = [];
+        for (let i = 1; i <= n; i++) {
+          // Last installment gets remainder principal
+          const principal = i < n ? basePrincipal : basePrincipal + remainder;
+          const payment = Math.round((principal + interestPerInstallment) * 100) / 100;
+
+          const payDate = new Date(startStr);
+          payDate.setDate(payDate.getDate() + i * 7);
+
+          const initials = getInitials(fullName);
+          const payID = `${initials}-${loanId}-${i}`;
+
+          schedule.push({
+            id: payID,
+            user_id: userId,
+            loan_id: loanId,
+            installment_no: i,
+            due_date: payDate.toISOString().slice(0, 10),
+            principal: principal,
+            interest: interestPerInstallment,
+            payment_amt: payment,
+            status: "Pending",
+            paid_date: null,
+          });
+        }
+        return schedule;
+      }
+
+      // 3) Insert new installments
+      const newRows = buildEqualSchedule(
+        principal,
+        ratePct,
+        count,
+        startStr,
+        fullName,
+        userId,
+        loanId
+      );
+      const { error: insError } = await db
+        .from("loan_installments")
+        .insert(newRows);
+      if (insError) {
+        console.error("Error inserting new installments:", insError);
+      }
+    }
+
+    function getInitials(fullName) {
+      if (!fullName) return "NA";
+      const parts = fullName.trim().split(" ");
+      let out = "";
+      parts.forEach((p) => {
+        if (p) out += p.charAt(0).toUpperCase();
+      });
+      return out;
+    }
+
+    async function loadInstallments(userId, loanId) {
+      installmentList.innerHTML = "";
+      try {
+        const { data, error } = await db
+          .from("loan_installments")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("loan_id", loanId)
+          .order("installment_no", { ascending: true });
+        if (error) {
+          installmentList.innerHTML =
+            `<tr><td colspan="7" class="error">Error loading installments</td></tr>`;
+          return;
+        }
+        if (!data.length) {
+          installmentList.innerHTML =
+            `<tr><td colspan="7" style="font-size:0.875rem;">No installments found</td></tr>`;
+          return;
+        }
+
+        const today = new Date().toISOString().slice(0, 10);
+
+        data.forEach((row) => {
+          let displayStatus = "";
+          let statusClass = "";
+          if (row.status === "Paid") {
+            displayStatus = "Paid";
+            statusClass = "paid-label";
+          } else {
+            if (row.due_date < today) {
+              displayStatus = "Overdue";
+              statusClass = "overdue-label";
+            } else {
+              displayStatus = "Pending";
+              statusClass = "";
+            }
+          }
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${row.installment_no}</td>
+            <td>${row.due_date}</td>
+            <td>$${(+row.principal).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}</td>
+            <td>$${(+row.interest).toFixed(2)}</td>
+            <td>$${(+row.payment_amt).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}</td>
+            <td><span class="${statusClass}">${displayStatus}</span></td>
+            <td>
+              ${row.status === "Pending"
+                ? `<button class="pay-btn" data-id="${row.id}">Mark Paid</button>`
+                : `<button class="unmark-btn" data-id="${row.id}">Unmark</button>`}
+            </td>
+          `;
+          installmentList.appendChild(tr);
+        });
+
+        document
+          .querySelectorAll(".pay-btn")
+          .forEach((btn) =>
+            btn.addEventListener("click", async (e) => {
+              const instId = e.currentTarget.dataset.id;
+              await markInstallmentPaid(instId);
+            })
+          );
+
+        document
+          .querySelectorAll(".unmark-btn")
+          .forEach((btn) =>
+            btn.addEventListener("click", async (e) => {
+              const instId = e.currentTarget.dataset.id;
+              await unmarkInstallment(instId);
+            })
+          );
+      } catch (err) {
+        console.error("loadInstallments error:", err);
+        installmentList.innerHTML =
+          `<tr><td colspan="7" class="error">Unexpected error loading installments</td></tr>`;
+      }
+    }
+
+    async function markInstallmentPaid(instId) {
+      const { error } = await db
+        .from("loan_installments")
+        .update({ status: "Paid", paid_date: new Date().toISOString().slice(0, 10) })
+        .eq("id", instId);
+      if (error) {
+        alert("Failed to mark paid: " + error.message);
+        return;
+      }
+      if (currentEditingUserId && currentLoanId) {
+        loadInstallments(currentEditingUserId, currentLoanId);
+      }
+    }
+
+    async function unmarkInstallment(instId) {
+      const { error } = await db
+        .from("loan_installments")
+        .update({ status: "Pending", paid_date: null })
+        .eq("id", instId);
+      if (error) {
+        alert("Failed to unmark paid: " + error.message);
+        return;
+      }
+      if (currentEditingUserId && currentLoanId) {
+        loadInstallments(currentEditingUserId, currentLoanId);
+      }
+    }
+
+    // ─────────── 7) Initial load when page opens ───────────
+    loadUsers();
+
+    function showAdminFeedback(message, isError = false) {
+      const el = document.getElementById('admin-feedback');
+      el.textContent = message;
+      el.className = isError ? 'mb-4 text-center text-sm font-semibold text-red-600' : 'mb-4 text-center text-sm font-semibold text-green-700';
+      setTimeout(() => { el.textContent = ''; }, 4000);
+    }
+  </script>
+</body>
+</html>
