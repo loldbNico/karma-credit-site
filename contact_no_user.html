@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karma Credit – Contact (No Account)</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: radial-gradient(ellipse at 60% 18%, #160e47 0%, #030207 60%, #000000 100%);
+      color: #9b999e;
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .starfield {
+      pointer-events: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0;
+    }
+    .logo-img {
+      display: block;
+      margin: 0 auto 1em auto;
+      width: 82px; height: 82px;
+      border-radius: 50%;
+      box-shadow: 0 0 18px 6px #00000088;
+      object-fit: cover;
+      background: #000000;
+    }
+    .title-img {
+      max-width: 280px;
+      width: 95%;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 1rem;
+    }
+    .logout-absolute {
+      position: fixed;
+      top: 18px;
+      right: 28px;
+      z-index: 50;
+    }
+    @media (max-width: 640px) {
+      .logout-absolute { top: 6px; right: 5vw; }
+      .logo-img { width: 56px; height: 56px; }
+      .title-img { max-width: 150px; }
+      .card { padding: 1.2rem 0.6rem; }
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, #5f568f 0%, #4b4181 100%);
+      color: #e5e2e4;
+      font-weight: bold;
+      border: 1.5px solid #fff;
+      padding: 0.8em 2em;
+      border-radius: 0.7em;
+      font-size: 1.12rem;
+      box-shadow: 0 0 8px #4b418144, 0 1px 2px #0007;
+      transition: filter 0.16s, box-shadow 0.18s;
+      margin-left: 0.6em;
+      margin-right: 0.2em;
+      margin-bottom: 0.1em;
+    }
+    .btn-primary:hover, .btn-primary:focus {
+      filter: brightness(1.08) drop-shadow(0 0 10px #8c84ac77);
+      border-color: #8037d4;
+    }
+    .gold { color: #a496f1; }
+    .card {
+      background: #18142a;
+      border-radius: 1.2em;
+      box-shadow: 0 0 18px 6px #00000044;
+      border: 1.5px solid #4b4181;
+      margin-bottom: 1.5em;
+    }
+    .shimmer { animation: shimmer 2.5s infinite linear; }
+    @keyframes shimmer {
+      0% { box-shadow: 0 0 18px 6px #4b418144; }
+      50% { box-shadow: 0 0 28px 10px #d4af3744; }
+      100% { box-shadow: 0 0 18px 6px #4b418144; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body class="relative min-h-screen pt-3 pb-6 px-1 sm:px-0 flex flex-col items-center">
+  <canvas class="starfield" id="starfield"></canvas>
+  <button id="menuBtn"
+    class="btn-primary fixed z-50 top-6 left-6 logout-absolute"
+    aria-label="Open menu"
+    style="box-shadow: 0 2px 8px #0008; left: 28px; right: auto; top: 18px; min-width: 90px; padding: 0.8em 2em; font-size: 1.12rem; border-radius: 0.7em;"
+  >
+    Menu
+  </button>
+  <div class="w-full max-w-2xl z-10 relative"></div>
+  <!-- Drawer menu -->
+  <div id="drawerMenuBg"
+    class="fixed inset-0 z-40 bg-black bg-opacity-50 hidden"
+    style="backdrop-filter: blur(3px);"></div>
+  <aside id="drawerMenu"
+    class="fixed top-0 left-0 h-full w-64 bg-[#0c0a0f] border-r border-[#4b4181] shadow-2xl z-50 transform -translate-x-full transition-transform duration-200"
+    style="box-shadow: 2px 0 20px #000a;">
+    <div class="flex flex-col items-start p-6 space-y-2 h-full">
+      <a href="index.html" class="mb-6 flex items-center space-x-2" onclick="closeDrawer()">
+        <img src="logo6.png" alt="Karma Credit Logo" class="logo-img">
+        <img src="https://i.postimg.cc/pXHx23DN/logo11.png" alt="Karma Credit" class="title-img">
+      </a>
+      <a href="index.html" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold">Login</a>
+      <a href="contact_no_user.html" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold">Contact Us (No Account)</a>
+      <div class="flex-grow"></div>
+      <button onclick="closeDrawer()" class="text-xs text-gray-400 mt-6">Close</button>
+    </div>
+  </aside>
+
+  <div class="w-full max-w-lg mx-auto mt-12 p-6">
+    <div class="card p-7 shimmer">
+      <h1 class="text-2xl gold font-bold mb-4">Contact Us</h1>
+      <p class="mb-3">If you have any questions or issues, please reach out below:</p>
+      <form id="contactForm" class="space-y-5">
+        <div>
+          <label class="block mb-1 text-sm gold">Full Name</label>
+          <input type="text" id="contactFullName" class="w-full px-4 py-2 rounded bg-[#1a1a2b]" required>
+        </div>
+        <div>
+          <label class="block mb-1 text-sm gold">State ID</label>
+          <input type="text" id="contactStateId" class="w-full px-4 py-2 rounded bg-[#1a1a2b]" required>
+        </div>
+        <div>
+          <label class="block mb-1 text-sm gold">Phone Number</label>
+          <input type="text" id="contactPhone" class="w-full px-4 py-2 rounded bg-[#1a1a2b]" required>
+        </div>
+        <div>
+          <label class="block mb-1 text-sm gold">Provide your Discord Username (optional)</label>
+          <input type="text" id="contactDiscord" class="w-full px-4 py-2 rounded bg-[#1a1a2b]" placeholder="e.g. user#1234">
+        </div>
+        <div>
+          <label class="block mb-1 text-sm gold">What can we help you with?</label>
+          <select id="contactTopic" class="w-full px-4 py-2 rounded bg-[#1a1a2b]" required>
+            <option value="" disabled selected>Select a topic</option>
+            <option value="account">Account Access / Login</option>
+            <option value="vault">Vault Questions</option>
+            <option value="loan">Loan Questions</option>
+            <option value="payments">Payments & Repayments</option>
+            <option value="feedback">Feedback / Suggestions</option>
+            <option value="bug">Report a Bug</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block mb-1 text-sm gold">Your Message</label>
+          <textarea id="contactMsg" class="w-full px-4 py-2 rounded bg-[#1a1a2b]" rows="4" required></textarea>
+        </div>
+        <div class="flex justify-center">
+          <button type="submit" class="btn-primary w-full max-w-xs mt-2">Send</button>
+        </div>
+        <div id="contactMsgFeedback" class="mt-2 text-center"></div>
+      </form>
+    </div>
+    <a href="index.html" class="text-blue-300 hover:underline">&larr; Back to Login</a>
+  </div>
+  <script>
+    // Starfield background (copied from dashboard)
+    const starColors = ["#e5e2e4", "#8c84ac", "#5f568f", "#ffffff"];
+    const canvas = document.getElementById("starfield");
+    const ctx = canvas.getContext("2d");
+    let w, h, stars = [];
+    function resize() {
+      w = window.innerWidth; h = window.innerHeight;
+      canvas.width = w; canvas.height = h;
+    }
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < 120; i++) {
+        stars.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 1.2 + 0.2,
+          alpha: Math.random() * 0.7 + 0.2,
+          tw: Math.random() * 10,
+          c: starColors[Math.floor(Math.random() * starColors.length)]
+        });
+      }
+    }
+    function animateStars() {
+      ctx.clearRect(0, 0, w, h);
+      for (let s of stars) {
+        ctx.save();
+        ctx.globalAlpha = Math.abs(Math.sin(performance.now()/900 + s.tw)) * s.alpha + 0.08;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
+        ctx.fillStyle = s.c;
+        ctx.shadowColor = s.c;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.restore();
+      }
+      requestAnimationFrame(animateStars);
+    }
+    resize(); initStars(); animateStars();
+    window.addEventListener('resize', () => { resize(); initStars(); });
+
+    // Drawer menu logic
+    const menuBtn = document.getElementById("menuBtn");
+    const drawerMenu = document.getElementById("drawerMenu");
+    const drawerMenuBg = document.getElementById("drawerMenuBg");
+    menuBtn.onclick = function() {
+      drawerMenu.classList.remove("-translate-x-full");
+      drawerMenuBg.classList.remove("hidden");
+      menuBtn.style.display = "none";
+    };
+    function closeDrawer() {
+      drawerMenu.classList.add("-translate-x-full");
+      drawerMenuBg.classList.add("hidden");
+      menuBtn.style.display = "";
+    }
+    drawerMenuBg.onclick = closeDrawer;
+
+    // Supabase logic for public contact form
+    const db = supabase.createClient(
+      "https://nxgivpbbuwbzjsfbhlzt.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Z2l2cGJidXdiempzZmJobHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3ODA2ODYsImV4cCI6MjA2NDM1NjY4Nn0.7Hrn29OfpNGLyOy3tASiuWX6lsWQ3t1mrLWBb2K_E7E"
+    );
+    document.getElementById("contactForm").onsubmit = async function(e) {
+      e.preventDefault();
+      const fullName = document.getElementById("contactFullName").value.trim();
+      const stateId = document.getElementById("contactStateId").value.trim();
+      const phone = document.getElementById("contactPhone").value.trim();
+      const discord = document.getElementById("contactDiscord").value.trim();
+      const topic = document.getElementById("contactTopic").value;
+      const msg = document.getElementById("contactMsg").value.trim();
+      if (!fullName || !stateId || !phone || !topic || !msg) {
+        document.getElementById("contactMsgFeedback").textContent = "Please fill in all required fields.";
+        document.getElementById("contactMsgFeedback").className = "text-pink-300 mt-2";
+        return;
+      }
+      const { error } = await db.from("contact_requests_no_user").insert({
+        full_name: fullName,
+        state_id: stateId,
+        phone: phone,
+        discord: discord,
+        topic: topic,
+        message: msg,
+        created_at: new Date().toISOString()
+      });
+      if (!error) {
+        document.getElementById("contactMsgFeedback").textContent = "Message sent!";
+        document.getElementById("contactMsgFeedback").className = "text-green-400 mt-2";
+        document.getElementById("contactForm").reset();
+      } else {
+        document.getElementById("contactMsgFeedback").textContent = "Failed to send!";
+        document.getElementById("contactMsgFeedback").className = "text-pink-300 mt-2";
+      }
+    };
+  </script>
+</body>
+</html>
