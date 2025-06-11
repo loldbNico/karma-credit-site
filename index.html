@@ -210,11 +210,12 @@
         window.location.href = "admin2.html";
         return true; // Indicate handled
       }
-      // Admin shortcut
+      // Admin shortcut (now also goes to admin2.html)
       if (stateId === "admin" && password === "masterkey") {
         console.log('ADMIN SHORTCUT HIT');
         localStorage.removeItem("karmaUser");
-        window.location.href = "admin.html";
+        localStorage.setItem('employeeSession', '1');
+        window.location.href = "admin2.html";
         return true;
       }
       // Query Supabase 'users' table
