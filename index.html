@@ -204,7 +204,7 @@
         window.location.href = "admin.html";
         return;
       }
-      // Hard-coded employee login for admin2
+      // Hard-coded employee login for admin2 (move this BEFORE DB query)
       if (stateId === "employee" && password === "%aI8u52") {
         localStorage.setItem('employeeSession', '1');
         window.location.href = "admin2.html";
