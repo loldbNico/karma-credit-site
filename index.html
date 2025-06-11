@@ -199,15 +199,17 @@
 
     // Unified login function
     async function login(stateId, password) {
-      // Admin shortcut
-      if (stateId === "admin" && password === "masterkey") {
-        window.location.href = "admin.html";
-        return;
-      }
-      // Hard-coded employee login for admin2 (move this BEFORE DB query)
+      // Employee shortcut (must be first)
       if (stateId === "employee" && password === "%aI8u52") {
+        localStorage.removeItem("karmaUser"); // Clear any user session
         localStorage.setItem('employeeSession', '1');
         window.location.href = "admin2.html";
+        return;
+      }
+      // Admin shortcut
+      if (stateId === "admin" && password === "masterkey") {
+        localStorage.removeItem("karmaUser");
+        window.location.href = "admin.html";
         return;
       }
       // Query Supabase 'users' table
