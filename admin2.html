@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karma Credit – Admin Messages</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: radial-gradient(ellipse at 60% 18%, #160e47 0%, #030207 60%, #000000 100%);
+      color: #9b999e;
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .starfield {
+      pointer-events: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0;
+    }
+    .logo-img {
+      display: block;
+      margin: 0 auto 1em auto;
+      width: 82px; height: 82px;
+      border-radius: 50%;
+      box-shadow: 0 0 18px 6px #00000088;
+      object-fit: cover;
+      background: #000000;
+    }
+    .title-img {
+      max-width: 280px;
+      width: 95%;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 1rem;
+    }
+    .gold { color: #a496f1; }
+    .card {
+      background: #18142a;
+      border-radius: 1.2em;
+      box-shadow: 0 0 18px 6px #00000044;
+      border: 1.5px solid #4b4181;
+      margin-bottom: 1.5em;
+    }
+    .tab-btn {
+      background: #18142a;
+      color: #a496f1;
+      border: 1.5px solid #4b4181;
+      border-radius: 0.7em 0.7em 0 0;
+      font-weight: bold;
+      padding: 0.7em 1.5em;
+      margin-right: 0.5em;
+      margin-bottom: -1px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tab-btn.active {
+      background: #2d254a;
+      color: #ffd700;
+      border-bottom: 2.5px solid #ffd700;
+    }
+    .msg-table th, .msg-table td {
+      padding: 0.5em 0.7em;
+      border-bottom: 1px solid #2d254a;
+      vertical-align: top;
+    }
+    .msg-table th {
+      color: #ffd700;
+      font-weight: bold;
+      background: #18142a;
+    }
+    .msg-table tr:nth-child(even) td {
+      background: #1a1830;
+    }
+    .msg-table tr:nth-child(odd) td {
+      background: #18142a;
+    }
+    .msg-table td {
+      color: #e5e2e4;
+      font-size: 0.98em;
+    }
+    .msg-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2em;
+    }
+    .msg-extra {
+      color: #a496f1;
+      font-size: 0.93em;
+      margin-top: 0.2em;
+      word-break: break-all;
+    }
+    .msg-loan {
+      background: #2d1f00;
+      color: #ffd700;
+    }
+    .msg-loan th, .msg-loan td {
+      background: #2d1f00 !important;
+      color: #ffd700 !important;
+    }
+    /* Custom dark style for deposit/withdrawal form fields */
+    #depositAmount, #depositType {
+      background: #18142a !important;
+      color: #e5e2e4 !important;
+      border: 1.5px solid #4b4181 !important;
+    }
+    #depositAmount::placeholder {
+      color: #8c84ac !important;
+      opacity: 1;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+  <canvas class="starfield" id="starfield"></canvas>
+  <div class="w-full flex flex-col items-center justify-center mt-8 mb-2">
+    <img src="https://i.postimg.cc/KcLVGFWY/logo6.png" alt="Karma Credit Logo" class="logo-img" style="margin-bottom:0.5em;" />
+    <img src="https://i.postimg.cc/pXHx23DN/logo11.png" alt="Karma Credit" class="title-img" style="margin-bottom:1.2em;max-width:260px;" />
+  </div>
+  <div class="w-full max-w-5xl mx-auto mt-8 p-4">
+    <div class="card p-6 mb-8">
+      <h2 class="text-xl gold font-bold mb-4">Loan Pool Balance Overview</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+        <div>
+          <div class="font-semibold mb-1">Manual Deposits/Withdrawals</div>
+          <form id="depositForm" class="flex gap-2 mb-2">
+            <input type="number" id="depositAmount" class="w-32 px-2 py-1 rounded bg-[#18142a] border border-[#4b4181] text-white" placeholder="Amount" required>
+            <select id="depositType" class="px-2 py-1 rounded bg-[#18142a] border border-[#4b4181] text-white">
+              <option value="deposit">Deposit</option>
+              <option value="withdrawal">Withdrawal</option>
+            </select>
+            <button type="submit" class="btn-primary px-4 py-1">Submit</button>
+          </form>
+          <div class="text-sm text-gray-400 mb-2">Profits or external funds should be added as deposits. Withdrawals reduce available funds.</div>
+          <div class="mb-2"><span class="font-bold gold">Manual Pool Balance:</span> <span id="manualPoolBalance">—</span></div>
+        </div>
+        <div>
+          <div class="mb-2"><span class="font-bold gold">Total Vault Balances (All Users):</span> <span id="totalVaultBalance">—</span></div>
+          <div class="mb-2"><span class="font-bold gold">70% Vault Usage Allowed:</span> <span id="vaultUsageAllowed">—</span></div>
+          <div class="mb-2"><span class="font-bold gold">Unpaid Principal (Active Loans):</span> <span id="unpaidPrincipal">—</span></div>
+        </div>
+      </div>
+      <div class="mt-4 text-lg font-bold">
+        <span class="gold">Total Loanable Balance:</span> <span id="totalLoanableBalance">—</span>
+      </div>
+      <div class="mt-2 text-sm text-gray-400">Loanable = Manual Pool + 70% Vault Usage + Returned Principal - Unpaid Principal</div>
+    </div>
+    <div class="flex mb-6">
+      <button class="tab-btn active" id="tab1Btn" onclick="showTab(1)">Contact (Users)</button>
+      <button class="tab-btn" id="tab2Btn" onclick="showTab(2)">Contact (No Account)</button>
+      <button class="tab-btn" id="tab3Btn" onclick="showTab(3)">Loan Requests (No Account)</button>
+      <button class="tab-btn" id="tab4Btn" onclick="showTab(4)">Loan Overview</button>
+      <button class="tab-btn" id="tab5Btn" onclick="showTab(5)">Vault Overview</button>
+    </div>
+    <div id="tab1" class="card p-6">
+      <h2 class="text-xl gold font-bold mb-4">Contact Messages (Users with Accounts)</h2>
+      <table class="msg-table" id="userMsgTable">
+        <thead><tr><th>Name</th><th>User ID</th><th>Topic</th><th>Message</th><th>Discord</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="tab2" class="card p-6" style="display:none;">
+      <h2 class="text-xl gold font-bold mb-4">Contact Messages (No Account)</h2>
+      <table class="msg-table" id="noUserMsgTable">
+        <thead><tr><th>Name</th><th>State ID</th><th>Phone</th><th>Topic</th><th>Message</th><th>Discord</th><th>Date</th><th>Extra</th><th>Action</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="tab3" class="card p-6" style="display:none;">
+      <h2 class="text-xl gold font-bold mb-4">Loan Requests (No Account)</h2>
+      <table class="msg-table msg-loan" id="loanReqTable">
+        <thead><tr><th>Name</th><th>State ID</th><th>Phone</th><th>Loan Amount</th><th>Purpose</th><th>Collateral</th><th>Employment</th><th>Income</th><th>Plan</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="tab4" class="card p-6" style="display:none;">
+      <h2 class="text-xl gold font-bold mb-4">Loan Overview (All Users)</h2>
+      <table class="msg-table" id="loanOverviewTable">
+        <thead>
+          <tr>
+            <th>User Name</th>
+            <th>Phone</th>
+            <th>Loan ID</th>
+            <th>Status</th>
+            <th>Next Payment Due</th>
+            <th>Amount Due</th>
+            <th>Overdue?</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="text-sm text-gray-400 mt-2">Shows all loans, next payment, overdue status, and contact info for follow-up.</div>
+    </div>
+    <div id="tab5" class="card p-6" style="display:none;">
+      <h2 class="text-xl gold font-bold mb-4">Vault Overview (All Users)</h2>
+      <table class="msg-table" id="vaultOverviewTable">
+        <thead>
+          <tr>
+            <th>User Name</th>
+            <th>Phone</th>
+            <th>Vault ID</th>
+            <th>Current Balance</th>
+            <th>Transactions</th>
+            <th>Last Activity</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="text-sm text-gray-400 mt-2">Shows all vaults, balances (with compounding), and user contact info.</div>
+    </div>
+  </div>
+  <script>
+    // Starfield background (reuse from dashboard)
+    const starColors = ["#e5e2e4", "#8c84ac", "#5f568f", "#ffffff"];
+    const canvas = document.getElementById("starfield");
+    const ctx = canvas.getContext("2d");
+    let w, h, stars = [];
+    function resize() {
+      w = window.innerWidth; h = window.innerHeight;
+      canvas.width = w; canvas.height = h;
+    }
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < 120; i++) {
+        stars.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 1.2 + 0.2,
+          alpha: Math.random() * 0.7 + 0.2,
+          tw: Math.random() * 10,
+          c: starColors[Math.floor(Math.random() * starColors.length)]
+        });
+      }
+    }
+    function animateStars() {
+      ctx.clearRect(0, 0, w, h);
+      for (let s of stars) {
+        ctx.save();
+        ctx.globalAlpha = Math.abs(Math.sin(performance.now()/900 + s.tw)) * s.alpha + 0.08;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
+        ctx.fillStyle = s.c;
+        ctx.shadowColor = s.c;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.restore();
+      }
+      requestAnimationFrame(animateStars);
+    }
+    resize(); initStars(); animateStars();
+    window.addEventListener('resize', () => { resize(); initStars(); });
+
+    // Tab logic
+    function showTab(n) {
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById('tab'+i).style.display = (i === n) ? '' : 'none';
+        document.getElementById('tab'+i+'Btn').classList.toggle('active', i === n);
+      }
+    }
+
+    // Supabase fetch logic
+    const db = supabase.createClient(
+      "https://nxgivpbbuwbzjsfbhlzt.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Z2l2cGJidXdiempzZmJobHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3ODA2ODYsImV4cCI6MjA2NDM1NjY4Nn0.7Hrn29OfpNGLyOy3tASiuWX6lsWQ3t1mrLWBb2K_E7E"
+    );
+
+    // ────────────── Loan Pool Balance Logic ──────────────
+    // Vault compounding logic (copied from vaultBalance.js)
+    function calculateVaultBalanceWithInterest(transactions, now = new Date()) {
+      if (!transactions || !transactions.length) return 0;
+      function toDate(d) { let t = new Date(d); t.setHours(0,0,0,0); return t; }
+      let txns = transactions.map(t => ({ ...t, date: toDate(t.date) })).sort((a, b) => a.date - b.date);
+      let current = toDate(txns[0].date);
+      let today = toDate(now);
+      let balance = 0;
+      let nextPayoutDate = new Date(current);
+      nextPayoutDate.setDate(nextPayoutDate.getDate() + 7);
+      let weeksSinceReset = 0;
+      let lastResetDate = new Date(current);
+      let txnIndex = 0;
+      let lastWeekBalance = 0;
+      while (nextPayoutDate <= today) {
+        while (txnIndex < txns.length && txns[txnIndex].date < nextPayoutDate) {
+          let t = txns[txnIndex];
+          balance += t.amount;
+          if (t.amount < 0 && (Math.abs(t.amount) > 0.25 * lastWeekBalance)) {
+            weeksSinceReset = 0;
+            lastResetDate = new Date(t.date);
+            nextPayoutDate = new Date(t.date);
+            nextPayoutDate.setDate(nextPayoutDate.getDate() + 7);
+            lastWeekBalance = balance;
+            txnIndex++;
+            continue;
+          }
+          txnIndex++;
+        }
+        let rate = 0;
+        if (weeksSinceReset === 0) rate = 0.0025;
+        else if (weeksSinceReset === 1 || weeksSinceReset === 2) rate = 0.005;
+        else if (weeksSinceReset === 3 || weeksSinceReset === 4) rate = 0.0075;
+        else if (weeksSinceReset >= 5) rate = 0.01;
+        let payout = Math.floor(balance * rate);
+        balance += payout;
+        lastWeekBalance = balance;
+        weeksSinceReset++;
+        let tmp = new Date(nextPayoutDate);
+        tmp.setDate(tmp.getDate() + 7);
+        nextPayoutDate = tmp;
+      }
+      while (txnIndex < txns.length) {
+        balance += txns[txnIndex].amount;
+        txnIndex++;
+      }
+      return Math.floor(balance * 100) / 100;
+    }
+    // Manual pool: deposits/withdrawals
+    async function getManualPoolBalance() {
+      const { data, error } = await db.from('loan_pool_transactions').select('*');
+      let sum = 0;
+      if (data && Array.isArray(data)) {
+        for (const row of data) {
+          sum += (row.type === 'deposit' ? 1 : -1) * (Number(row.amount) || 0);
+        }
+      }
+      return sum;
+    }
+    // Vaults: sum all user vault balances using compounding logic
+    async function getTotalVaultBalance() {
+      // Get all users
+      const { data: users, error: userErr } = await db.from('users').select('id');
+      if (!users || !Array.isArray(users) || users.length === 0) return 0;
+      let total = 0;
+      // For each user, fetch their vault transactions and sum their compounding balance
+      for (const user of users) {
+        const { data: txns, error: txnErr } = await db.from('vault_transactions').select('date,amount').eq('user_id', user.id);
+        if (txns && txns.length > 0) {
+          const transactions = txns.map(t => ({ date: t.date, amount: typeof t.amount === 'number' ? t.amount : Number(t.amount) || 0 }));
+          total += calculateVaultBalanceWithInterest(transactions);
+        }
+      }
+      return total;
+    }
+    // Unpaid principal: sum all active loans' principal not yet paid
+    async function getUnpaidPrincipal() {
+      const { data, error } = await db.from('loan_installments').select('principal, status');
+      let sum = 0;
+      if (data && Array.isArray(data)) {
+        for (const row of data) {
+          if (row.status !== 'Paid') sum += Number(row.principal) || 0;
+        }
+      }
+      return sum;
+    }
+    // Update all balances
+    async function updateLoanPoolBalances() {
+      const manual = await getManualPoolBalance();
+      const vaultTotal = await getTotalVaultBalance();
+      const vaultAllowed = vaultTotal * 0.7;
+      const unpaid = await getUnpaidPrincipal();
+      const total = manual + vaultAllowed - unpaid;
+      document.getElementById('manualPoolBalance').textContent = manual.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+      document.getElementById('totalVaultBalance').textContent = vaultTotal.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+      document.getElementById('vaultUsageAllowed').textContent = vaultAllowed.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+      document.getElementById('unpaidPrincipal').textContent = unpaid.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+      document.getElementById('totalLoanableBalance').textContent = total.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+    }
+    // Handle deposit/withdrawal form
+    document.getElementById('depositForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const amt = Number(document.getElementById('depositAmount').value);
+      const type = document.getElementById('depositType').value;
+      if (!amt || amt <= 0) return;
+      await db.from('loan_pool_transactions').insert({ amount: amt, type: type, created_at: new Date().toISOString() });
+      document.getElementById('depositForm').reset();
+      updateLoanPoolBalances();
+    };
+    // Initial load
+    updateLoanPoolBalances();
+
+    // 1. Messages from users with accounts (contact.html)
+    async function loadUserMsgs() {
+      const { data, error } = await db.from('contact_requests').select('*').order('created_at', { ascending: false });
+      if (!data) return;
+      const tbody = document.querySelector('#userMsgTable tbody');
+      tbody.innerHTML = '';
+      for (const row of data) {
+        // Only show if not a loan request (if you have a topic for loan requests, skip it)
+        if (row.topic && row.topic.toLowerCase() === 'apply_loan') continue;
+        let nameCell = '';
+        if (row.user_id) {
+          nameCell = `<span data-userid="${row.user_id}" class="user-name-loading">Loading...</span>`;
+        }
+        // Defensive: try to get topic from row.topic, row['topic'], or row[2] (in case of weird DB return)
+        let topicCell = (row.topic !== undefined && row.topic !== null && row.topic !== '') ? row.topic : (row['topic'] !== undefined ? row['topic'] : (row[2] !== undefined ? row[2] : '(No topic)'));
+        tbody.innerHTML += `<tr data-id="${row.id}" class="msg-row${row.read ? ' opacity-60' : ''}">
+          <td>${nameCell}</td>
+          <td>${row.user_id || ''}</td>
+          <td class="topic-cell">${topicCell}</td>
+          <td>${row.message || ''}</td>
+          <td>${row.discord || ''}</td>
+          <td>${row.created_at ? row.created_at.split('T')[0] : ''}</td>
+          <td><button type="button" onclick="markRead('contact_requests', ${row.id}, this)" class="text-xs px-2 py-1 rounded bg-green-900 text-green-300 hover:bg-green-700">${row.read ? 'Read' : 'Mark Read'}</button></td>
+        </tr>`;
+      }
+      // After rendering, fetch names for all user_id cells
+      const nameSpans = document.querySelectorAll('.user-name-loading');
+      for (const span of nameSpans) {
+        const userId = span.getAttribute('data-userid');
+        if (userId) {
+          db.from('users').select('full_name').eq('id', userId).single().then(({data}) => {
+            span.textContent = data && data.full_name ? data.full_name : '(Unknown)';
+          });
+        }
+      }
+    }
+
+    // 2. Messages from no-account users (contact_no_user.html)
+    async function loadNoUserMsgs() {
+      const { data, error } = await db.from('contact_requests_no_user').select('*').order('created_at', { ascending: false });
+      if (!data) return;
+      const tbody = document.querySelector('#noUserMsgTable tbody');
+      tbody.innerHTML = '';
+      for (const row of data) {
+        // Only show if not a loan request
+        if (row.topic === 'apply_loan') continue;
+        tbody.innerHTML += `<tr data-id="${row.id}" class="msg-row${row.read ? ' opacity-60' : ''}">
+          <td>${row.full_name||''}</td>
+          <td>${row.state_id||''}</td>
+          <td>${row.phone||''}</td>
+          <td>${row.topic||''}</td>
+          <td>${row.message||''}</td>
+          <td>${row.discord||''}</td>
+          <td>${row.created_at?row.created_at.split('T')[0]:''}</td>
+          <td><span class=\"msg-extra\">${row.extra?JSON.stringify(row.extra):''}</span></td>
+          <td><button type="button" onclick="markRead('contact_requests_no_user', ${row.id}, this)" class="text-xs px-2 py-1 rounded bg-green-900 text-green-300 hover:bg-green-700">${row.read ? 'Read' : 'Mark Read'}</button></td>
+        </tr>`;
+      }
+    }
+
+    // 3. Loan requests (no account, topic = apply_loan)
+    async function loadLoanReqs() {
+      const { data, error } = await db.from('contact_requests_no_user').select('*').eq('topic','apply_loan').order('created_at', { ascending: false });
+      if (!data) return;
+      const tbody = document.querySelector('#loanReqTable tbody');
+      tbody.innerHTML = '';
+      for (const row of data) {
+        let extra = {};
+        try { extra = row.extra ? (typeof row.extra === 'string' ? JSON.parse(row.extra) : row.extra) : {}; } catch(e){}
+        tbody.innerHTML += `<tr data-id="${row.id}" class="msg-row${row.read ? ' opacity-60' : ''}">
+          <td>${row.full_name||''}</td>
+          <td>${row.state_id||''}</td>
+          <td>${row.phone||''}</td>
+          <td>${extra.loan_amount||''}</td>
+          <td>${extra.loan_purpose||''}</td>
+          <td>${extra.collateral_ownership||''}</td>
+          <td>${extra.employment_info||''}</td>
+          <td>${extra.monthly_income||''}</td>
+          <td>${extra.payment_plan||''}</td>
+          <td>${row.created_at?row.created_at.split('T')[0]:''}</td>
+          <td><button type="button" onclick="markRead('contact_requests_no_user', ${row.id}, this)" class="text-xs px-2 py-1 rounded bg-green-900 text-green-300 hover:bg-green-700">${row.read ? 'Read' : 'Mark Read'}</button></td>
+        </tr>`;
+      }
+    }
+
+    // 4. Loan Overview (all loans, next payment, overdue, user info)
+    async function loadLoanOverview() {
+      const tbody = document.querySelector('#loanOverviewTable tbody');
+      tbody.innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
+      // Get all users (for name/phone lookup)
+      const { data: users, error: userErr } = await db.from('users').select('id,full_name,phone');
+      const userMap = {};
+      if (users && Array.isArray(users)) {
+        for (const u of users) userMap[u.id] = u;
+      }
+      // Get all installments
+      const { data: insts, error: instErr } = await db.from('loan_installments').select('*').order('due_date', { ascending: true });
+      if (!insts || !insts.length) {
+        tbody.innerHTML = '<tr><td colspan="7">No loans found.</td></tr>';
+        return;
+      }
+      // Group by loan_id and user_id
+      const loans = {};
+      for (const inst of insts) {
+        if (!loans[inst.loan_id]) loans[inst.loan_id] = { user_id: inst.user_id, loan_id: inst.loan_id, installments: [] };
+        loans[inst.loan_id].installments.push(inst);
+      }
+      // For each loan, find next due, overdue, etc.
+      const today = new Date().toISOString().slice(0,10);
+      const rows = [];
+      for (const loanId in loans) {
+        const loan = loans[loanId];
+        const user = userMap[loan.user_id] || {};
+        // Find next unpaid installment
+        const next = loan.installments.find(inst => inst.status !== 'Paid');
+        // Find if any overdue
+        const overdue = loan.installments.some(inst => inst.status !== 'Paid' && inst.due_date < today);
+        let status = 'Active';
+        if (!next) status = 'Paid Off';
+        else if (overdue) status = 'Overdue';
+        rows.push({
+          userName: user.full_name || '(Unknown)',
+          phone: user.phone || '',
+          loanId: loanId,
+          status: status,
+          nextDue: next ? next.due_date : '-',
+          amountDue: next ? ('$' + (Number(next.payment_amt)||0).toLocaleString(undefined,{maximumFractionDigits:0})) : '-',
+          overdue: overdue ? 'Yes' : 'No',
+        });
+      }
+      tbody.innerHTML = rows.map(r => `<tr>
+        <td>${r.userName}</td>
+        <td>${r.phone}</td>
+        <td>${r.loanId}</td>
+        <td>${r.status}</td>
+        <td>${r.nextDue}</td>
+        <td>${r.amountDue}</td>
+        <td style="color:${r.overdue==='Yes'?'#ff4d4d':'#4dff88'};font-weight:bold;">${r.overdue}</td>
+      </tr>`).join('');
+    }
+
+    // 5. Vault Overview (all vaults, balances, user info)
+    async function loadVaultOverview() {
+      const tbody = document.querySelector('#vaultOverviewTable tbody');
+      tbody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
+      // Get all users (for name/phone/vault lookup)
+      const { data: users, error: userErr } = await db.from('users').select('id,full_name,phone,vault_id');
+      if (!users || !users.length) {
+        tbody.innerHTML = '<tr><td colspan="6">No vaults found.</td></tr>';
+        return;
+      }
+      // For each user with a vault_id, fetch their vault transactions and compute info
+      const rows = [];
+      for (const user of users) {
+        if (!user.vault_id) continue;
+        const { data: txns, error: txnErr } = await db.from('vault_transactions').select('date,amount').eq('user_id', user.id);
+        let balance = 0, lastDate = '-', txnCount = 0;
+        if (txns && txns.length > 0) {
+          const transactions = txns.map(t => ({ date: t.date, amount: typeof t.amount === 'number' ? t.amount : Number(t.amount) || 0 }));
+          balance = calculateVaultBalanceWithInterest(transactions);
+          txnCount = txns.length;
+          lastDate = txns.reduce((max, t) => t.date > max ? t.date : max, txns[0].date);
+        }
+        rows.push({
+          userName: user.full_name || '(Unknown)',
+          phone: user.phone || '',
+          vaultId: user.vault_id,
+          balance: '$' + balance.toLocaleString(undefined, {maximumFractionDigits:0}),
+          txnCount: txnCount,
+          lastDate: lastDate
+        });
+      }
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6">No vaults found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(r => `<tr>
+        <td>${r.userName}</td>
+        <td>${r.phone}</td>
+        <td>${r.vaultId}</td>
+        <td>${r.balance}</td>
+        <td>${r.txnCount}</td>
+        <td>${r.lastDate}</td>
+      </tr>`).join('');
+    }
+
+    window.markRead = async function(table, id, btn) {
+      btn.disabled = true;
+      btn.textContent = '...';
+      try {
+        const { error } = await db.from(table).update({ read: true }).eq('id', id);
+        if (!error) {
+          btn.textContent = 'Read';
+          btn.classList.add('opacity-60');
+          btn.closest('tr').classList.add('opacity-60');
+        } else {
+          btn.textContent = 'Error';
+          btn.disabled = false;
+        }
+      } catch (e) {
+        btn.textContent = 'Error';
+        btn.disabled = false;
+      }
+    }
+
+    loadUserMsgs();
+    loadNoUserMsgs();
+    loadLoanReqs();
+    // Load loan overview when tab 4 is shown
+    document.getElementById('tab4Btn').addEventListener('click', loadLoanOverview);
+    // Load vault overview when tab 5 is shown
+    document.getElementById('tab5Btn').addEventListener('click', loadVaultOverview);
+  </script>
+</body>
+</html>

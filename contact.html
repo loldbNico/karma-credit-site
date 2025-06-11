@@ -2,185 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Karma Credit – Contact</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;900&display=swap" rel="stylesheet">
-  <style>
-    body {
-      min-height: 100vh;
-      margin: 0;
-      background: radial-gradient(ellipse at 60% 18%, #160e47 0%, #030207 60%, #000000 100%);
-      color: #9b999e;
-      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
-      position: relative;
-      overflow-x: hidden;
-    }
-    .starfield {
-      pointer-events: none;
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      z-index: 0;
-    }
-    .logo-img {
-      display: block;
-      margin: 0 auto 1em auto;
-      width: 82px; height: 82px;
-      border-radius: 50%;
-      box-shadow: 0 0 18px 6px #00000088;
-      object-fit: cover;
-      background: #000000;
-    }
-    .title-img {
-      max-width: 280px;
-      width: 95%;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-      margin-bottom: 1rem;
-    }
-    .logout-absolute {
-      position: fixed;
-      top: 18px;
-      right: 28px;
-      z-index: 50;
-    }
-    @media (max-width: 640px) {
-      .logout-absolute { top: 6px; right: 5vw; }
-      .logo-img { width: 56px; height: 56px; }
-      .title-img { max-width: 150px; }
-      .card { padding: 1.2rem 0.6rem; }
-    }
-    .btn-primary {
-      background: linear-gradient(90deg, #5f568f 0%, #4b4181 100%);
-      color: #e5e2e4;
-      font-weight: bold;
-      border: 1.5px solid #fff;
-      padding: 0.8em 2em;
-      border-radius: 0.7em;
-      font-size: 1.12rem;
-      box-shadow: 0 0 8px #4b418144, 0 1px 2px #0007;
-      transition: filter 0.16s, box-shadow 0.18s;
-      margin-left: 0.6em;
-      margin-right: 0.2em;
-      margin-bottom: 0.1em;
-    }
-    .btn-primary:hover, .btn-primary:focus {
-      filter: brightness(1.08) drop-shadow(0 0 10px #8c84ac77);
-      box-shadow: 0 0 22px #8c84ac88, 0 1px 2px #0007;
-      outline: none;
-    }
-    /* Hide the Menu button when the drawer is open */
-    #menuBtn.drawer-open {
-      display: none !important;
-    }
-    .card {
-      background: linear-gradient(120deg, #0c0a0f 0%, #160f3d 100%);
-      border: 1.7px solid #4b4181;
-      box-shadow: 0 6px 28px 0 #000c, 0 1.5px 16px 0 #23176566;
-      border-radius: 1.15rem;
-      backdrop-filter: blur(6px);
-      margin-bottom: 2.1rem;
-      transition: box-shadow 0.18s, border-color 0.18s;
-      padding: 2rem 1.5rem;
-    }
-    /* Shimmer effect for card */
-    .card.shimmer {
-      position: relative;
-      overflow: hidden;
-    }
-    .card.shimmer::before {
-      content: '';
-      position: absolute;
-      top: 0; left: -60%;
-      width: 60%; height: 100%;
-      background: linear-gradient(120deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.18) 60%, rgba(255,255,255,0.08) 100%);
-      z-index: 2;
-      animation: shimmer-move 2.2s infinite;
-      pointer-events: none;
-    }
-    @keyframes shimmer-move {
-      0% { left: -60%; }
-      100% { left: 120%; }
-    }
-    .gold { color: #8c84ac; }
-    .text-label {
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      color: #2f2c3a;
-      font-size: 1.04rem;
-    }
-    ::-webkit-scrollbar { width: 0 !important; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Karma Credit – Contact Us</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { background: #09061c; color: #e5e2e4; font-family: 'Montserrat', Arial, sans-serif;}
+    .card { background: linear-gradient(120deg, #0c0a0f 0%, #160f3d 100%);
+            border: 1.7px solid #4b4181; border-radius: 1.15rem; margin-bottom: 2.1rem; }
+    .gold { color: #8c84ac; }
+    .menu-btn { position: fixed; top: 18px; left: 28px; z-index: 50; }
+    .logout-absolute { position: fixed; top: 18px; right: 28px; z-index: 50; }
+  </style>
 </head>
-<body class="relative min-h-screen pt-3 pb-6 px-1 sm:px-0 flex flex-col items-center">
-  <canvas class="starfield" id="starfield"></canvas>
-  <button id="logoutBtn" class="btn-primary logout-absolute">Logout</button>
-  <button id="menuBtn"
-    class="btn-primary fixed z-50 top-6 left-6 logout-absolute"
-    aria-label="Open menu"
-    style="box-shadow: 0 2px 8px #0008; left: 28px; right: auto; top: 18px; min-width: 90px; padding: 0.8em 2em; font-size: 1.12rem; border-radius: 0.7em;"
-  >
-    Menu
+<body>
+  <button id="menuBtn" class="menu-btn bg-[#16122f] p-2 rounded-full border border-[#4b4181] hover:bg-[#4b4181]">
+    <svg width="30" height="30" fill="none" stroke="#e5e2e4" stroke-width="3" viewBox="0 0 24 24">
+      <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
   </button>
-  <div class="w-full max-w-2xl z-10 relative"></div>
-
-  <a href="dashboard.html" style="display:block;text-align:center;margin-bottom:0.5em;">
-    <img src="logo6.png" alt="Karma Credit Logo" class="logo-img">
-    <img src="https://i.postimg.cc/pXHx23DN/logo11.png" alt="Karma Credit" class="title-img">
-  </a>
-
-  <!-- Drawer menu -->
-  <div id="drawerMenuBg"
-    class="fixed inset-0 z-40 bg-black bg-opacity-50 hidden"
-    style="backdrop-filter: blur(3px);"></div>
-  <aside id="drawerMenu"
-    class="fixed top-0 left-0 h-full w-64 bg-[#0c0a0f] border-r border-[#4b4181] shadow-2xl z-50 transform -translate-x-full transition-transform duration-200"
-    style="box-shadow: 2px 0 20px #000a;">
-    <div class="flex flex-col items-start p-6 space-y-2 h-full">
-      <a href="dashboard.html" class="mb-6 flex items-center space-x-2" onclick="closeDrawer()">
-        <img src="logo6.png" alt="Karma Credit Logo" class="logo-img" style="width:38px;height:38px;margin-right:0.7em;box-shadow:none;" />
-        <span class="text-xl font-bold gold">Karma Credit</span>
-      </a>
-      <button id="vaultMenuBtn" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold"></button>
-      <button id="loanMenuBtn" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold"></button>
-      <a href="edit_user.html" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold">Edit User Details</a>
-      <a href="contact.html" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold">Contact Us</a>
-      <div class="flex-grow"></div>
-      <button onclick="closeDrawer()" class="text-xs text-gray-400 mt-6">Close</button>
-    </div>
-  </aside>
-
+  <button id="logoutBtn" class="btn-primary logout-absolute">Logout</button>
   <div class="w-full max-w-lg mx-auto mt-12 p-6">
-    <div class="card p-7 shimmer">
+    <a href="dashboard.html">
+      <img src="https://i.postimg.cc/KcLVGFWY/logo6.png" class="logo-img w-20 h-20 rounded-full mx-auto mb-2"/>
+      <img src="https://i.postimg.cc/QtFmLjWh/logo8.png" class="title-img max-w-xs mx-auto mb-6"/>
+    </a>
+    <div class="card p-7">
       <h1 class="text-2xl gold font-bold mb-4">Contact Us</h1>
       <p class="mb-3">If you have any questions or issues, please reach out below:</p>
       <form id="contactForm" class="space-y-5">
         <div>
-          <label class="block mb-1 text-sm gold">Provide your Discord Username (optional)</label>
-          <input type="text" id="contactDiscord" class="w-full px-4 py-2 rounded bg-[#1a1a2b]" placeholder="e.g. user#1234">
-        </div>
-        <div>
-          <label class="block mb-1 text-sm gold">What can we help you with?</label>
-          <select id="contactTopic" class="w-full px-4 py-2 rounded bg-[#1a1a2b]" required>
-            <option value="" disabled selected>Select a topic</option>
-            <option value="account">Account Access / Login</option>
-            <option value="vault">Vault Questions</option>
-            <option value="loan">Loan Questions</option>
-            <option value="payments">Payments & Repayments</option>
-            <option value="feedback">Feedback / Suggestions</option>
-            <option value="bug">Report a Bug</option>
-            <option value="other">Other</option>
-          </select>
+          <label class="block mb-1 text-sm gold">Your Email or Discord</label>
+          <input type="text" id="contactEmail" class="w-full px-4 py-2 rounded bg-[#1a1a2b]" required>
         </div>
         <div>
           <label class="block mb-1 text-sm gold">Your Message</label>
           <textarea id="contactMsg" class="w-full px-4 py-2 rounded bg-[#1a1a2b]" rows="4" required></textarea>
         </div>
-        <div class="flex justify-center">
-          <button type="submit" class="btn-primary w-full max-w-xs mt-2">Send</button>
-        </div>
+        <button type="submit" class="btn-primary w-full mt-2">Send</button>
         <div id="contactMsgFeedback" class="mt-2 text-center"></div>
       </form>
     </div>
@@ -196,35 +54,20 @@
 
     document.getElementById("contactForm").onsubmit = async function(e) {
       e.preventDefault();
-      const discord = document.getElementById("contactDiscord").value;
-      const topic = document.getElementById("contactTopic").value;
+      const contactEmail = document.getElementById("contactEmail").value;
       const msg = document.getElementById("contactMsg").value;
-      const user = JSON.parse(localStorage.getItem("karmaUser")||"{}")
-      if (!user.id) {
-        document.getElementById("contactMsgFeedback").textContent = "You must be logged in.";
-        document.getElementById("contactMsgFeedback").className = "text-pink-300 mt-2";
-        return;
-      }
-      if (!topic || !msg) {
-        document.getElementById("contactMsgFeedback").textContent = "Please fill in all required fields.";
-        document.getElementById("contactMsgFeedback").className = "text-pink-300 mt-2";
-        return;
-      }
-      // Now that the 'discord' column exists, include it in the payload
-      const payload = {
+      // Insert into 'contact_requests' (create this table if needed)
+      const { error } = await db.from("contact_requests").insert({
         user_id: user.id,
-        discord: discord,
-        contact: topic, // changed from 'topic' to 'contact' to match DB schema
+        contact: contactEmail,
         message: msg,
         created_at: new Date().toISOString()
-      };
-      const { error } = await db.from("contact_requests").insert(payload);
+      });
       if (!error) {
         document.getElementById("contactMsgFeedback").textContent = "Message sent!";
         document.getElementById("contactMsgFeedback").className = "text-green-400 mt-2";
-        document.getElementById("contactForm").reset();
       } else {
-        document.getElementById("contactMsgFeedback").textContent = "Failed to send! " + (error.message || "");
+        document.getElementById("contactMsgFeedback").textContent = "Failed to send!";
         document.getElementById("contactMsgFeedback").className = "text-pink-300 mt-2";
       }
     };
@@ -232,81 +75,6 @@
       localStorage.removeItem("karmaUser");
       window.location.href = "index.html";
     };
-
-    // Starfield background (copied from dashboard)
-    const starColors = ["#e5e2e4", "#8c84ac", "#5f568f", "#ffffff"];
-    const canvas = document.getElementById("starfield");
-    const ctx = canvas.getContext("2d");
-    let w, h, stars = [];
-    function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resize);
-    function initStars() {
-      stars = [];
-      for (let i = 0; i < 140; i++) {
-        stars.push({
-          x: Math.random() * w,
-          y: Math.random() * h,
-          r: Math.random() * 0.85 + 0.3,
-          alpha: Math.random() * 0.6 + 0.13,
-          tw: Math.random() * 2 * Math.PI,
-          c: starColors[Math.floor(Math.random() * starColors.length)]
-        });
-      }
-    }
-    function animateStars() {
-      ctx.clearRect(0, 0, w, h);
-      for (let s of stars) {
-        ctx.save();
-        ctx.globalAlpha = Math.abs(Math.sin(performance.now()/900 + s.tw)) * s.alpha + 0.08;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
-        ctx.fillStyle = s.c;
-        ctx.shadowColor = s.c;
-        ctx.shadowBlur = 12;
-        ctx.fill();
-        ctx.restore();
-      }
-      requestAnimationFrame(animateStars);
-    }
-    resize(); initStars(); animateStars();
-    window.addEventListener('resize', () => { resize(); initStars(); });
-    // Drawer menu open/close logic (copied from dashboard)
-    function openDrawer() {
-      drawer.style.transform = "translateX(0)";
-      drawerBg.classList.remove("hidden");
-      setTimeout(() => drawerBg.style.opacity = "1", 10);
-      menuBtn.classList.add("drawer-open");
-    }
-    function closeDrawer() {
-      drawer.style.transform = "translateX(-100%)";
-      drawerBg.classList.add("hidden");
-      drawerBg.style.opacity = "0";
-      menuBtn.classList.remove("drawer-open");
-    }
-    const menuBtn = document.getElementById('menuBtn');
-    const drawer = document.getElementById('drawerMenu');
-    const drawerBg = document.getElementById('drawerMenuBg');
-    menuBtn.onclick = openDrawer;
-    drawerBg.onclick = closeDrawer;
-    drawerBg.addEventListener("wheel", e => e.preventDefault(), { passive: false });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
-    // Dynamically set Vault/Loan menu
-    const vaultMenuBtn = document.getElementById("vaultMenuBtn");
-    const loanMenuBtn = document.getElementById("loanMenuBtn");
-    if (user && user.vault_id) {
-      vaultMenuBtn.textContent = "Vault Info";
-      vaultMenuBtn.onclick = () => { window.location.href = "vault.html"; };
-    } else {
-      vaultMenuBtn.textContent = "Open a Vault Account";
-      vaultMenuBtn.onclick = () => { window.location.href = "create_vault.html"; };
-    }
-    if (user && user.loan_id) {
-      loanMenuBtn.textContent = "Loan Info";
-      loanMenuBtn.onclick = () => { window.location.href = "loan.html"; };
-    } else {
-      loanMenuBtn.textContent = "Apply for a Loan";
-      loanMenuBtn.onclick = () => { window.location.href = "apply_loan.html"; };
-    }
   </script>
 </body>
 </html>

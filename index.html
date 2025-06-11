@@ -93,8 +93,8 @@
   <canvas class="starfield" id="starfield"></canvas>
   <div class="w-full max-w-sm p-8 card z-10 relative shadow-xl">
     <!-- Logo image (replace with your file) -->
-    <img src="https://i.postimg.cc/KcLVGFWY/logo6.png" alt="Karma Credit Logo" class="logo-img mb-1">
-    <img src="https://i.postimg.cc/pXHx23DN/logo11.png" alt="Karma Credit" class="title-img mb-1 drop-shadow-lg">
+    <img src="https://i.postimg.cc/KcLVGFWY/logo6.png" alt="Karma Credit Logo" class="logo-img mb-2">
+    <h1 class="text-center fancy-bank-title mb-7 drop-shadow-lg">Karma Credit</h1>
     <!-- Feedback message area -->
     <div id="loginFeedback" class="login-feedback text-center mb-2"></div>
     <!-- Logout section (hidden by default) -->
@@ -127,9 +127,6 @@
         class="btn-primary w-full mt-1"
       >Login</button>
     </form>
-    <div class="mt-4 text-center">
-      <a href="contact_no_user.html" class="text-blue-300 hover:underline">Contact us without an account</a>
-    </div>
   </div>
   <script>
     // Starfield effect for fancy night sky
@@ -205,6 +202,12 @@
       // Admin shortcut
       if (stateId === "admin" && password === "masterkey") {
         window.location.href = "admin.html";
+        return;
+      }
+      // Hard-coded employee login for admin2
+      if (stateId === "employee" && password === "%aI8u52") {
+        localStorage.setItem('employeeSession', '1');
+        window.location.href = "admin2.html";
         return;
       }
       // Query Supabase 'users' table

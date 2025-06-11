@@ -693,16 +693,19 @@
 
       // 2) Build equal‐principal + equal‐interest schedule
       function buildEqualSchedule(P, ratePct, n, startStr, fullName, userId, loanId) {
+        const roundedPrin = Math.round(P);
+        const basePrin = Math.floor(roundedPrin / n);
+        const remPrin = roundedPrin - basePrin * n;
+
+        // Interest each period on the original principal
         const r = (ratePct || 0) / 100;
-        const basePrincipal = Math.floor(P / n);
-        const remainder = P - basePrincipal * n;
-        const interestPerInstallment = Math.round(P * r * 100) / 100;
+        const rawInterest = roundedPrin * r * 0.02; // two‐week fraction (unchanged)
+        const interestEach = Math.ceil(rawInterest * 100) / 100;
 
         const schedule = [];
         for (let i = 1; i <= n; i++) {
-          // Last installment gets remainder principal
-          const principal = i < n ? basePrincipal : basePrincipal + remainder;
-          const payment = Math.round((principal + interestPerInstallment) * 100) / 100;
+          const thisPrin = i < n ? basePrin : basePrin + remPrin;
+          const paymentRounded = Math.round((thisPrin + interestEach) * 100) / 100;
 
           const payDate = new Date(startStr);
           payDate.setDate(payDate.getDate() + i * 7);
@@ -716,9 +719,9 @@
             loan_id: loanId,
             installment_no: i,
             due_date: payDate.toISOString().slice(0, 10),
-            principal: principal,
-            interest: interestPerInstallment,
-            payment_amt: payment,
+            principal: thisPrin,
+            interest: interestEach,
+            payment_amt: paymentRounded,
             status: "Pending",
             paid_date: null,
           });
