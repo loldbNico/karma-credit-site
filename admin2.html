@@ -215,6 +215,12 @@
     </div>
   </div>
   <script>
+    // Employee session check: redirect if not logged in as employee
+    if (!localStorage.getItem('employeeSession')) {
+      window.location.href = 'index.html';
+    }
+  </script>
+  <script>
     // Starfield background (reuse from dashboard)
     const starColors = ["#e5e2e4", "#8c84ac", "#5f568f", "#ffffff"];
     const canvas = document.getElementById("starfield");
