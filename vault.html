@@ -2,143 +2,690 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Karma Credit – Vault Info</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karma Credit – Vault</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: radial-gradient(ellipse at 60% 18%, #160e47 0%, #030207 60%, #000000 100%);
+      color: #e5e2e4;
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .starfield {
+      pointer-events: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0;
+    }
+    .logo-img {
+      display: block;
+      margin: 0 auto 1em auto;
+      width: 82px; height: 82px;
+      border-radius: 50%;
+      box-shadow: 0 0 18px 6px #00000088;
+      object-fit: cover;
+      background: #000000;
+    }
+    .title-img {
+      max-width: 280px;
+      width: 95%;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 1rem;
+    }
+    .logout-absolute {
+      position: fixed;
+      top: 18px;
+      right: 28px;
+      z-index: 50;
+    }
+    @media (max-width: 640px) {
+      .logout-absolute { top: 6px; right: 5vw; }
+      .logo-img { width: 56px; height: 56px; }
+      .title-img { max-width: 150px; }
+      .card { padding: 1.2rem 0.6rem; }
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, #5f568f 0%, #4b4181 100%);
+      color: #e5e2e4;
+      font-weight: bold;
+      border: 1.5px solid #fff;
+      padding: 0.8em 2em;
+      border-radius: 0.7em;
+      font-size: 1.12rem;
+      box-shadow: 0 0 8px #4b418144, 0 1px 2px #0007;
+      transition: filter 0.16s, box-shadow 0.18s;
+      margin-left: 0.6em;
+      margin-right: 0.2em;
+      margin-bottom: 0.1em;
+    }
+    .btn-primary:hover, .btn-primary:focus {
+      filter: brightness(1.08) drop-shadow(0 0 10px #8c84ac77);
+      box-shadow: 0 0 22px #8c84ac88, 0 1px 2px #0007;
+      outline: none;
+    }
+    /* Hide the Menu button when the drawer is open */
+    #menuBtn.drawer-open {
+      display: none !important;
+    }
+    .card {
+      background: linear-gradient(120deg, #0c0a0f 0%, #160f3d 100%);
+      border: 1.7px solid #4b4181;
+      box-shadow: 0 6px 28px 0 #000c, 0 1.5px 16px 0 #23176566;
+      border-radius: 1.15rem;
+      backdrop-filter: blur(6px);
+      margin-bottom: 2.1rem;
+      transition: box-shadow 0.18s, border-color 0.18s;
+      padding: 2rem 1.5rem;
+    }
+    .gold { color: #8c84ac; }
+    .balance-highlight {
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      color: #e5e2e4;
+      background: linear-gradient(90deg, #4b4181 0%, #8c84ac 100%);
+      border-radius: 0.8em;
+      box-shadow: 0 0 16px 3px #5f568f44;
+      display: inline-block;
+      padding: 0.16em 0.8em;
+      margin: 0.13em 0 0.08em 0;
+      border: 2px solid #9993b4;
+      text-shadow: 0 1px 4px #4b418155;
+    }
+    .text-label {
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: #8c84ac;
+      font-size: 1.04rem;
+    }
+    .history-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.36rem 1.1em !important;
+      border-radius: 0.3rem;
+      margin-bottom: 2px;
+      word-break: break-word;
+    }
+    .single-line-message {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      text-align: center;
+      font-size: 1.15rem;
+      min-height: 1.5em;
+      line-height: 1.5em;
+      margin-bottom: 0;
+      transition: font-size 0.12s;
+    }
+    @media (max-width: 640px) {
+      .btn-primary { font-size: 1rem; padding: 0.7em 1.2em;}
+    }
+    ::-webkit-scrollbar { width: 0 !important; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body class="relative min-h-screen pt-3 pb-6 px-1 sm:px-0 flex flex-col items-center">
+  <canvas class="starfield" id="starfield"></canvas>
+  <button id="logoutBtn" class="btn-primary logout-absolute">Logout</button>
+  <button id="menuBtn"
+    class="btn-primary fixed z-50 top-6 left-6 logout-absolute"
+    aria-label="Open menu"
+    style="box-shadow: 0 2px 8px #0008; left: 28px; right: auto; top: 18px; min-width: 90px; padding: 0.8em 2em; font-size: 1.12rem; border-radius: 0.7em;"
+  >
+    Menu
+  </button>
+  <div class="w-full max-w-2xl z-10 relative"></div>
+  <a href="dashboard.html" style="display:block;text-align:center;margin-bottom:0.5em;">
+    <img src="logo6.png" alt="Karma Credit Logo" class="logo-img">
+    <img src="https://i.postimg.cc/pXHx23DN/logo11.png" alt="Karma Credit" class="title-img">
+  </a>
+
+  <!-- Drawer menu -->
+  <div id="drawerMenuBg"
+    class="fixed inset-0 z-40 bg-black bg-opacity-50 hidden"
+    style="backdrop-filter: blur(3px);"></div>
+  <aside id="drawerMenu"
+    class="fixed top-0 left-0 h-full w-64 bg-[#0c0a0f] border-r border-[#4b4181] shadow-2xl z-50 transform -translate-x-full transition-transform duration-200"
+    style="box-shadow: 2px 0 20px #000a;">
+    <div class="flex flex-col items-start p-6 space-y-2 h-full">
+      <a href="dashboard.html" class="mb-6 flex items-center space-x-2" onclick="closeDrawer()">
+        <img src="logo6.png" alt="Karma Credit Logo" class="logo-img" style="width:38px;height:38px;margin-right:0.7em;box-shadow:none;" />
+        <span class="text-xl font-bold gold">Karma Credit</span>
+      </a>
+      <button id="vaultMenuBtn" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold"></button>
+      <button id="loanMenuBtn" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold"></button>
+      <a href="edit_user.html" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold">Edit User Details</a>
+      <a href="contact.html" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold">Contact Us</a>
+      <div class="flex-grow"></div>
+      <button onclick="closeDrawer()" class="text-xs text-gray-400 mt-6">Close</button>
+    </div>
+  </aside>
+
+  <div id="feedbackMsg" class="mb-2 text-center text-base"></div>
+
+  <!-- Main Vault Card and Info -->
+  <div id="vaultCard" class="card mb-6" style="position:relative; overflow:hidden;">
+    <div class="flex flex-col items-center justify-center w-full h-full px-6 py-4" style="box-sizing:border-box;">
+      <h2 class="text-2xl gold font-semibold mb-3">
+        Vault ID: <span id="dispVaultID"></span>
+      </h2>
+      <div class="text-label mb-1">Current Vault Balance</div>
+      <div id="dispVaultBalance" class="balance-highlight text-3xl mb-2">$—</div>
+      <div id="vaultChartMsg" class="mt-2 text-base text-blue-200 text-center w-full single-line-message"></div>
+      <p>
+        <span class="text-label">Current Weekly Interest Rate:</span>
+        <span id="dispInterestRate"></span>%
+        <span id="nextInterestMsg" style="font-size: 0.92rem; color: #8c84ac;"></span>
+      </p>
+    </div>
+    <h3 class="text-xl gold font-semibold mt-4 mb-2 ml-2">History</h3>
+    <div id="historyList"></div>
+  </div>
+
+  <div id="vaultInvite" class="card p-6 mb-6 hidden text-center">
+    <h2 class="text-2xl gold font-semibold mb-4">No Vault Found</h2>
+    <p>
+      You don’t have a vault with Karma Credit yet.<br>
+      Entrust your funds with us for safety and earn weekly interest.<br>
+      <a href="create_vault.html" class="text-label underline hover:text-blue-100">Open a Vault Now →</a>
+    </p>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { background: #09061c; color: #e5e2e4; font-family: 'Montserrat', Arial, sans-serif;}
-    .card { background: linear-gradient(120deg, #0c0a0f 0%, #160f3d 100%);
-            border: 1.7px solid #4b4181; border-radius: 1.15rem; margin-bottom: 2.1rem; }
-    .gold { color: #8c84ac; }
-    .menu-btn { position: fixed; top: 18px; left: 28px; z-index: 50; }
-    .logout-absolute { position: fixed; top: 18px; right: 28px; z-index: 50; }
-    .history-row { display: flex; justify-content: space-between; padding: 0.38rem 0.7em; border-bottom: 1px solid #333; }
-    .history-row:last-child { border-bottom: none; }
-  </style>
-</head>
-<body>
-  <!-- Hamburger Menu Button -->
-  <button id="menuBtn" class="menu-btn bg-[#16122f] p-2 rounded-full border border-[#4b4181] hover:bg-[#4b4181]">
-    <svg width="30" height="30" fill="none" stroke="#e5e2e4" stroke-width="3" viewBox="0 0 24 24">
-      <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
-  </button>
-  <!-- Logout -->
-  <button id="logoutBtn" class="btn-primary logout-absolute">Logout</button>
-  <!-- Main Container -->
-  <div class="w-full max-w-2xl mx-auto mt-12 p-6">
-    <!-- Clickable logo/title -->
-    <a href="dashboard.html">
-      <img src="https://i.postimg.cc/KcLVGFWY/logo6.png" class="logo-img w-20 h-20 rounded-full mx-auto mb-2"/>
-      <img src="https://i.postimg.cc/QtFmLjWh/logo8.png" class="title-img max-w-xs mx-auto mb-6"/>
-    </a>
-    <div class="card p-7 mb-8">
-      <h1 class="text-2xl gold font-bold mb-3">Vault Info</h1>
-      <div id="vaultInfo">
-        <div class="text-lg mb-2">Vault ID: <span id="vaultId"></span></div>
-        <div class="text-xl font-bold mb-2">Balance: $<span id="vaultBalance"></span></div>
-        <div>Interest Rate: <span id="interestRate"></span>% <span id="nextInterest"></span></div>
-      </div>
-    </div>
-    <div class="card p-7 mb-8">
-      <h2 class="text-xl gold font-semibold mb-3">Transaction History</h2>
-      <canvas id="vaultChart" height="120"></canvas>
-      <div id="vaultHistory" class="mt-4"></div>
-    </div>
-    <a href="dashboard.html" class="text-blue-300 hover:underline">&larr; Back to Summary</a>
-  </div>
   <script>
-    // Supabase config (from your dashboard)
+    // Starfield background (copied exactly from dashboard)
+    const starColors = ["#e5e2e4", "#8c84ac", "#5f568f", "#ffffff"];
+    const canvas = document.getElementById("starfield");
+    const ctx = canvas.getContext("2d");
+    let w, h, stars = [];
+    function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize);
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < 140; i++) {
+        stars.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 0.85 + 0.3,
+          alpha: Math.random() * 0.6 + 0.13,
+          tw: Math.random() * 2 * Math.PI,
+          c: starColors[Math.floor(Math.random() * starColors.length)]
+        });
+      }
+    }
+    function animateStars() {
+      ctx.clearRect(0, 0, w, h);
+      for (let s of stars) {
+        ctx.save();
+        ctx.globalAlpha = Math.abs(Math.sin(performance.now()/900 + s.tw)) * s.alpha + 0.08;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
+        ctx.fillStyle = s.c;
+        ctx.shadowColor = s.c;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.restore();
+      }
+      requestAnimationFrame(animateStars);
+    }
+    resize(); initStars(); animateStars();
+    window.addEventListener('resize', () => { resize(); initStars(); });
+
+    // Supabase session/user check
     const db = supabase.createClient(
       "https://nxgivpbbuwbzjsfbhlzt.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Z2l2cGJidXdiempzZmJobHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3ODA2ODYsImV4cCI6MjA2NDM1NjY4Nn0.7Hrn29OfpNGLyOy3tASiuWX6lsWQ3t1mrLWBb2K_E7E"
     );
-
-    // Session handling
     const raw = localStorage.getItem("karmaUser");
-    if (!raw) { window.location.href = "index.html"; }
+    if (!raw) {
+      alert("No user data found. Please log in again.");
+      window.location.href = "index.html";
+    }
     const user = JSON.parse(raw);
 
-    document.getElementById('logoutBtn').onclick = function() {
+    document.getElementById("logoutBtn").onclick = function() {
       localStorage.removeItem("karmaUser");
       window.location.href = "index.html";
     };
 
-    // Fetch and display vault info & history
-    async function loadVault() {
-      if (!user.vault_id) {
-        document.getElementById('vaultInfo').innerHTML = '<div class="text-pink-300">No vault account found.</div>';
-        return;
-      }
-      document.getElementById("vaultId").textContent = user.vault_id;
+    function showFeedback(msg, isError = false) {
+      const el = document.getElementById("feedbackMsg");
+      el.textContent = msg;
+      el.className = isError ? "mb-2 text-center text-base text-pink-300" : "mb-2 text-center text-base text-blue-200";
+      setTimeout(() => { el.textContent = ""; }, 3500);
+    }
 
-      // Get all vault transactions
-      const { data: txns, error } = await db
+    // -- Hamburger Menu Logic (identical to dashboard) --
+    const menuBtn = document.getElementById('menuBtn');
+    const drawer = document.getElementById('drawerMenu');
+    const drawerBg = document.getElementById('drawerMenuBg');
+    function openDrawer() {
+      drawer.style.transform = "translateX(0)";
+      drawerBg.classList.remove("hidden");
+      setTimeout(() => drawerBg.style.opacity = "1", 10);
+      menuBtn.classList.add("drawer-open");
+    }
+    function closeDrawer() {
+      drawer.style.transform = "translateX(-100%)";
+      drawerBg.classList.add("hidden");
+      drawerBg.style.opacity = "0";
+      menuBtn.classList.remove("drawer-open");
+    }
+    menuBtn.onclick = openDrawer;
+    drawerBg.onclick = closeDrawer;
+    drawerBg.addEventListener("wheel", e => e.preventDefault(), { passive: false });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+    const vaultMenuBtn = document.getElementById("vaultMenuBtn");
+    const loanMenuBtn = document.getElementById("loanMenuBtn");
+    if (user && user.vault_id) {
+      vaultMenuBtn.textContent = "Vault Info";
+      vaultMenuBtn.onclick = () => { window.location.href = "vault.html"; };
+    } else {
+      vaultMenuBtn.textContent = "Open a Vault Account";
+      vaultMenuBtn.onclick = () => { window.location.href = "create_vault.html"; };
+    }
+    if (user && user.loan_id) {
+      loanMenuBtn.textContent = "Loan Info";
+      loanMenuBtn.onclick = () => { window.location.href = "loan.html"; };
+    } else {
+      loanMenuBtn.textContent = "Apply for a Loan";
+      loanMenuBtn.onclick = () => { window.location.href = "apply_loan.html"; };
+    }
+
+    // Helper functions copied directly from dashboard for vault logic
+    function parseLocalDate(iso) {
+      const [y, m, d] = iso.split("-").map(Number);
+      return new Date(Date.UTC(y, m - 1, d));
+    }
+    function getInterestResetEvents(txns) {
+      let resets = [];
+      txns = [...txns].sort((a, b) => (a.date < b.date ? -1 : 1));
+      for (let i = 0; i < txns.length; i++) {
+        const t = txns[i];
+        const tDate = parseLocalDate(t.date);
+        if (t.amount < 0) {
+          let balBefore = 0;
+          for (let j = 0; j < i; j++) { balBefore += txns[j].amount; }
+          if (Math.abs(t.amount) > 0.25 * balBefore) {
+            resets.push({ date: tDate, iso: t.date, balBefore, withdrawal: t.amount });
+          }
+        }
+      }
+      return resets;
+    }
+    function getLastResetDate(resets, refDate, firstDepositDate) {
+      let last = firstDepositDate;
+      for (let i = 0; i < resets.length; i++) {
+        if (resets[i].date <= refDate) last = resets[i].date;
+      }
+      return last;
+    }
+    function rateForWeek(weekNo) {
+      if (weekNo < 2) return 0.0025;
+      if (weekNo < 4) return 0.005;
+      if (weekNo < 6) return 0.0075;
+      return 0.01;
+    }
+    function nextInterestInfo(lastReset) {
+      if (!lastReset) return "No transactions.";
+      const now = new Date();
+      const msPerDay = 1000 * 60 * 60 * 24;
+      const diffMs = now - lastReset;
+      const diffDays = Math.floor(diffMs / msPerDay);
+      const weekNo = Math.floor(diffDays / 7);
+      if (weekNo < 2) return `Next bump on ${(new Date(lastReset.getTime() + 14 * msPerDay)).toISOString().slice(0, 10)}`;
+      if (weekNo < 4) return `Next bump on ${(new Date(lastReset.getTime() + 28 * msPerDay)).toISOString().slice(0, 10)}`;
+      if (weekNo < 6) return `Next bump on ${(new Date(lastReset.getTime() + 42 * msPerDay)).toISOString().slice(0, 10)}`;
+      return "Rate is maxed out.";
+    }
+    function getInterestPayoutDates(startDate, endDate) {
+      const dates = [];
+      if (!startDate) return dates;
+      let d = new Date(startDate.getTime());
+      d.setUTCHours(0,0,0,0);
+      endDate = new Date(endDate.getTime());
+      endDate.setUTCHours(0,0,0,0);
+      while (true) {
+        d = new Date(d.getTime() + 7 * 24 * 60 * 60 * 1000);
+        if (d > endDate) break;
+        dates.push(new Date(d));
+      }
+      return dates;
+    }
+
+    // --------- Main Vault Card Display ---------
+    const vaultCard = document.getElementById("vaultCard");
+    const vaultInvite = document.getElementById("vaultInvite");
+    if (!user.vault_id) {
+      vaultCard.classList.add("hidden");
+      vaultInvite.classList.remove("hidden");
+    } else {
+      vaultCard.classList.remove("hidden");
+      vaultInvite.classList.add("hidden");
+      document.getElementById("dispVaultID").textContent = user.vault_id;
+      computeAndDisplayVaultBalance();
+    }
+
+    // --------- Vault Balance and History (copied from dashboard) ---------
+    async function computeAndDisplayVaultBalance() {
+      const txnsRes = await db
         .from("vault_transactions")
         .select("*")
         .eq("user_id", user.id)
         .order("date", { ascending: true });
-      if (error || !txns.length) {
-        document.getElementById("vaultBalance").textContent = "0";
-        document.getElementById("vaultHistory").innerHTML = "<div>No transactions found.</div>";
+      if (txnsRes.error || !txnsRes.data.length) {
+        // No transactions: treat as no vault
+        vaultCard.classList.add("hidden");
+        vaultInvite.classList.remove("hidden");
+        document.getElementById("dispVaultBalance").textContent = "$ 0";
+        document.getElementById("dispVaultBalance").className = "";
+        document.getElementById("dispInterestRate").textContent = "0";
+        document.getElementById("nextInterestMsg").textContent = "";
+        document.getElementById("historyList").innerHTML = "";
+        let toggleBtn = document.getElementById("historyToggleBtn");
+        if (toggleBtn) toggleBtn.style.display = "none";
+        showFeedback("No vault found. Start a vault to begin earning interest!", true);
         return;
       }
-
-      // Calculate balance, interest rate, next payout
-      let balance = 0;
-      let chartLabels = [], chartData = [];
-      txns.forEach(t => {
-        balance += t.amount;
-        chartLabels.push(t.date);
-        chartData.push(balance);
-      });
-      document.getElementById("vaultBalance").textContent = balance.toLocaleString();
-
-      // Interest rate logic (from dashboard)
-      function parseLocalDate(iso) {
-        const [y, m, d] = iso.split("-").map(Number);
-        return new Date(Date.UTC(y, m - 1, d));
-      }
-      function rateForWeek(weekNo) {
-        if (weekNo < 2) return 0.5;
-        if (weekNo < 6) return 1.0;
-        if (weekNo < 10) return 1.5;
-        return 2.0;
-      }
-      // Find oldest deposit date
-      const firstDeposit = parseLocalDate(txns[0].date);
+      let txns = txnsRes.data;
+      txns = txns.sort((a, b) => (a.date < b.date ? -1 : 1));
+      const firstDepositDate = parseLocalDate(txns[0].date);
       const today = new Date();
-      const msPerDay = 1000 * 60 * 60 * 24;
-      const diffDays = Math.floor((today - firstDeposit) / msPerDay);
-      const weekNo = Math.floor(diffDays / 7);
-      const curRate = rateForWeek(weekNo);
-      document.getElementById("interestRate").textContent = curRate.toFixed(2);
+      const resets = getInterestResetEvents(txns);
 
-      // Next interest payout
-      const nextInterest = new Date(firstDeposit.getTime() + ((weekNo + 1) * 7 * msPerDay));
-      document.getElementById("nextInterest").textContent = `(Next: ${nextInterest.toISOString().slice(0,10)})`;
+      // Only up to today for history
+      let payoutDates = [];
+      let allResetPoints = [{date: firstDepositDate, iso: txns[0].date}, ...resets.map(r => ({date: r.date, iso: r.iso}))];
+      for (let i = 0; i < allResetPoints.length; i++) {
+        let start = allResetPoints[i].date;
+        let end = (i + 1 < allResetPoints.length) ? allResetPoints[i + 1].date : today;
+        let theseDates = getInterestPayoutDates(start, end);
+        payoutDates = payoutDates.concat(theseDates);
+      }
 
-      // Chart
-      const ctx = document.getElementById('vaultChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: chartLabels,
-          datasets: [{ label: 'Balance', data: chartData, fill: false }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false } } }
+      let allEvents = [];
+      for (const t of txns) {
+        allEvents.push({
+          type: "txn", date: parseLocalDate(t.date), iso: t.date, amount: t.amount, resetTriggered: false
+        });
+      }
+      payoutDates.forEach((payoutDate, idx) => {
+        let resetIdx = -1;
+        for (let i = allResetPoints.length - 1; i >= 0; i--) {
+          if (allResetPoints[i].date <= payoutDate) {
+            resetIdx = i;
+            break;
+          }
+        }
+        let lastResetDate = allResetPoints[resetIdx].date;
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const weekNo = Math.floor((payoutDate - lastResetDate) / (7 * msPerDay));
+        const rate = rateForWeek(weekNo);
+        let bal = 0;
+        allEvents.filter(e => e.date < payoutDate).sort((a, b) => a.date - b.date).forEach(e => { bal += e.amount; });
+        if (bal > 0) {
+          const interestAmt = Math.floor(bal * rate);
+          if (interestAmt > 0) {
+            allEvents.push({
+              type: "interest",
+              date: new Date(payoutDate),
+              iso: payoutDate.toISOString().slice(0, 10),
+              amount: interestAmt,
+              interestNum: idx + 1
+            });
+          }
+        }
       });
-
-      // History list
-      let hist = "";
-      txns.slice().reverse().forEach(t => {
-        hist += `<div class="history-row"><span>${t.date}</span><span class="${t.amount >= 0 ? 'text-green-300' : 'text-pink-300'}">${t.amount >= 0 ? "+" : ""}${t.amount}</span></div>`;
-      });
-      document.getElementById("vaultHistory").innerHTML = hist;
+      for (let r of resets) {
+        let evt = allEvents.find(e =>
+          e.type === "txn" && e.amount < 0 && e.date.getTime() === r.date.getTime()
+        );
+        if (evt) evt.resetTriggered = true;
+      }
+      allEvents.sort((a, b) => b.date - a.date);
+      let finalBalance = 0;
+      [...allEvents].sort((a, b) => a.date - b.date).forEach(evt => { finalBalance += evt.amount; });
+      let balanceEl = document.getElementById("dispVaultBalance");
+      balanceEl.textContent = "$ " + finalBalance.toLocaleString(undefined, { maximumFractionDigits: 0 });
+      balanceEl.className = "balance-highlight";
+      showFeedback("Vault balance updated.");
+      let lastResetDate = getLastResetDate(resets, today, firstDepositDate);
+      const weeksSinceReset = Math.floor((today - lastResetDate) / (7 * 1000 * 60 * 60 * 24));
+      const curRate = rateForWeek(weeksSinceReset) * 100;
+      document.getElementById("dispInterestRate").textContent = curRate.toFixed(2);
+      document.getElementById("nextInterestMsg").textContent = ` (${nextInterestInfo(lastResetDate)})`;
+      loadVaultHistoryUI(allEvents, false);
+      // REMOVE CHART: Remove all chart logic and canvas
+      // Remove the chart rendering and canvas update logic
+      // Only update the balance, interest rate, and history as before
     }
 
-    loadVault();
+    function loadVaultHistoryUI(allEvents, showAll = false) {
+      allEvents = [...allEvents].sort((a, b) => b.date - a.date);
+      const oldestDeposit = [...allEvents]
+        .filter(e => e.type === "txn" && e.amount > 0)
+        .sort((a, b) => a.date - b.date)[0];
+      let displayEvents = showAll ? allEvents : allEvents.slice(0, 6);
+      const histContainer = document.getElementById("historyList");
+      histContainer.innerHTML = "";
+      displayEvents.forEach(evt => {
+        let label = "", highlight = false;
+        if (evt.type === "txn") {
+          if (evt.amount > 0) {
+            label = (oldestDeposit && evt.iso === oldestDeposit.iso) ? "Founding Deposit" : "Deposit";
+            highlight = true;
+          } else { label = "Withdrawal"; highlight = true; }
+        } else if (evt.type === "interest") {
+          label = `Interest Payout #${evt.interestNum}`;
+        }
+        const row = document.createElement("div");
+        row.className = "history-row";
+        if (highlight) {
+          row.style.background = "#2c2251";
+          row.style.fontWeight = "bold";
+          row.style.fontSize = "1.06rem";
+          row.style.boxShadow = "0 0 3px #b48fff88";
+          row.style.border = "1.5px solid #b48fff99";
+        } else {
+          row.style.opacity = "0.92";
+          row.style.fontSize = "0.97rem";
+        }
+        const leftCol = document.createElement("div");
+        leftCol.innerHTML = `<span style="min-width: 90px; display: inline-block;">${evt.iso}</span>
+                             <span style="margin-left:0.7em; color:${highlight ? "#b48fff" : "#aaa"}">${label}</span>`;
+        const amountSpan = document.createElement("span");
+        amountSpan.textContent = evt.amount.toLocaleString(undefined, {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        });
+        if (evt.type === "txn") {
+          amountSpan.style.color = evt.amount < 0 ? "#fc657c" : "#63ebff";
+        } else {
+          amountSpan.style.color = "#63ebff";
+        }
+        amountSpan.style.fontWeight = highlight ? "bold" : "normal";
+        amountSpan.style.fontSize = highlight ? "1.06rem" : "0.97rem";
+        row.appendChild(leftCol);
+        row.appendChild(amountSpan);
+        histContainer.appendChild(row);
+      });
+      let toggleBtn = document.getElementById("historyToggleBtn");
+      if (!toggleBtn) {
+        toggleBtn = document.createElement("button");
+        toggleBtn.id = "historyToggleBtn";
+        toggleBtn.className = "mt-3 btn-primary";
+        histContainer.after(toggleBtn);
+      }
+      toggleBtn.textContent = showAll ? "Show Only Latest" : "Show All Transactions";
+      toggleBtn.onclick = () => loadVaultHistoryUI(allEvents, !showAll);
+      toggleBtn.style.display = allEvents.length <= 6 ? "none" : "";
+    }
+
+    // ==== Chart.js Vault Balance Chart (flush style) ====
+    async function showVaultBalanceAndChart(allEvents, txns) {
+      if (!txns || !txns.length) {
+        document.getElementById("vaultBalanceChart").getContext("2d").clearRect(0, 0, 300, 60);
+        return;
+      }
+      allEvents.sort((a, b) => a.date - b.date);
+      const today = new Date();
+      let days = [];
+      let d = new Date(today.getTime() - 34 * 24 * 60 * 60 * 1000);
+      d.setUTCHours(0,0,0,0);
+      let end = new Date(today.getTime());
+      end.setUTCHours(0,0,0,0);
+      while (d <= end) {
+        days.push(new Date(d.getTime()));
+        d.setDate(d.getDate() + 1);
+      }
+
+      let chartLabels = [], chartData = [];
+      let bal = 0;
+      let startISO = days[0].toISOString().slice(0, 10);
+      // Get initial balance up to the first date
+      for (let evt of allEvents) {
+        if (evt.iso < startISO) bal += evt.amount;
+      }
+
+      let minBal = bal, maxBal = bal;
+      let eventIdx = 0;
+      // Iterate over each day and add up events for that exact day
+      for (let d of days) {
+        let dayISO = d.toISOString().slice(0, 10);
+        // Add all events for this day
+        while (eventIdx < allEvents.length && allEvents[eventIdx].iso === dayISO) {
+          bal += allEvents[eventIdx].amount;
+          eventIdx++;
+        }
+        chartLabels.push(dayISO);
+        chartData.push(bal);
+        if (bal < minBal) minBal = bal;
+        if (bal > maxBal) maxBal = bal;
+      }
+
+      // Fix: Set a sensible min/max for y-axis and ensure chart height is visually reasonable
+      let yMin = Math.min(...chartData);
+      let yMax = Math.max(...chartData);
+      if (yMin === yMax) {
+        yMin = yMin - 10;
+        yMax = yMax + 10;
+      } else {
+        yMin = Math.floor(yMin - (yMax - yMin) * 0.08);
+        yMax = Math.ceil(yMax + (yMax - yMin) * 0.08);
+      }
+      const chartCanvas = document.getElementById('vaultBalanceChart');
+      chartCanvas.height = 60; // Fix: force a reasonable height
+      if (window.vaultChartInstance) {
+        window.vaultChartInstance.destroy();
+      }
+      const chartLabelsFlush = [...chartLabels];
+      const chartDataFlush = [...chartData];
+      if (chartLabels.length > 1) {
+        chartLabelsFlush.unshift('');
+        chartDataFlush.unshift(chartData[0]);
+        chartLabelsFlush.push('');
+        chartDataFlush.push(chartData[chartData.length - 1]);
+      }
+      window.vaultChartInstance = new Chart(chartCanvas.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: chartLabelsFlush,
+          datasets: [
+            {
+              label: 'Balance',
+              data: chartDataFlush,
+              borderColor: '#8c84ac',
+              backgroundColor: 'rgba(140,132,172,0.18)',
+              fill: true,
+              tension: 0.2,
+              pointRadius: 0,
+              pointHoverRadius: 0,
+              pointHitRadius: 0,
+              borderWidth: 3,
+              showLine: true,
+              borderCapStyle: 'butt',
+              borderJoinStyle: 'miter',
+              clip: false,
+              spanGaps: true,
+              cubicInterpolationMode: 'monotone'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: 0 },
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false },
+            datalabels: { display: false }
+          },
+          elements: {
+            point: { radius: 0 }
+          },
+          scales: {
+            y: {
+              min: yMin,
+              max: yMax,
+              ticks: { color: 'rgba(0,0,0,0)' },
+              grid: { display: false }
+            },
+            x: {
+              offset: false,
+              ticks: { color: 'rgba(0,0,0,0)', callback: () => '' },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+      // Show a dynamic message under the balance (congratulations for max rate)
+      let lastResetDate = getLastResetDate(getInterestResetEvents(txns), today, parseLocalDate(txns[0].date));
+      const weeksSinceReset = Math.floor((today - lastResetDate) / (7 * 1000 * 60 * 60 * 24));
+      const curRate = rateForWeek(weeksSinceReset) * 100;
+      let msg = '';
+      if (curRate >= 1) {
+        msg = '🎉 Congratulations! You are earning the maximum 1% weekly interest on your vault.';
+      } else if (curRate >= 0.75) {
+        msg = 'Great job! You are earning 0.75% weekly interest. Keep saving to reach 1%!';
+      } else if (curRate >= 0.5) {
+        msg = 'You are earning 0.5% weekly interest. Stay consistent to unlock higher rates!';
+      } else if (curRate >= 0.25) {
+        msg = 'You are earning 0.25% weekly interest. Your rate will increase the longer you keep your funds!';
+      } else {
+        msg = 'Start saving to earn weekly interest on your vault!';
+      }
+      document.getElementById('vaultChartMsg').textContent = msg;
+      fitSingleLineMessage();
+    }
+
+    function fitSingleLineMessage() {
+      const el = document.getElementById('vaultChartMsg');
+      if (!el) return;
+      el.style.fontSize = '1.15rem';
+      let parent = el.parentElement;
+      let maxWidth = parent ? parent.offsetWidth : el.offsetWidth;
+      let minFont = 0.7, maxFont = 1.15, font = maxFont;
+      el.style.whiteSpace = 'nowrap';
+      el.style.overflow = 'visible';
+      while (el.scrollWidth > maxWidth && font > minFont) {
+        font -= 0.04;
+        el.style.fontSize = font + 'rem';
+      }
+    }
+    window.addEventListener('resize', fitSingleLineMessage);
+
   </script>
 </body>
 </html>

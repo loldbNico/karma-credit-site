@@ -10,7 +10,7 @@
     body {
       min-height: 100vh;
       margin: 0;
-      background: radial-gradient(ellipse at 60% 18%, #1f1362 0%, #05030a 60%, #000000 100%);
+      background: radial-gradient(ellipse at 60% 18%, #160e47 0%, #030207 60%, #000000 100%);
       color: #e5e2e4;
       font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
       position: relative;
@@ -50,10 +50,7 @@
       .logo-img { width: 56px; height: 56px; }
       .title-img { max-width: 150px; }
       .card { padding: 1.2rem 0.6rem; }
-      #calendarContainer { flex-direction: column !important; gap: 1.2rem !important; }
-      .month-container { min-width: 0; max-width: 100vw; width: 100%; }
     }
-    .fancy-bank-title { display: none; }
     .card {
       background: linear-gradient(120deg, #0c0a0f 0%, #160f3d 100%);
       border: 1.7px solid #4b4181;
@@ -64,7 +61,6 @@
       transition: box-shadow 0.18s, border-color 0.18s;
       padding: 2rem 1.5rem;
     }
-    .card:last-child { margin-bottom: 0; }
     .gold { color: #8c84ac; }
     .balance-highlight {
       font-size: 2.1rem;
@@ -80,41 +76,73 @@
       border: 2px solid #9993b4;
       text-shadow: 0 1px 4px #4b418155;
     }
-    .score-bar {
-      height: 1.1rem;
-      border-radius: 0.4rem;
-      background: linear-gradient(90deg, #9993b4 0%, #8c84ac 100%);
-      background-size: 200% 100%;
-      margin-top: 0.5em;
-      margin-bottom: 0.35em;
+    .text-label {
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: #8c84ac;
+      font-size: 1.04rem;
     }
-    .score-value {
-      position: relative;
-      font-size: 1rem;
+    .single-line-message {
+      display: block;
+      width: 100%;
+      min-width: 0;
       text-align: center;
-      color: #fff;
-      margin-top: -0.6em;
-      margin-bottom: 0.4em;
-      font-weight: bold;
-      text-shadow: 0 1px 2px #111c;
+      font-size: 1.15rem;
+      min-height: 1.5em;
+      line-height: 1.5em;
+      margin-bottom: 0;
+      transition: font-size 0.12s;
+    }
+    #calendarContainer {
+      display: flex;
+      flex-direction: row;
+      gap: 2rem;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .month-container {
+      min-width: 320px;
+      max-width: 340px;
+      flex: 1 1 320px;
+    }
+    .calendar-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: auto !important;
+      margin: 0 auto;
+      table-layout: fixed;
+      background: transparent;
+    }
+    .calendar-table th,
+    .calendar-table td {
+      text-align: center;
+      width: 38px;
+      max-width: 38px;
+      min-width: 38px;
+      height: 38px;
+      box-sizing: border-box;
+      padding: 0 !important;
+      font-size: 0.98rem;
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+    }
+    .calendar-table th {
+      color: #aaa9b7;
+      font-weight: 700;
+      background: transparent;
+      font-size: 0.9rem;
+      letter-spacing: 0.02em;
+      padding-bottom: 0.2em !important;
     }
     .calendar-cell {
-      width: 38px;
-      height: 38px;
       border: 1.3px solid #4b4181;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin: 2px;
-      box-sizing: border-box;
-      font-size: 0.98rem;
       background-color: transparent;
       color: #e5e2e4;
       border-radius: 0.5em;
-      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      position: relative;
       transition: background 0.18s, color 0.18s;
       z-index: 2;
-      position: relative;
     }
     td.installment {
       background: #a993fc !important;
@@ -122,20 +150,6 @@
       font-weight: 900;
       border-radius: 0.5em;
       border: 2px solid #9e75f9 !important;
-    }
-    td.interest-increase {
-      border: 2.5px solid #5dc7fa !important;
-      color: #82d6ff;
-      font-weight: 700;
-      background: #19235d !important;
-    }
-    td.both {
-      background: #a7e0f9 !important;
-      color: #0c253b !important;
-      border: 2.5px solid #8c84ac !important;
-      font-weight: 900;
-      border-radius: 0.5em;
-      box-shadow: 0 0 8px #73ccff44;
     }
     td.today {
       background: #ffe881 !important;
@@ -151,67 +165,63 @@
       to   { box-shadow: 0 0 22px 10px #fff9cd99, 0 0 12px 2px #ffe25a99; }
     }
     .month-header {
-      text-align: center; font-size: 1.08rem;
-      margin-bottom: 0.3rem; color: #e5e2e4;
+      text-align: center; font-size: 1rem;
+      margin-bottom: 0.5rem; color: #e5e2e4;
       letter-spacing: 0.06em;
       font-weight: 700;
     }
-    .calendar-table th {
-      font-size: 0.85rem !important;
-      font-weight: 700;
-      color: #aaa9b7;
-      padding: 0.33em 0;
-      background: transparent;
+    .btn-primary {
+      background: linear-gradient(90deg, #5f568f 0%, #4b4181 100%);
+      color: #e5e2e4;
+      font-weight: bold;
+      border: 1.5px solid #fff;
+      padding: 0.8em 2em;
+      border-radius: 0.7em;
+      font-size: 1.12rem;
+      box-shadow: 0 0 8px #4b418144, 0 1px 2px #0007;
+      transition: filter 0.16s, box-shadow 0.18s;
+      margin-left: 0.6em;
+      margin-right: 0.2em;
+      margin-bottom: 0.1em;
     }
-    #calendarContainer {
-      display: flex;
-      flex-direction: row;
-      gap: 2rem;
-      justify-content: center;
-      align-items: flex-start;
-      flex-wrap: wrap;
+    .btn-primary:hover, .btn-primary:focus {
+      filter: brightness(1.08) drop-shadow(0 0 10px #8c84ac77);
+      box-shadow: 0 0 22px #8c84ac88, 0 1px 2px #0007;
+      outline: none;
     }
-    .month-container {
-      min-width: 320px;
-      max-width: 340px;
-      flex: 1 1 320px;
-      background: #1c1844;
-      border: 2.5px solid #534f8d;
-      border-radius: 1.2rem;
-      box-shadow: 0 6px 30px 0 #000c, 0 1.5px 16px 0 #23176566;
-      padding: 1.2rem 1.1rem 1rem 1.1rem;
-      margin: 0;
+    ::-webkit-scrollbar { width: 0 !important; }
+
+    /* Hide the Menu button when the drawer is open */
+    #menuBtn.drawer-open {
+      display: none !important;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="vaultBalance.js"></script>
 </head>
 <body class="relative min-h-screen pt-3 pb-6 px-1 sm:px-0 flex flex-col items-center">
   <canvas class="starfield" id="starfield"></canvas>
   <!-- LOGOUT BUTTON, always in top-right -->
   <button id="logoutBtn" class="btn-primary logout-absolute">Logout</button>
-  <div class="w-full max-w-2xl z-10 relative">
-    <img src="https://i.postimg.cc/KcLVGFWY/logo6.png" alt="Karma Credit Logo" class="logo-img mt-4">
-    <!-- Title as an image, not text -->
-    <img src="https://i.postimg.cc/QtFmLjWh/logo8.png" alt="Karma Credit" class="title-img">
+  <div class="w-full max-w-2xl z-10 relative"></div>
+<img src="https://i.postimg.cc/KcLVGFWY/logo6.png" alt="Karma Credit Logo" class="logo-img">
+<img src="https://i.postimg.cc/pXHx23DN/logo11.png" alt="Karma Credit" class="title-img">
+
     <div id="feedbackMsg" class="mb-2 text-center text-base"></div>
-    <div class="card p-6 mb-6">
-      <h2 class="text-2xl gold font-semibold mb-4">User Info</h2>
-      <div class="grid grid-cols-2 gap-x-4 gap-y-2 mb-2">
-        <div class="text-label">Client Name:</div>
-        <div id="dispFullName" class="pl-1"></div>
-        <div class="text-label">State ID:</div>
-        <div id="dispID" class="pl-1"></div>
-        <div class="text-label">Phone:</div>
-        <div id="dispPhone" class="pl-1"></div>
-        <div class="text-label">Credit Score:</div>
-        <div id="dispCreditScore" class="pl-1"></div>
+    <div id="userSummaryCard" class="card mb-6" style="position:relative; overflow:hidden;">
+      <div class="flex flex-col items-center justify-center w-full h-full px-6 py-4" style="box-sizing:border-box;">
+        <div id="userGreeting" class="text-2xl gold font-semibold mb-4"></div>
+        <div class="flex-1 min-w-[180px] order-1 sm:order-2 flex flex-col items-center w-full">
+          <div class="flex flex-col items-center justify-center w-full">
+            <div class="text-label mb-1">Current Vault Balance</div>
+            <div id="userVaultBalance" class="balance-highlight text-3xl mb-2">$—</div>
+            <div id="vaultChartMsg" class="mt-2 text-base text-blue-200 text-center w-full single-line-message"></div>
+          </div>
+        </div>
       </div>
-      <div class="mt-2">
-        <div class="score-bar" id="scoreBar"></div>
-        <div class="score-value" id="scoreValue"></div>
-      </div>
+      <div id="loanStatusSummary" class="mt-6 w-full"></div>
     </div>
-    <div id="vaultCard" class="card p-6 mb-6">
+    <div id="vaultCard" class="card p-6 mb-6" style="display:none;">
       <h2 class="text-2xl gold font-semibold mb-4">
         Vault ID: <span id="dispVaultID"></span>
       </h2>
@@ -232,23 +242,6 @@
         <a href="create_vault.html" class="text-label underline hover:text-blue-100">Open a Vault Now →</a>
       </p>
     </div>
-    <div id="loanCard" class="card p-6 mb-6">
-      <h2 class="text-2xl gold font-semibold mb-4">
-        Loan ID: <span id="dispLoanID"></span> signed on <span id="dispLoanStart"></span>
-      </h2>
-      <div class="grid grid-cols-2 gap-x-3 gap-y-1">
-        <div class="text-label">Amount Loaned Out:</div>
-        <div>$<span id="dispLoanAmount"></span></div>
-        <div class="text-label">Weekly Interest Rate:</div>
-        <div><span id="dispLoanInterestRate"></span>%</div>
-        <div class="text-label">Number of Installments:</div>
-        <div><span id="dispInstallmentCount"></span></div>
-        <div class="text-label">Next Payment Amount:</div>
-        <div>$<span id="dispNextPaymentAmt"></span> on <span id="dispNextPaymentDate"></span></div>
-        <div class="text-label">Status:</div>
-        <div><span id="dispLoanStatus"></span></div>
-      </div>
-    </div>
     <div id="loanInvite" class="card p-6 mb-6 hidden text-center">
       <h2 class="text-2xl gold font-semibold mb-4">No Active Loan</h2>
       <p>
@@ -257,7 +250,7 @@
         <a href="apply_loan.html" class="text-label underline hover:text-blue-100">Apply for a Loan →</a>
       </p>
     </div>
-    <div class="card p-6">
+    <div class="card p-6" style="display:none;">
       <h2 class="text-2xl gold font-semibold mb-4">User Calendar</h2>
       <div id="calendarLegend" class="mb-2 text-base">
         <span class="px-2" style="background-color: #a993fc; color: #231765; border-radius:0.4em; font-weight:900;">Upcoming Installment</span>
@@ -268,8 +261,9 @@
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    // Starfield effect (unchanged)
+    // --- Starfield BG ---
     const starColors = ["#e5e2e4", "#8c84ac", "#5f568f", "#ffffff"];
     const canvas = document.getElementById("starfield");
     const ctx = canvas.getContext("2d");
@@ -307,32 +301,7 @@
     resize(); initStars(); animateStars();
     window.addEventListener('resize', () => { resize(); initStars(); });
 
-    // Dashboard user state
-    const db = supabase.createClient(
-      "https://nxgivpbbuwbzjsfbhlzt.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Z2l2cGJidXdiempzZmJobHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3ODA2ODYsImV4cCI6MjA2NDM1NjY4Nn0.7Hrn29OfpNGLyOy3tASiuWX6lsWQ3t1mrLWBb2K_E7E"
-    );
-    const raw = localStorage.getItem("karmaUser");
-    if (!raw) {
-      alert("No user data found. Please log in again.");
-      window.location.href = "index.html";
-    }
-    const user = JSON.parse(raw);
-    document.getElementById("dispFullName").textContent = user.full_name || "—";
-    document.getElementById("dispID").textContent = user.id || "—";
-    document.getElementById("dispPhone").textContent = user.phone || "—";
-    const cs = user.credit_score != null ? user.credit_score : 0;
-    document.getElementById("dispCreditScore").textContent = `${cs}/100`;
-    const scoreBar = document.getElementById("scoreBar");
-    let pos = cs * 2 - 100;
-    scoreBar.style.backgroundPosition = `${pos}% 0`;
-    document.getElementById("scoreValue").textContent = `${cs}/100`;
-    document.getElementById("logoutBtn").onclick = function() {
-      localStorage.removeItem("karmaUser");
-      window.location.href = "index.html";
-    };
-
-    // Calendar & history helpers
+    // Helper date functions
     function parseLocalDate(iso) {
       const [y, m, d] = iso.split("-").map(Number);
       return new Date(Date.UTC(y, m - 1, d));
@@ -353,291 +322,394 @@
       }
       return resets;
     }
+    function getLastResetDate(resets, refDate, firstDepositDate) {
+      let last = firstDepositDate;
+      for (let i = 0; i < resets.length; i++) {
+        if (resets[i].date <= refDate) last = resets[i].date;
+      }
+      return last;
+    }
     function rateForWeek(weekNo) {
       if (weekNo < 2) return 0.0025;
       if (weekNo < 4) return 0.005;
       if (weekNo < 6) return 0.0075;
       return 0.01;
     }
-    // --- Core Calendar Builder ---
-    async function buildCalendar() {
-      const container = document.getElementById("calendarContainer");
-      container.innerHTML = "";
-      // Loan installments (pending/overdue only)
-      let instISOs = [];
-      if (user.loan_id) {
-        const { data: insts, error } = await db
-          .from("loan_installments")
-          .select("due_date, status")
-          .eq("user_id", user.id)
-          .eq("loan_id", user.loan_id);
-        if (!error && insts) {
-          instISOs = insts.filter(i => i.status !== "Paid").map(i => i.due_date);
-        }
+    function nextInterestInfo(lastReset) {
+      if (!lastReset) return "No transactions.";
+      const now = new Date();
+      const msPerDay = 1000 * 60 * 60 * 24;
+      const diffMs = now - lastReset;
+      const diffDays = Math.floor(diffMs / msPerDay);
+      const weekNo = Math.floor(diffDays / 7);
+      if (weekNo < 2) return `Next bump on ${(new Date(lastReset.getTime() + 14 * msPerDay)).toISOString().slice(0, 10)}`;
+      if (weekNo < 4) return `Next bump on ${(new Date(lastReset.getTime() + 28 * msPerDay)).toISOString().slice(0, 10)}`;
+      if (weekNo < 6) return `Next bump on ${(new Date(lastReset.getTime() + 42 * msPerDay)).toISOString().slice(0, 10)}`;
+      return "Rate is maxed out.";
+    }
+    function getInterestPayoutDates(startDate, endDate) {
+      // Return payout dates up to endDate (exclusive)
+      const dates = [];
+      if (!startDate) return dates;
+      let d = new Date(startDate.getTime());
+      d.setUTCHours(0,0,0,0);
+      endDate = new Date(endDate.getTime());
+      endDate.setUTCHours(0,0,0,0);
+      while (true) {
+        d = new Date(d.getTime() + 7 * 24 * 60 * 60 * 1000);
+        if (d > endDate) break;
+        dates.push(new Date(d));
       }
-      // Vault interest payout dates, 2 months into future
-      let vaultInterestISOs = [];
-      if (user.vault_id) {
-        const txnsRes = await db
-          .from("vault_transactions")
-          .select("date, amount")
-          .eq("user_id", user.id)
-          .order("date", { ascending: true });
-        const txns = txnsRes.data || [];
-        if (txns.length) {
-          let firstDepositDate = parseLocalDate(txns[0].date);
-          const resets = getInterestResetEvents(txns);
-          let allResetPoints = [firstDepositDate, ...resets.map(r => r.date)];
-          let periodEnds = resets.map(r => r.date);
-          periodEnds.push(new Date(Date.now() + 61 * 24 * 60 * 60 * 1000));
-          let payoutDates = [];
-          for (let p = 0; p < allResetPoints.length; p++) {
-            let d = new Date(allResetPoints[p].getTime());
-            while (d < periodEnds[p]) {
-              d = new Date(d.getTime() + 7 * 24 * 60 * 60 * 1000);
-              if (d > periodEnds[p]) break;
-              payoutDates.push(d.toISOString().slice(0, 10));
-            }
-          }
-          // Add future payouts up to 2 months ahead
-          let maxFuture = new Date(Date.now() + 61 * 24 * 60 * 60 * 1000);
-          let last = new Date(txns[txns.length - 1].date);
-          while (last < maxFuture) {
-            last = new Date(last.getTime() + 7 * 24 * 60 * 60 * 1000);
-            if (last > maxFuture) break;
-            payoutDates.push(last.toISOString().slice(0, 10));
-          }
-          vaultInterestISOs = Array.from(new Set(payoutDates)); // Remove dups
-        }
+      return dates;
+    }
+
+    // --------- DASHBOARD DATA LOGIC (User, Vault, Loan, etc) ---------
+    const db = supabase.createClient(
+      "https://nxgivpbbuwbzjsfbhlzt.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Z2l2cGJidXdiempzZmJobHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3ODA2ODYsImV4cCI6MjA2NDM1NjY4Nn0.7Hrn29OfpNGLyOy3tASiuWX6lsWQ3t1mrLWBb2K_E7E"
+    );
+    const raw = localStorage.getItem("karmaUser");
+    if (!raw) {
+      alert("No user data found. Please log in again.");
+      window.location.href = "index.html";
+    }
+    const user = JSON.parse(raw);
+    document.getElementById("logoutBtn").onclick = function() {
+      localStorage.removeItem("karmaUser");
+      window.location.href = "index.html";
+    };
+    function showFeedback(msg, isError = false) {
+      const el = document.getElementById("feedbackMsg");
+      el.textContent = msg;
+      el.className = isError ? "mb-2 text-center text-base text-pink-300" : "mb-2 text-center text-base text-blue-200";
+      setTimeout(() => { el.textContent = ""; }, 3500);
+    }
+    const vaultCard = document.getElementById("vaultCard");
+    const vaultInvite = document.getElementById("vaultInvite");
+    const userSummaryCard = document.getElementById("userSummaryCard");
+    const loanCard = document.getElementById("loanCard");
+    const loanInvite = document.getElementById("loanInvite");
+
+    // Always hide the loan details card on dashboard
+    if (loanCard) loanCard.style.display = "none";
+
+    // Hide all info except invites if both vault_id and loan_id are missing
+    if ((!user.vault_id || user.vault_id === null || user.vault_id === "") && (!user.loan_id || user.loan_id === null || user.loan_id === "")) {
+      if (userSummaryCard) userSummaryCard.style.display = "none";
+      if (vaultCard) vaultCard.classList.add("hidden");
+      if (vaultInvite) vaultInvite.classList.remove("hidden");
+      if (loanCard) loanCard.style.display = "none";
+      if (loanInvite) loanInvite.classList.remove("hidden");
+      document.getElementById("loanStatusSummary").innerHTML = `<div class="flex flex-col items-center justify-center w-full h-full px-6 py-8"><div class="text-label mb-1">Loan Status</div><div class="balance-highlight text-3xl mb-2">Inactive</div></div>`;
+    } else if (!user.loan_id || user.loan_id === null || user.loan_id === "") {
+      // User has a vault but no loan: show vault info, hide loan card, show loan invite, and set loan status to Inactive
+      if (userSummaryCard) userSummaryCard.style.display = "";
+      if (vaultCard) vaultCard.classList.remove("hidden");
+      if (vaultInvite) vaultInvite.classList.add("hidden");
+      if (loanCard) loanCard.style.display = "none";
+      if (loanInvite) loanInvite.classList.remove("hidden");
+      document.getElementById("dispVaultID").textContent = user.vault_id;
+      computeAndDisplayVaultBalance();
+      document.getElementById("loanStatusSummary").innerHTML = `<div class="flex flex-col items-center justify-center w-full h-full px-6 py-8"><div class="text-label mb-1">Loan Status</div><div class="balance-highlight text-3xl mb-2">Inactive</div></div>`;
+    } else {
+      // Show/hide vault info as before
+      vaultCard.style.display = "none";
+      if (!user.vault_id || user.vault_id === null || user.vault_id === "") {
+        vaultCard.classList.add("hidden");
+        vaultInvite.classList.remove("hidden");
+      } else {
+        vaultCard.classList.remove("hidden");
+        vaultInvite.classList.add("hidden");
+        document.getElementById("dispVaultID").textContent = user.vault_id;
+        computeAndDisplayVaultBalance();
       }
-      // Only 2 months: current + next (UTC logic)
-      const today = new Date();
-      let months = [
-        { m: today.getUTCMonth(), y: today.getUTCFullYear() },
-        { m: (today.getUTCMonth() + 1) % 12, y: (today.getUTCMonth() === 11 ? today.getUTCFullYear() + 1 : today.getUTCFullYear()) }
-      ];
-      function createMonthGrid(m, y) {
-        const monthName = new Date(Date.UTC(y, m)).toLocaleString("default", { month: "long" });
-        const wrapper = document.createElement("div");
-        wrapper.className = "month-container";
-        const title = document.createElement("div");
-        title.className = "month-header";
-        title.textContent = `${monthName} ${y}`;
-        wrapper.appendChild(title);
-        const table = document.createElement("table");
-        table.className = "calendar-table";
-        const thead = document.createElement("thead");
-        const daysRow = document.createElement("tr");
-        ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach((d) => {
-          const th = document.createElement("th");
-          th.textContent = d;
-          daysRow.appendChild(th);
-        });
-        thead.appendChild(daysRow);
-        table.appendChild(thead);
-        const tbody = document.createElement("tbody");
-        // Always 6x7 grid, UTC logic
-        const firstOfMonth = new Date(Date.UTC(y, m, 1));
-        const startDay = firstOfMonth.getUTCDay();
-        const gridStart = new Date(Date.UTC(y, m, 1 - startDay));
-        for (let row = 0; row < 6; row++) {
-          const tr = document.createElement("tr");
-          for (let col = 0; col < 7; col++) {
-            const cell = document.createElement("td");
-            cell.className = "calendar-cell";
-            // This cell's date
-            const cellDate = new Date(gridStart.getTime() + (row * 7 + col) * 24 * 60 * 60 * 1000);
-            const cellY = cellDate.getUTCFullYear();
-            const cellM = cellDate.getUTCMonth();
-            const cellD = cellDate.getUTCDate();
-            cell.textContent = cellD;
-            const iso = cellDate.toISOString().slice(0, 10);
-            if (cellM !== m) cell.style.opacity = "0.38";
-            // Today highlight (UTC)
-            const now = new Date();
-            const todayIso = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString().slice(0,10);
-            if (iso === todayIso) cell.classList.add("today");
-            // Installment (unpaid)
-            if (instISOs.includes(iso)) {
-              cell.classList.add("installment");
-              cell.title = `Upcoming Loan Installment`;
-            }
-            // Interest (future included)
-            if (vaultInterestISOs.includes(iso)) {
-              if (cell.classList.contains("installment")) {
-                cell.classList.remove("installment");
-                cell.classList.add("both");
-                cell.title = `Installment + Vault Interest Deposit`;
-              } else {
-                cell.classList.add("interest-increase");
-                cell.title = `Vault Interest Deposit`;
-              }
-            }
-            tr.appendChild(cell);
-          }
-          tbody.appendChild(tr);
-        }
-        table.appendChild(tbody);
-        wrapper.appendChild(table);
-        return wrapper;
-      }
-      for (let mobj of months) {
-        container.appendChild(createMonthGrid(mobj.m, mobj.y));
+      // Show/hide loan info as before
+      if (!user.loan_id || user.loan_id === null || user.loan_id === "") {
+        if (loanCard) loanCard.style.display = "none";
+        if (loanInvite) loanInvite.classList.remove("hidden");
+        document.getElementById("loanStatusSummary").innerHTML = `<div class=\"flex flex-col items-center justify-center w-full h-full px-6 py-8\"><div class=\"text-label mb-1\">Loan Status</div><div class=\"balance-highlight text-3xl mb-2\">Inactive</div></div>`;
+      } else {
+        if (loanCard) loanCard.style.display = "block";
+        if (loanInvite) loanInvite.classList.add("hidden");
+        showLoanStatus();
       }
     }
-    buildCalendar();
+    // --- Minimal Loan Section for Dashboard ---
+    function showMinimalLoanSectionDashboard(loanAmount, status, isOverdue, isFulfilled, overdueAmount) {
+      const loanCard = document.getElementById("loanCard");
+      if (loanCard) loanCard.style.display = "none";
+      let displayAmount = (loanAmount && !isNaN(Number(loanAmount.replace(/,/g, '')))) ? loanAmount : (user.loan_amount != null ? Math.round(user.loan_amount).toLocaleString() : "0");
+      let html = `<div class='flex flex-col items-center justify-center w-full h-full px-6 py-8'>
+        <div class='text-label mb-1'>Loan Amount</div>
+        <div class='balance-highlight text-3xl mb-2'>$${displayAmount}</div>
+        <div id='loanStatus' class='text-lg font-bold ${isOverdue ? 'bg-pink-600 text-white px-4 py-2 rounded' : 'text-green-300'} mb-2'>${status}</div>`;
+      if (isOverdue) {
+        html += `
+          <div class='text-base font-semibold text-pink-300 bg-pink-900 bg-opacity-80 rounded px-4 py-3 mt-1 mb-2 text-center' style='max-width:420px;'>
+            <span style='font-size:1.13em;'><b>Karma Credit Enforcement Notice:</b></span><br>
+            Your loan is overdue. Failure to resolve this debt will result in severe penalties, seizure of collateral, and more.<br><br>
+            <b><Immediate payment is required</b><br>to avoid enforcement measures.
+          </div>
+        `;
+      }
+      if (isFulfilled) {
+        html += `<a href='apply_loan.html' id='newLoanLink' class='mt-2 underline text-blue-200 text-lg'>Apply for a new loan →</a>`;
+      }
+      html += `</div>`;
+      document.getElementById("loanStatusSummary").innerHTML = html;
+    }
 
+    // --- Loan Status Logic (with correct overdue calculation/status string) ---
+    async function showLoanStatus() {
+      // Get all loan installments for this user/loan
+      const { data: insts, error } = await db
+        .from("loan_installments")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("loan_id", user.loan_id)
+        .order("installment_no", { ascending: true });
 
-    // ----------- Vault History Logic: Interest payouts only up to today! -----------
+      const today = new Date();
+      let overdueAmount = 0;
+      let totalLoanAmount = 0;
+      let status = "Active";
+      let isOverdue = false;
+
+      // Defensive: empty if no data
+      const rows = Array.isArray(insts) ? insts : [];
+
+      // Calculate overdue and total loan
+      for (const i of rows) {
+        totalLoanAmount += Number(i.payment_amt) || 0;
+        if (
+          i.status === "Pending" &&
+          new Date(i.due_date + "T23:59:59") < today // before today
+        ) {
+          overdueAmount += Number(i.payment_amt) || 0;
+        }
+      }
+
+      if (overdueAmount > 0) {
+        status = `Overdue - $${overdueAmount.toLocaleString()}`;
+        isOverdue = true;
+      }
+      let allPaid = rows.length > 0 && rows.every(i => i.status === "Paid");
+      if (allPaid) {
+        status = "Paid off";
+        document.getElementById("loanStatusSummary").innerHTML = `
+          <div class="flex flex-col items-center justify-center w-full h-full px-6 py-8">
+            <div class="text-label mb-1">Loan Status</div>
+            <div class="balance-highlight text-3xl mb-2">Paid off</div>
+            <a href='apply_loan.html' id='newLoanLink' class='mt-2 underline text-blue-200 text-lg'>Apply for a new loan →</a>
+          </div>
+        `;
+        return;
+      }
+
+      document.getElementById("loanStatusSummary").innerHTML = `
+        <div class="flex flex-col items-center justify-center w-full h-full px-6 py-8">
+          <div class="text-label mb-1">Loan Status</div>
+          <div class="balance-highlight text-3xl mb-2">${status}</div>
+          ${
+            isOverdue
+              ? `<div class="text-base font-semibold text-pink-300 bg-pink-900 bg-opacity-80 rounded px-4 py-3 mt-1 mb-2 text-center" style="max-width:420px;">
+                    <span style='font-size:1.13em;'><b>Karma Credit Enforcement Notice:</b></span><br>
+                    <b>Your loan is seriously overdue.</b> <br>Immediate action is required.<br><br>
+                    <span style='color:#fff;'>If you do not pay <b>$${overdueAmount.toLocaleString()}</b> right away, <u><br>severe penalties will be imposed</u>:</span><br>
+                    <ul style='text-align:left; margin:0.7em auto 0.7em auto; max-width:340px; color:#fbb6ce; font-size:1em; line-height:1.5;'>
+                      <li>• <b>Seizure of funds and assets</b></li>
+                      <li>• <b>Legal action and credit blacklisting</b></li>
+                      <li>• <b>Increased debt and additional fees</b></li>
+                    </ul>
+                    <span style='color:#fff; font-weight:bold;'>This is your final warning!</span><br>
+                    <b>Pay now to avoid irreversible enforcement and financial consequences.</b>
+                    <div class='mt-4 p-3 rounded bg-pink-800 bg-opacity-90 text-pink-100 font-bold text-lg'>
+                      <span style='font-size:1.08em;'>Need help or have questions?</span><br>
+                      <a href='contact.html' class='underline text-blue-200'>Contact us immediately</a> to discuss your options and avoid escalation.
+                    </div>
+                </div>`
+              : status.startsWith("Active")
+                ? `<div class="text-base font-semibold text-blue-200 bg-blue-900 bg-opacity-80 rounded px-4 py-3 mt-1 mb-2 text-center" style="max-width:420px;">
+                    Your loan is active and in good standing. Make your payments on time to maintain your Karma Credit privileges.
+                  </div>`
+                : ""
+          }
+        </div>
+      `;
+    }
+    // Only call showLoanStatus if user.loan_id exists
+    if (user.loan_id && user.loan_id !== null && user.loan_id !== "") {
+      showLoanStatus();
+    }
+
+    // Show correct vault balance in dashboard
     async function computeAndDisplayVaultBalance() {
       const txnsRes = await db
         .from("vault_transactions")
         .select("*")
         .eq("user_id", user.id)
         .order("date", { ascending: true });
-      if (txnsRes.error || !txnsRes.data.length) {
-        document.getElementById("dispVaultBalance").textContent = "$ 0";
-        document.getElementById("dispVaultBalance").className = "";
-        document.getElementById("dispInterestRate").textContent = "0";
-        document.getElementById("nextInterestMsg").textContent = "";
-        document.getElementById("historyList").innerHTML = "";
-        let toggleBtn = document.getElementById("historyToggleBtn");
-        if (toggleBtn) toggleBtn.style.display = "none";
-        showFeedback("No vault transactions found.", true);
-        return;
-      }
-      let txns = txnsRes.data;
-      txns = txns.sort((a, b) => (a.date < b.date ? -1 : 1));
-      const firstDepositDate = parseLocalDate(txns[0].date);
-      const today = new Date();
-      const resets = getInterestResetEvents(txns);
+      let txns = (txnsRes && txnsRes.data) ? txnsRes.data : [];
+      let transactions = txns.map(t => ({
+        date: t.date,
+        amount: typeof t.amount === 'number' ? t.amount : Number(t.amount) || 0
+      }));
 
-      // Only up to today for history
-      let payoutDates = [];
-      let allResetPoints = [{date: firstDepositDate, iso: txns[0].date}, ...resets.map(r => ({date: r.date, iso: r.iso}))];
-      for (let i = 0; i < allResetPoints.length; i++) {
-        let start = allResetPoints[i].date;
-        let end = (i + 1 < allResetPoints.length) ? allResetPoints[i + 1].date : today;
-        let theseDates = getInterestPayoutDates(start, end);
-        payoutDates = payoutDates.concat(theseDates);
-      }
+      let balance = window.calculateVaultBalanceWithInterest(transactions);
 
-      let allEvents = [];
-      for (const t of txns) {
-        allEvents.push({
-          type: "txn", date: parseLocalDate(t.date), iso: t.date, amount: t.amount, resetTriggered: false
-        });
-      }
-      payoutDates.forEach((payoutDate, idx) => {
-        let resetIdx = -1;
-        for (let i = allResetPoints.length - 1; i >= 0; i--) {
-          if (allResetPoints[i].date <= payoutDate) {
-            resetIdx = i;
-            break;
-          }
-        }
-        let lastResetDate = allResetPoints[resetIdx].date;
+      document.getElementById("userVaultBalance").textContent =
+        "$" + balance.toLocaleString(); // No decimals!
+
+      document.getElementById("userVaultBalance").className = "balance-highlight text-3xl mb-2";
+      // Show current weekly interest rate message under vault balance
+      let curRate = 0;
+      if (txns.length > 0) {
+        const firstDepositDate = parseLocalDate(txns[0].date);
+        const resets = getInterestResetEvents(txns);
+        const today = new Date();
+        const lastReset = getLastResetDate(resets, today, firstDepositDate);
         const msPerDay = 1000 * 60 * 60 * 24;
-        const weekNo = Math.floor((payoutDate - lastResetDate) / (7 * msPerDay));
-        const rate = rateForWeek(weekNo);
-        let bal = 0;
-        allEvents.filter(e => e.date < payoutDate).sort((a, b) => a.date - b.date).forEach(e => { bal += e.amount; });
-        if (bal > 0) {
-          const interestAmt = Math.floor(bal * rate);
-          if (interestAmt > 0) {
-            allEvents.push({
-              type: "interest",
-              date: new Date(payoutDate),
-              iso: payoutDate.toISOString().slice(0, 10),
-              amount: interestAmt,
-              interestNum: idx + 1
-            });
-          }
-        }
-      });
-      for (let r of resets) {
-        let evt = allEvents.find(e =>
-          e.type === "txn" && e.amount < 0 && e.date.getTime() === r.date.getTime()
-        );
-        if (evt) evt.resetTriggered = true;
+        const diffMs = today - lastReset;
+        const diffDays = Math.floor(diffMs / msPerDay);
+        const weekNo = Math.floor(diffDays / 7);
+        if (weekNo < 2) curRate = 0.25;
+        else if (weekNo < 4) curRate = 0.5;
+        else if (weekNo < 6) curRate = 0.75;
+        else curRate = 1.0;
       }
-      allEvents.sort((a, b) => b.date - a.date);
-      let finalBalance = 0;
-      [...allEvents].sort((a, b) => a.date - b.date).forEach(evt => { finalBalance += evt.amount; });
-      let balanceEl = document.getElementById("dispVaultBalance");
-      balanceEl.textContent = "$ " + finalBalance.toLocaleString(undefined, { maximumFractionDigits: 0 });
-      balanceEl.className = "balance-highlight";
-      showFeedback("Vault balance updated.");
-      let lastResetDate = getLastResetDate(resets, today, firstDepositDate);
-      const weeksSinceReset = Math.floor((today - lastResetDate) / (7 * 1000 * 60 * 60 * 24));
-      const curRate = rateForWeek(weeksSinceReset) * 100;
-      document.getElementById("dispInterestRate").textContent = curRate.toFixed(2);
-      document.getElementById("nextInterestMsg").textContent = ` (${nextInterestInfo(lastResetDate)})`;
-      loadVaultHistoryUI(allEvents, false);
+      let msg = '';
+      if (curRate >= 1.0) {
+        msg = '<span style="font-size:0.86em;color:#e5e2e4;">You are earning <b style="color:#ffe881;font-weight:bold;">1.0% weekly interest</b> on your vault!</span>';
+      } else if (curRate >= 0.75) {
+        msg = '<span style="font-size:0.92em;color:#bdb6d6;">You are earning <b>0.75% weekly interest</b>. Keep saving to maintain this rate!</span>';
+      } else if (curRate >= 0.5) {
+        msg = '<span style="font-size:0.92em;color:#bdb6d6;">You are earning <b>0.5% weekly interest</b>. Stay consistent to unlock higher rates!</span>';
+      } else if (curRate >= 0.25) {
+        msg = '<span style="font-size:0.92em;color:#bdb6d6;">You are earning <b>0.25% weekly interest</b>. Your rate will increase the longer you keep your funds!</span>';
+      } else {
+        msg = '<span style="font-size:0.92em;color:#7a7890;">Start saving to earn weekly interest on your vault!</span>';
+      }
+      document.getElementById('vaultChartMsg').innerHTML = msg;
+      // After vault balance loads, render the calendar if available
+      if (typeof renderUserCalendar === 'function') {
+        renderUserCalendar(txns);
+      }
     }
 
-    function loadVaultHistoryUI(allEvents, showAll = false) {
-      allEvents = [...allEvents].sort((a, b) => b.date - a.date);
-      const oldestDeposit = [...allEvents]
-        .filter(e => e.type === "txn" && e.amount > 0)
-        .sort((a, b) => a.date - b.date)[0];
-      let displayEvents = showAll ? allEvents : allEvents.slice(0, 6);
-      const histContainer = document.getElementById("historyList");
-      histContainer.innerHTML = "";
-      displayEvents.forEach(evt => {
-        let label = "", highlight = false;
-        if (evt.type === "txn") {
-          if (evt.amount > 0) {
-            label = (oldestDeposit && evt.iso === oldestDeposit.iso) ? "Founding Deposit" : "Deposit";
-            highlight = true;
-          } else { label = "Withdrawal"; highlight = true; }
-        } else if (evt.type === "interest") {
-          label = `Interest Payout #${evt.interestNum}`;
-        }
-        const row = document.createElement("div");
-        row.className = "history-row";
-        if (highlight) {
-          row.style.background = "#2c2251";
-          row.style.fontWeight = "bold";
-          row.style.fontSize = "1.06rem";
-          row.style.boxShadow = "0 0 3px #b48fff88";
-          row.style.border = "1.5px solid #b48fff99";
-        } else {
-          row.style.opacity = "0.92";
-          row.style.fontSize = "0.97rem";
-        }
-        const leftCol = document.createElement("div");
-        leftCol.innerHTML = `<span style="min-width: 90px; display: inline-block;">${evt.iso}</span>
-                             <span style="margin-left:0.7em; color:${highlight ? "#b48fff" : "#aaa"}">${label}</span>`;
-        const amountSpan = document.createElement("span");
-        amountSpan.textContent = evt.amount.toLocaleString(undefined, {
-          style: "currency",
-          currency: "USD",
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        });
-        if (evt.type === "txn") {
-          amountSpan.style.color = evt.amount < 0 ? "#fc657c" : "#63ebff";
-        } else {
-          amountSpan.style.color = "#63ebff";
-        }
-        amountSpan.style.fontWeight = highlight ? "bold" : "normal";
-        amountSpan.style.fontSize = highlight ? "1.06rem" : "0.97rem";
-        row.appendChild(leftCol);
-        row.appendChild(amountSpan);
-        histContainer.appendChild(row);
-      });
-      let toggleBtn = document.getElementById("historyToggleBtn");
-      if (!toggleBtn) {
-        toggleBtn = document.createElement("button");
-        toggleBtn.id = "historyToggleBtn";
-        toggleBtn.className = "mt-3 btn-primary";
-        histContainer.after(toggleBtn);
+    function fitSingleLineMessage() {
+      const el = document.getElementById('vaultChartMsg');
+      if (!el) return;
+      el.style.fontSize = '1.15rem';
+      let parent = el.parentElement;
+      let maxWidth = parent ? parent.offsetWidth : el.offsetWidth;
+      let minFont = 0.7, maxFont = 1.15, font = maxFont;
+      el.style.whiteSpace = 'nowrap';
+      el.style.overflow = 'visible';
+      while (el.scrollWidth > maxWidth && font > minFont) {
+        font -= 0.04;
+        el.style.fontSize = font + 'rem';
       }
-      toggleBtn.textContent = showAll ? "Show Only Latest 6" : "Show All Transactions";
-      toggleBtn.onclick = () => loadVaultHistoryUI(allEvents, !showAll);
-      toggleBtn.style.display = allEvents.length <= 6 ? "none" : "";
+    }
+    window.addEventListener('resize', fitSingleLineMessage);
+    const origSetVaultChartMsg = (window.setVaultChartMsg = function(msg) {
+      const el = document.getElementById('vaultChartMsg');
+      if (el) {
+        el.textContent = msg;
+        fitSingleLineMessage();
+      }
+    });
+    // Patch the chart message update to use setVaultChartMsg
+    const origShowVaultBalanceAndChart = window.showVaultBalanceAndChart;
+    window.showVaultBalanceAndChart = async function() {
+      if (origShowVaultBalanceAndChart) await origShowVaultBalanceAndChart();
+      // After chart updates, re-fit the message
+      fitSingleLineMessage();
+    };
+
+    // Calendar rendering logic (ensure this function exists and is called after vault data loads)
+    function renderUserCalendar(txns) {
+      // Example: render a simple calendar or call your existing calendar logic
+      // If you have a more complex calendar, call that logic here
+      // For demonstration, clear the container
+      const cal = document.getElementById('calendarContainer');
+      if (cal) cal.innerHTML = '';
+      // ...insert your calendar rendering code here, using txns as needed...
     }
   </script>
+  <!-- Hamburger/Menu Button (already styled) -->
+<button id="menuBtn"
+  class="btn-primary fixed z-50 top-6 left-6 logout-absolute" 
+  aria-label="Open menu"
+  style="box-shadow: 0 2px 8px #0008; left: 28px; right: auto; top: 18px; min-width: 90px; padding: 0.8em 2em; font-size: 1.12rem; border-radius: 0.7em;"
+>
+  Menu
+</button>
+
+<!-- Drawer menu -->
+<div id="drawerMenuBg"
+  class="fixed inset-0 z-40 bg-black bg-opacity-50 hidden"
+  style="backdrop-filter: blur(3px);"></div>
+<aside id="drawerMenu"
+  class="fixed top-0 left-0 h-full w-64 bg-[#0c0a0f] border-r border-[#4b4181] shadow-2xl z-50 transform -translate-x-full transition-transform duration-200"
+  style="box-shadow: 2px 0 20px #000a;">
+  <div class="flex flex-col items-start p-6 space-y-2 h-full">
+    <a href="dashboard.html" class="mb-6 flex items-center space-x-2" onclick="closeDrawer()">
+      <img src="logo6.png" alt="Karma Credit Logo" class="logo-img" style="width:38px;height:38px;margin-right:0.7em;box-shadow:none;" />
+      <span class="text-xl font-bold gold">Karma Credit</span>
+    </a>
+    <button id="vaultMenuBtn" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold"></button>
+    <button id="loanMenuBtn" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold"></button>
+    <a href="edit_user.html" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold">Edit User Details</a>
+    <a href="contact.html" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold">Contact Us</a>
+    <div class="flex-grow"></div>
+    <button onclick="closeDrawer()" class="text-xs text-gray-400 mt-6">Close</button>
+  </div>
+</aside>
+
+<script>
+  // Drawer menu open/close logic
+  const menuBtn = document.getElementById('menuBtn');
+  const drawer = document.getElementById('drawerMenu');
+  const drawerBg = document.getElementById('drawerMenuBg');
+  function openDrawer() {
+    drawer.style.transform = "translateX(0)";
+    drawerBg.classList.remove("hidden");
+    setTimeout(() => drawerBg.style.opacity = "1", 10);
+    menuBtn.classList.add("drawer-open");
+  }
+  function closeDrawer() {
+    drawer.style.transform = "translateX(-100%)";
+    drawerBg.classList.add("hidden");
+    drawerBg.style.opacity = "0";
+    menuBtn.classList.remove("drawer-open");
+  }
+  menuBtn.onclick = openDrawer;
+  drawerBg.onclick = closeDrawer;
+
+  // Prevent background scroll while menu open
+  drawerBg.addEventListener("wheel", e => e.preventDefault(), { passive: false });
+
+  // Dynamically set the Vault and Loan menu options based on user data
+  const vaultMenuBtn = document.getElementById("vaultMenuBtn");
+  const loanMenuBtn = document.getElementById("loanMenuBtn");
+  if (user && user.vault_id) {
+    vaultMenuBtn.textContent = "Vault Info";
+    vaultMenuBtn.onclick = () => { window.location.href = "vault.html"; };
+  } else {
+    vaultMenuBtn.textContent = "Open a Vault Account";
+    vaultMenuBtn.onclick = () => { window.location.href = "create_vault.html"; };
+  }
+  if (user && user.loan_id) {
+    loanMenuBtn.textContent = "Loan Info";
+    loanMenuBtn.onclick = () => { window.location.href = "loan.html"; };
+  } else {
+    loanMenuBtn.textContent = "Apply for a Loan";
+    loanMenuBtn.onclick = () => { window.location.href = "apply_loan.html"; };
+  }
+  // Optional: Keyboard ESC closes menu
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+  // Make logo/title in menu and dashboard jump to summary (already done)
+</script>
 </body>
 </html>

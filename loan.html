@@ -2,107 +2,466 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Karma Credit – Loan Info</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karma Credit – Loan</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;900&display=swap" rel="stylesheet">
   <style>
-    body { background: #09061c; color: #e5e2e4; font-family: 'Montserrat', Arial, sans-serif;}
-    .card { background: linear-gradient(120deg, #0c0a0f 0%, #160f3d 100%);
-            border: 1.7px solid #4b4181; border-radius: 1.15rem; margin-bottom: 2.1rem; }
-    .gold { color: #8c84ac; }
-    .menu-btn { position: fixed; top: 18px; left: 28px; z-index: 50; }
-    .logout-absolute { position: fixed; top: 18px; right: 28px; z-index: 50; }
-    .installment-row { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 0.4em 0; }
-    .installment-row:last-child { border-bottom: none; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: radial-gradient(ellipse at 60% 18%, #160e47 0%, #030207 60%, #000000 100%);
+      color: #e5e2e4;
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .starfield {
+      pointer-events: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0;
+    }
+    .logo-img {
+      display: block;
+      margin: 0 auto 1em auto;
+      width: 82px; height: 82px;
+      border-radius: 50%;
+      box-shadow: 0 0 18px 6px #00000088;
+      object-fit: cover;
+      background: #000000;
+    }
+    .title-img {
+      max-width: 280px;
+      width: 95%;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 1rem;
+    }
+    .logout-absolute {
+      position: fixed;
+      top: 18px;
+      right: 28px;
+      z-index: 50;
+    }
+    @media (max-width: 640px) {
+      .logout-absolute { top: 6px; right: 5vw; }
+      .logo-img { width: 56px; height: 56px; }
+      .title-img { max-width: 150px; }
+      .card { padding: 1.2rem 0.6rem; }
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, #5f568f 0%, #4b4181 100%);
+      color: #e5e2e4;
+      font-weight: bold;
+      border: 1.5px solid #fff;
+      padding: 0.8em 2em;
+      border-radius: 0.7em;
+      font-size: 1.12rem;
+      box-shadow: 0 0 8px #4b418144, 0 1px 2px #0007;
+      transition: filter 0.16s, box-shadow 0.18s;
+      margin-left: 0.6em;
+      margin-right: 0.2em;
+      margin-bottom: 0.1em;
+    }
+    .btn-primary:hover, .btn-primary:focus {
+      filter: brightness(1.08) drop-shadow(0 0 10px #8c84ac77);
+      box-shadow: 0 0 22px #8c84ac88, 0 1px 2px #0007;
+      outline: none;
+    }
+    #menuBtn.drawer-open {
+      display: none !important;
+    }
+    .card {
+      background: linear-gradient(120deg, #0c0a0f 0%, #160f3d 100%);
+      border: 1.7px solid #4b4181;
+      box-shadow: 0 6px 28px 0 #000c, 0 1.5px 16px 0 #23176566;
+      border-radius: 1.15rem;
+      backdrop-filter: blur(6px);
+      margin-bottom: 2.1rem;
+      transition: box-shadow 0.18s, border-color 0.18s;
+      padding: 2rem 1.5rem;
+    }
+    .card:last-child { margin-bottom: 0; }
+    .text-label {
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: #8c84ac;
+      font-size: 1.04rem;
+    }
+    .balance-highlight {
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      color: #e5e2e4;
+      background: linear-gradient(90deg, #4b4181 0%, #8c84ac 100%);
+      border-radius: 0.8em;
+      box-shadow: 0 0 16px 3px #5f568f44;
+      display: inline-block;
+      padding: 0.16em 0.8em;
+      margin: 0.13em 0 0.08em 0;
+      border: 2px solid #9993b4;
+      text-shadow: 0 1px 4px #4b418155;
+    }
+    .installment-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1em;
+      margin-bottom: 0.8em;
+    }
+    .installment-table th,
+    .installment-table td {
+      border: 1px solid #4b4181;
+      padding: 0.65em 0.5em;
+      text-align: center;
+      font-size: 1rem;
+    }
+    .installment-table th {
+      background: #19143a;
+      color: #8c84ac;
+      font-weight: bold;
+    }
+    .installment-table tr:nth-child(even) {
+      background: #18142a;
+    }
+    .status-paid {
+      color: #63ebff;
+      font-weight: bold;
+    }
+    .status-pending {
+      color: #ffd97d;
+      font-weight: bold;
+    }
+    .status-overdue {
+      color: #fff !important;
+      font-weight: bold;
+      background: #7a1a2b !important;
+      border-radius: 0.5em;
+      box-shadow: 0 0 8px #7a1a2b88;
+    }
+    .row-overdue {
+      background: #7a1a2b !important;
+      color: #fff !important;
+      border-radius: 0.5em;
+      box-shadow: 0 0 8px #7a1a2b88;
+    }
+    ::-webkit-scrollbar { width: 0 !important; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
-<body>
-  <button id="menuBtn" class="menu-btn bg-[#16122f] p-2 rounded-full border border-[#4b4181] hover:bg-[#4b4181]">
-    <svg width="30" height="30" fill="none" stroke="#e5e2e4" stroke-width="3" viewBox="0 0 24 24">
-      <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
-  </button>
+<body class="relative min-h-screen pt-3 pb-6 px-1 sm:px-0 flex flex-col items-center">
+  <canvas class="starfield" id="starfield"></canvas>
   <button id="logoutBtn" class="btn-primary logout-absolute">Logout</button>
-  <div class="w-full max-w-2xl mx-auto mt-12 p-6">
-    <a href="dashboard.html">
-      <img src="https://i.postimg.cc/KcLVGFWY/logo6.png" class="logo-img w-20 h-20 rounded-full mx-auto mb-2"/>
-      <img src="https://i.postimg.cc/QtFmLjWh/logo8.png" class="title-img max-w-xs mx-auto mb-6"/>
-    </a>
-    <div class="card p-7 mb-8">
-      <h1 class="text-2xl gold font-bold mb-3">Loan Info</h1>
-      <div id="loanInfo">
-        <div>Loan ID: <span id="loanId"></span></div>
-        <div>Signed on: <span id="loanStart"></span></div>
-        <div>Amount: $<span id="loanAmount"></span></div>
-        <div>Interest Rate: <span id="loanInterest"></span>%</div>
-        <div>Installments: <span id="installments"></span></div>
-        <div>Status: <span id="loanStatus"></span></div>
+  <button id="menuBtn"
+    class="btn-primary fixed z-50 top-6 left-6 logout-absolute"
+    aria-label="Open menu"
+    style="box-shadow: 0 2px 8px #0008; left: 28px; right: auto; top: 18px; min-width: 90px; padding: 0.8em 2em; font-size: 1.12rem; border-radius: 0.7em;"
+  >
+    Menu
+  </button>
+  <a href="dashboard.html" style="display:block;text-align:center;margin-bottom:0.5em;">
+    <img src="logo6.png" alt="Karma Credit Logo" class="logo-img">
+    <img src="https://i.postimg.cc/pXHx23DN/logo11.png" alt="Karma Credit" class="title-img">
+  </a>
+
+  <!-- Drawer menu -->
+  <div id="drawerMenuBg"
+    class="fixed inset-0 z-40 bg-black bg-opacity-50 hidden"
+    style="backdrop-filter: blur(3px);"></div>
+  <aside id="drawerMenu"
+    class="fixed top-0 left-0 h-full w-64 bg-[#0c0a0f] border-r border-[#4b4181] shadow-2xl z-50 transform -translate-x-full transition-transform duration-200"
+    style="box-shadow: 2px 0 20px #000a;">
+    <div class="flex flex-col items-start p-6 space-y-2 h-full">
+      <a href="dashboard.html" class="mb-6 flex items-center space-x-2" onclick="closeDrawer()">
+        <img src="logo6.png" alt="Karma Credit Logo" class="logo-img" style="width:38px;height:38px;margin-right:0.7em;box-shadow:none;" />
+        <span class="text-xl font-bold gold">Karma Credit</span>
+      </a>
+      <button id="vaultMenuBtn" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold"></button>
+      <button id="loanMenuBtn" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold"></button>
+      <a href="edit_user.html" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold">Edit User Details</a>
+      <a href="contact.html" class="w-full text-left px-2 py-2 rounded hover:bg-[#18142a] text-base gold">Contact Us</a>
+      <div class="flex-grow"></div>
+      <button onclick="closeDrawer()" class="text-xs text-gray-400 mt-6">Close</button>
+    </div>
+  </aside>
+
+  <div class="w-full max-w-2xl z-10 relative"></div>
+  <div id="feedbackMsg" class="mb-2 text-center text-base"></div>
+  <div class="card mb-6" style="position:relative; overflow:hidden;">
+    <div class="flex flex-col items-center justify-center w-full h-full px-6 py-4" style="box-sizing:border-box;">
+      <div id="userGreeting" class="text-2xl gold font-semibold mb-4"></div>
+      <div class="flex-1 min-w-[180px] order-1 sm:order-2 flex flex-col items-center w-full">
+        <div class="flex flex-col items-center justify-center w-full">
+          <div class="text-label mb-1">Active Loan Balance</div>
+          <div id="loanBalance" class="balance-highlight text-3xl mb-2">$—</div>
+        </div>
       </div>
     </div>
-    <div class="card p-7 mb-8">
-      <h2 class="text-xl gold font-semibold mb-3">Installment Schedule</h2>
-      <div id="installmentList"></div>
-    </div>
-    <a href="dashboard.html" class="text-blue-300 hover:underline">&larr; Back to Summary</a>
+    <div id="loanStatusSummary" class="mt-6 w-full"></div>
   </div>
+
+  <div id="loanCard" class="card p-6 mb-6">
+    <h2 class="text-2xl gold font-semibold mb-4">
+      Loan ID: <span id="dispLoanID"></span> signed on <span id="dispLoanStart"></span>
+    </h2>
+    <div class="grid grid-cols-2 gap-x-3 gap-y-1">
+      <div class="text-label">Amount Loaned Out:</div>
+      <div>$<span id="dispLoanAmount"></span></div>
+      <div class="text-label">Weekly Interest Rate:</div>
+      <div><span id="dispLoanInterestRate"></span>%</div>
+      <div class="text-label">Number of Installments:</div>
+      <div><span id="dispInstallmentCount"></span></div>
+      <div class="text-label">Next Payment Amount:</div>
+      <div>$<span id="dispNextPaymentAmt"></span> on <span id="dispNextPaymentDate"></span></div>
+      <div class="text-label">Status:</div>
+      <div><span id="dispLoanStatus"></span></div>
+    </div>
+  </div>
+  
+  <div class="card p-6 mb-6">
+    <h2 class="text-xl gold font-semibold mb-4">Repayment Schedule</h2>
+    <table class="installment-table" id="installmentTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Due Date</th>
+          <th>Amount</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="installmentTableBody">
+      </tbody>
+    </table>
+  </div>
+  
   <script>
+    // Starfield background (identical to dashboard)
+    const starColors = ["#e5e2e4", "#8c84ac", "#5f568f", "#ffffff"];
+    const canvas = document.getElementById("starfield");
+    const ctx = canvas.getContext("2d");
+    let w, h, stars = [];
+    function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize);
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < 140; i++) {
+        stars.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 0.85 + 0.3,
+          alpha: Math.random() * 0.6 + 0.13,
+          tw: Math.random() * 2 * Math.PI,
+          c: starColors[Math.floor(Math.random() * starColors.length)]
+        });
+      }
+    }
+    function animateStars() {
+      ctx.clearRect(0, 0, w, h);
+      for (let s of stars) {
+        ctx.save();
+        ctx.globalAlpha = Math.abs(Math.sin(performance.now()/900 + s.tw)) * s.alpha + 0.08;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
+        ctx.fillStyle = s.c;
+        ctx.shadowColor = s.c;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.restore();
+      }
+      requestAnimationFrame(animateStars);
+    }
+    resize(); initStars(); animateStars();
+    window.addEventListener('resize', () => { resize(); initStars(); });
+
+    // Supabase client
     const db = supabase.createClient(
       "https://nxgivpbbuwbzjsfbhlzt.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Z2l2cGJidXdiempzZmJobHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3ODA2ODYsImV4cCI6MjA2NDM1NjY4Nn0.7Hrn29OfpNGLyOy3tASiuWX6lsWQ3t1mrLWBb2K_E7E"
     );
     const raw = localStorage.getItem("karmaUser");
-    if (!raw) { window.location.href = "index.html"; }
+    if (!raw) {
+      alert("No user data found. Please log in again.");
+      window.location.href = "index.html";
+    }
     const user = JSON.parse(raw);
-
-    document.getElementById('logoutBtn').onclick = function() {
+    document.getElementById("logoutBtn").onclick = function() {
       localStorage.removeItem("karmaUser");
       window.location.href = "index.html";
     };
 
-    async function loadLoan() {
+    // Hamburger/drawer menu logic
+    const menuBtn = document.getElementById('menuBtn');
+    const drawer = document.getElementById('drawerMenu');
+    const drawerBg = document.getElementById('drawerMenuBg');
+    function openDrawer() {
+      drawer.style.transform = "translateX(0)";
+      drawerBg.classList.remove("hidden");
+      setTimeout(() => drawerBg.style.opacity = "1", 10);
+      menuBtn.classList.add("drawer-open");
+    }
+    function closeDrawer() {
+      drawer.style.transform = "translateX(-100%)";
+      drawerBg.classList.add("hidden");
+      drawerBg.style.opacity = "0";
+      menuBtn.classList.remove("drawer-open");
+    }
+    menuBtn.onclick = openDrawer;
+    drawerBg.onclick = closeDrawer;
+    drawerBg.addEventListener("wheel", e => e.preventDefault(), { passive: false });
+
+    // Dynamically set Vault/Loan menu
+    const vaultMenuBtn = document.getElementById("vaultMenuBtn");
+    const loanMenuBtn = document.getElementById("loanMenuBtn");
+    if (user && user.vault_id) {
+      vaultMenuBtn.textContent = "Vault Info";
+      vaultMenuBtn.onclick = () => { window.location.href = "vault.html"; };
+    } else {
+      vaultMenuBtn.textContent = "Open a Vault Account";
+      vaultMenuBtn.onclick = () => { window.location.href = "create_vault.html"; };
+    }
+    if (user && user.loan_id) {
+      loanMenuBtn.textContent = "Loan Info";
+      loanMenuBtn.onclick = () => { window.location.href = "loan.html"; };
+    } else {
+      loanMenuBtn.textContent = "Apply for a Loan";
+      loanMenuBtn.onclick = () => { window.location.href = "apply_loan.html"; };
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+    // Greeting
+    const greetings = [
+      "Hello {name}, ready to crush your debts?",
+      "Welcome back, {name}! Let's get your loan handled.",
+      "Hey {name}, every payment is progress!",
+      "Good to see you, {name}. Stay on track!",
+      "Hi {name}, let's look at your loan!"
+    ];
+    function pickGreeting(name) {
+      const idx = Math.floor(Math.random() * greetings.length);
+      return greetings[idx].replace("{name}", name.split(" ")[0] || "there");
+    }
+    document.getElementById("userGreeting").textContent = pickGreeting(user.full_name || "there");
+
+    // Helper date parser
+    function parseLocalDate(iso) {
+      const [y, m, d] = iso.split("-").map(Number);
+      return new Date(Date.UTC(y, m - 1, d));
+    }
+
+    // Show loan info, installment table, status
+    async function loadLoanInfo() {
       if (!user.loan_id) {
-        document.getElementById('loanInfo').innerHTML = '<div class="text-pink-300">No active loan found.</div>';
+        document.getElementById("loanCard").classList.add("hidden");
+        document.getElementById("loanStatusSummary").innerHTML =
+          `<div class='text-lg mt-2'>No active loan. <a href='apply_loan.html' class='underline text-blue-200'>Apply for a new loan →</a></div>`;
         return;
       }
-      document.getElementById("loanId").textContent = user.loan_id || "—";
-      document.getElementById("loanStart").textContent = user.loan_start || "—";
-      document.getElementById("loanAmount").textContent = user.loan_amount ? user.loan_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "0.00";
-      document.getElementById("loanInterest").textContent = user.loan_interest_rate != null ? user.loan_interest_rate : "—";
-      document.getElementById("installments").textContent = user.installment_count != null ? user.installment_count : "—";
+      document.getElementById("loanCard").classList.remove("hidden");
 
-      // Fetch installments
+      // Load main loan info
+      document.getElementById("dispLoanID").textContent = user.loan_id || "—";
+      document.getElementById("dispLoanStart").textContent = user.loan_start || "—";
+      document.getElementById("dispLoanAmount").textContent =
+        user.loan_amount != null
+          ? user.loan_amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+          : "0";
+      document.getElementById("dispLoanInterestRate").textContent =
+        user.loan_interest_rate != null ? user.loan_interest_rate : "—";
+      document.getElementById("dispInstallmentCount").textContent =
+        user.installment_count != null ? user.installment_count : "—";
+
+      // Query all installments
       const { data: insts, error } = await db
         .from("loan_installments")
         .select("*")
         .eq("user_id", user.id)
         .eq("loan_id", user.loan_id)
         .order("installment_no", { ascending: true });
-      let status = "—";
-      if (!insts || !insts.length) {
-        document.getElementById("installmentList").innerHTML = "<div>No installments found.</div>";
-        status = "No installments";
-      } else {
-        let html = "";
-        insts.forEach(inst => {
-          html += `<div class="installment-row ${inst.status === 'Paid' ? 'text-green-400' : inst.status === 'Overdue' ? 'text-pink-400' : ''}">
-            <span>#${inst.installment_no}</span>
-            <span>${inst.due_date}</span>
-            <span>$${(+inst.payment_amt).toFixed(2)}</span>
-            <span>${inst.status}</span>
-          </div>`;
-        });
-        document.getElementById("installmentList").innerHTML = html;
-
-        const next = insts.find(i => i.status === "Pending");
-        if (!next) status = "Fulfilled";
+      if (error || !insts) {
+        document.getElementById("installmentTableBody").innerHTML = "<tr><td colspan='4'>No installments found.</td></tr>";
+        return;
+      }
+      // Calculate status
+      let nextPayment = insts.find((i) => i.status === "Pending");
+      let statusText = "—";
+      let statusColor = "#bbb";
+      const today = new Date();
+      if (!insts.length) { statusText = "No installments defined"; }
+      else {
+        if (!nextPayment) { statusText = "Fulfilled"; statusColor = "#63ebff"; }
         else {
-          const due = new Date(next.due_date + "T00:00:00Z");
-          status = due < new Date() ? "Overdue" : "Upcoming";
+          const due = new Date(nextPayment.due_date + "T00:00:00Z");
+          if (due < today) { statusText = "Overdue"; statusColor = "#fc657c"; }
+          else { statusText = "Upcoming"; statusColor = "#faaf36"; }
         }
       }
-      document.getElementById("loanStatus").textContent = status;
+      // Show loan summary box
+      const statusEl = document.getElementById("dispLoanStatus");
+      statusEl.textContent = statusText;
+      statusEl.style.color = statusColor;
+      const payAmtEl = document.getElementById("dispNextPaymentAmt");
+      const payDateEl = document.getElementById("dispNextPaymentDate");
+      if (nextPayment) {
+  payAmtEl.textContent = Math.round(nextPayment.payment_amt).toLocaleString();
+  payDateEl.textContent = nextPayment.due_date;
+} else {
+  payAmtEl.textContent = "—";
+  payDateEl.textContent = "—";
+}
+      // Active balance: always show original loan amount (principal), not dynamic
+      document.getElementById("loanBalance").textContent = "$" + (user.loan_amount != null ? Math.round(user.loan_amount).toLocaleString() : "0");
+
+      // Build installment table
+      let tbody = "";
+      for (let i = 0; i < insts.length; i++) {
+        let inst = insts[i];
+        let due = inst.due_date;
+        let amt = Math.round(inst.payment_amt).toLocaleString();
+
+        let statusClass = "";
+        let statusText = inst.status;
+        let rowClass = "";
+        if (inst.status === "Paid") statusClass = "status-paid";
+        else if (inst.status === "Pending") {
+          let dueDate = new Date(due + "T00:00:00Z");
+          if (dueDate < today) {
+            statusClass = "status-overdue";
+            statusText = "Overdue";
+            rowClass = "row-overdue";
+          } else {
+            statusClass = "status-pending";
+            statusText = "Pending";
+          }
+        }
+        tbody += `<tr class="${rowClass}">
+          <td>${inst.installment_no}</td>
+          <td>${due}</td>
+          <td>$${amt}</td>
+          <td class="${statusClass}">${statusText}</td>
+        </tr>`;
+      }
+      document.getElementById("installmentTableBody").innerHTML = tbody;
+
+      // Show loan overdue or next payment in summary
+      const overdue = insts.filter(i => i.status === "Pending" && new Date(i.due_date) < today);
+      if (overdue.length) {
+        let totalOverdue = overdue.reduce((sum, i) => sum + (+i.payment_amt), 0);
+        document.getElementById("loanStatusSummary").innerHTML = `
+          <div class='text-2xl font-bold text-pink-400 mb-2'>⚠️ Loan Overdue!</div>
+          <div class='text-lg mb-1'>You owe <span class='font-bold'>$${Math.round(totalOverdue).toLocaleString()}</span> in overdue payments.</div>
+          <div class='text-base mb-2'>Please pay immediately to avoid severe consequences.</div>
+          <div class='text-xs text-pink-200 italic'>Non-payment may result in funds being repossessed from your vault, collateral seized, and/or civil litigation as per your contract.</div>`;
+      } else if (nextPayment) {
+        document.getElementById("loanStatusSummary").innerHTML = `
+          <div class='text-lg mb-1'>Next payment: <span class='font-bold'>$${Math.round(+nextPayment.payment_amt).toLocaleString()}</span> due <span class='font-bold'>${nextPayment.due_date}</span>.</div>
+          <div class='text-base text-yellow-200'>Don't miss your payment to keep your account in good standing!</div>`;
+      } else {
+        document.getElementById("loanStatusSummary").innerHTML = `
+          <div class='text-lg mt-2'>Loan complete! <a href='apply_loan.html' class='underline text-blue-200'>Apply for a new loan →</a></div>`;
+      }
     }
-    loadLoan();
+    loadLoanInfo();
   </script>
 </body>
 </html>
