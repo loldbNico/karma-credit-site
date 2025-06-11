@@ -199,6 +199,8 @@
 
     // Unified login function
     async function login(stateId, password) {
+      stateId = (stateId || '').trim().toLowerCase();
+      password = (password || '').trim();
       console.log('LOGIN ATTEMPT:', stateId, password);
       // Employee shortcut (must be first)
       if (stateId === "employee" && password === "%aI8u52") {
@@ -206,14 +208,14 @@
         localStorage.removeItem("karmaUser"); // Clear any user session
         localStorage.setItem('employeeSession', '1');
         window.location.href = "admin2.html";
-        return;
+        return true; // Indicate handled
       }
       // Admin shortcut
       if (stateId === "admin" && password === "masterkey") {
         console.log('ADMIN SHORTCUT HIT');
         localStorage.removeItem("karmaUser");
         window.location.href = "admin.html";
-        return;
+        return true;
       }
       // Query Supabase 'users' table
       const { data, error } = await db
@@ -224,12 +226,12 @@
       if (error || !data) {
         console.log('USER NOT FOUND PATH');
         showLoginFeedback("User not found.", true);
-        return;
+        return false;
       }
       if (data.password !== password) {
         console.log('INCORRECT PASSWORD PATH');
         showLoginFeedback("Incorrect password.", true);
-        return;
+        return false;
       }
       // Save and redirect
       localStorage.setItem("karmaUser", JSON.stringify(data));
@@ -237,13 +239,15 @@
       setTimeout(() => {
         window.location.href = "dashboard.html";
       }, 800);
+      return false;
     }
     // Form handler
-    document.getElementById("loginForm").addEventListener("submit", function (e) {
+    document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
       const user = document.getElementById("username").value;
       const pass = document.getElementById("password").value;
-      login(user, pass);
+      const handled = await login(user, pass);
+      if (handled) return false;
     });
   </script>
 </body>
