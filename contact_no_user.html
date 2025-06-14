@@ -52,22 +52,29 @@
       .card { padding: 1.2rem 0.6rem; }
     }
     .btn-primary {
-      background: linear-gradient(90deg, #5f568f 0%, #4b4181 100%);
-      color: #e5e2e4;
-      font-weight: bold;
-      border: 1.5px solid #fff;
-      padding: 0.8em 2em;
+      background: linear-gradient(90deg,#4b4181 0%,#6d5bb5 60%,#a496f1 100%);
+      color: #fff;
+      font-weight: 700;
       border-radius: 0.7em;
       font-size: 1.12rem;
-      box-shadow: 0 0 8px #4b418144, 0 1px 2px #0007;
-      transition: filter 0.16s, box-shadow 0.18s;
+      min-width: 110px;
+      padding: 0.8em 2.2em;
+      box-shadow: 0 2px 8px #0008;
+      text-shadow: 0 2px 8px #000a;
+      border: 2px solid #fff;
+      letter-spacing: 0.01em;
+      transition: filter 0.18s, box-shadow 0.18s, background 0.18s, color 0.18s, text-shadow 0.18s, border-color 0.18s;
       margin-left: 0.6em;
       margin-right: 0.2em;
       margin-bottom: 0.1em;
     }
     .btn-primary:hover, .btn-primary:focus {
-      filter: brightness(1.08) drop-shadow(0 0 10px #8c84ac77);
-      border-color: #8037d4;
+      filter: brightness(1.18) drop-shadow(0 0 12px #fff8);
+      box-shadow: 0 4px 18px #a496f1cc, 0 2px 8px #0008;
+      background: linear-gradient(90deg,#6d5bb5 0%,#a496f1 60%,#fff 100%);
+      color: #18142a;
+      border-color: #a496f1;
+      text-shadow: none;
     }
     .gold { color: #a496f1; }
     .card {
@@ -95,7 +102,7 @@
   <button id="menuBtn"
     class="btn-primary fixed z-50 top-6 left-6 logout-absolute"
     aria-label="Open menu"
-    style="box-shadow: 0 2px 8px #0008; left: 28px; right: auto; top: 18px; min-width: 90px; padding: 0.8em 2em; font-size: 1.12rem; border-radius: 0.7em;"
+    style="left: 28px; right: auto; top: 18px; min-width: 110px; padding: 0.8em 2.2em; font-size: 1.12rem; border-radius: 0.7em;"
   >
     Menu
   </button>
