@@ -697,10 +697,9 @@
         const basePrin = Math.floor(roundedPrin / n);
         const remPrin = roundedPrin - basePrin * n;
 
-        // Interest each period on the original principal
+        // Interest each period on the original loan principal (not multiplied by n)
         const r = (ratePct || 0) / 100;
-        const rawInterest = roundedPrin * r * 0.02; // two‐week fraction (unchanged)
-        const interestEach = Math.ceil(rawInterest * 100) / 100;
+        const interestEach = +(roundedPrin * r).toFixed(2);
 
         const schedule = [];
         for (let i = 1; i <= n; i++) {

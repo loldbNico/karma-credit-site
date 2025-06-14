@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karma Credit – Loan Calculator</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: radial-gradient(ellipse at 60% 18%, #160e47 0%, #030207 60%, #000000 100%);
+      color: #9b999e;
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .logo-img {
+      display: block;
+      margin: 0 auto 1em auto;
+      width: 82px; height: 82px;
+      border-radius: 50%;
+      box-shadow: 0 0 18px 6px #00000088;
+      object-fit: cover;
+      background: #000000;
+    }
+    .title-img {
+      max-width: 280px;
+      width: 95%;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 1rem;
+    }
+    .gold { color: #a496f1; }
+    .card {
+      background: #18142a;
+      border-radius: 1.2em;
+      box-shadow: 0 0 18px 6px #00000044;
+      border: 1.5px solid #4b4181;
+      margin-bottom: 1.5em;
+    }
+    label {
+      color: #ffd700;
+      font-weight: 600;
+      margin-bottom: 0.2em;
+      display: block;
+    }
+    input, select {
+      background: #18142a;
+      color: #e5e2e4;
+      border: 1.5px solid #4b4181;
+      border-radius: 0.5em;
+      padding: 0.5em;
+      margin-bottom: 1em;
+      width: 100%;
+    }
+    .result-table th, .result-table td {
+      padding: 0.5em 0.7em;
+      border-bottom: 1px solid #2d254a;
+      vertical-align: top;
+    }
+    .result-table th {
+      color: #ffd700;
+      font-weight: bold;
+      background: #18142a;
+    }
+    .result-table tr:nth-child(even) td {
+      background: #1a1830;
+    }
+    .result-table tr:nth-child(odd) td {
+      background: #18142a;
+    }
+    .result-table td {
+      color: #e5e2e4;
+      font-size: 0.98em;
+    }
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2em;
+    }
+  </style>
+</head>
+<body>
+  <div class="w-full flex flex-col items-center justify-center mt-8 mb-2">
+    <img src="https://i.postimg.cc/KcLVGFWY/logo6.png" alt="Karma Credit Logo" class="logo-img" style="margin-bottom:0.5em;" />
+    <img src="https://i.postimg.cc/pXHx23DN/logo11.png" alt="Karma Credit" class="title-img" style="margin-bottom:1.2em;max-width:260px;" />
+  </div>
+  <div class="w-full max-w-2xl mx-auto mt-8 p-4">
+    <div class="card p-6 mb-8">
+      <h2 class="text-xl gold font-bold mb-4">Loan Calculator</h2>
+      <form id="loanCalcForm" class="mb-4">
+        <label for="principal">Loan Amount</label>
+        <input type="number" id="principal" required min="1" placeholder="e.g. 200000" />
+        <label for="collateral">Collateral Provided?</label>
+        <select id="collateral" required>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+        <label for="credit">Credit Score / Trust Level (0-100)</label>
+        <input type="number" id="credit" min="0" max="100" placeholder="e.g. 70 (higher = more trust)" />
+        <button type="submit" class="bg-yellow-600 text-black px-4 py-2 rounded font-bold hover:opacity-90">Show Loan Options</button>
+      </form>
+      <div id="calcResult"></div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('loanCalcForm').onsubmit = function(e) {
+      e.preventDefault();
+      const principal = Number(document.getElementById('principal').value);
+      const collateral = document.getElementById('collateral').value;
+      const credit = Number(document.getElementById('credit').value);
+      if (!principal) return;
+
+      // Define plan options: [label, weeks, baseRate]
+      const plans = [
+        { label: 'Short (2 weeks)', weeks: 2, baseRate: 12.0 },
+        { label: 'Short (3 weeks)', weeks: 3, baseRate: 11.0 },
+        { label: 'Medium (4 weeks)', weeks: 4, baseRate: 10.0 },
+        { label: 'Medium (5 weeks)', weeks: 5, baseRate: 9.0 },
+        { label: 'Medium (6 weeks)', weeks: 6, baseRate: 8.0 },
+        { label: 'Long (7 weeks)', weeks: 7, baseRate: 7.0 },
+        { label: 'Long (8 weeks)', weeks: 8, baseRate: 6.5 },
+        { label: 'Long (9 weeks)', weeks: 9, baseRate: 6.0 },
+        { label: 'Long (10 weeks)', weeks: 10, baseRate: 5.5 }
+      ];
+
+      // Helper to adjust rate for user profile
+      function adjustRate(base, planWeeks) {
+        let rate = base;
+        // Collateral
+        if (collateral === 'yes') rate -= 0.5;
+        else rate += 0.5;
+        // Credit score (0-100)
+        if (!isNaN(credit)) {
+          if (credit >= 90) rate -= 1.0;
+          else if (credit >= 75) rate -= 0.5;
+          else if (credit <= 40) rate += 1.0;
+          else if (credit <= 20) rate += 2.0;
+        }
+        // Clamp to 4% - 12%
+        if (rate < 4) rate = 4;
+        if (rate > 12) rate = 12;
+        return +(rate.toFixed(2));
+      }
+
+      // For each plan, calculate schedule and totals
+      let allResults = '';
+      plans.forEach(plan => {
+        const n = plan.weeks;
+        const rate = adjustRate(plan.baseRate, n);
+        const basePrin = Math.floor(principal / n);
+        const remPrin = principal - basePrin * n;
+        const interestEach = +(principal * (rate / 100)).toFixed(2);
+        let totalInterest = 0;
+        let totalPayment = 0;
+        let rows = '';
+        for (let i = 1; i <= n; i++) {
+          const thisPrin = i < n ? basePrin : basePrin + remPrin;
+          const payment = +(thisPrin + interestEach).toFixed(2);
+          totalInterest += interestEach;
+          totalPayment += payment;
+          rows += `<tr><td>${i}</td><td>Week ${i}</td><td>$${thisPrin.toLocaleString()}</td><td>$${interestEach.toLocaleString()}</td><td>$${payment.toLocaleString()}</td></tr>`;
+        }
+        allResults += `
+          <div class='mb-6 p-4 card'>
+            <div class='mb-2 text-sm text-gray-400'>Plan: <span class='gold font-bold'>${plan.label}</span> &nbsp;|&nbsp; Installments: <span class='gold font-bold'>${n}</span> &nbsp;|&nbsp; Effective Interest Rate: <span class='gold font-bold'>${rate}%</span></div>
+            <table class="result-table mb-4">
+              <thead><tr><th>No.</th><th>Week</th><th>Principal</th><th>Interest</th><th>Payment</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+            <div class="mt-2 text-lg gold font-bold">Total Interest: $${totalInterest.toLocaleString()}</div>
+            <div class="mt-1 text-lg gold font-bold">Total Payment: $${totalPayment.toLocaleString()}</div>
+          </div>
+        `;
+      });
+      document.getElementById('calcResult').innerHTML = allResults;
+    };
+  </script>
+</body>
+</html>

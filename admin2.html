@@ -143,6 +143,7 @@
           <div class="mb-2"><span class="font-bold gold">Total Vault Balances (All Users):</span> <span id="totalVaultBalance">—</span></div>
           <div class="mb-2"><span class="font-bold gold">70% Vault Usage Allowed:</span> <span id="vaultUsageAllowed">—</span></div>
           <div class="mb-2"><span class="font-bold gold">Unpaid Principal (Active Loans):</span> <span id="unpaidPrincipal">—</span></div>
+          <div class="mb-2"><span class="font-bold gold">Outstanding Profits (Unpaid Interest):</span> <span id="unpaidInterest">—</span></div>
         </div>
       </div>
       <div class="mt-4 text-lg font-bold">
@@ -362,17 +363,30 @@
       }
       return sum;
     }
+    // Unpaid interest: sum all active loans' interest not yet paid
+    async function getUnpaidInterest() {
+      const { data, error } = await db.from('loan_installments').select('interest, status');
+      let sum = 0;
+      if (data && Array.isArray(data)) {
+        for (const row of data) {
+          if (row.status !== 'Paid') sum += Number(row.interest) || 0;
+        }
+      }
+      return sum;
+    }
     // Update all balances
     async function updateLoanPoolBalances() {
       const manual = await getManualPoolBalance();
       const vaultTotal = await getTotalVaultBalance();
       const vaultAllowed = vaultTotal * 0.7;
       const unpaid = await getUnpaidPrincipal();
+      const unpaidInterest = await getUnpaidInterest();
       const total = manual + vaultAllowed - unpaid;
       document.getElementById('manualPoolBalance').textContent = manual.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
       document.getElementById('totalVaultBalance').textContent = vaultTotal.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
       document.getElementById('vaultUsageAllowed').textContent = vaultAllowed.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
       document.getElementById('unpaidPrincipal').textContent = unpaid.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+      document.getElementById('unpaidInterest').textContent = unpaidInterest.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
       document.getElementById('totalLoanableBalance').textContent = total.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
     }
     // Handle deposit/withdrawal form
@@ -495,10 +509,18 @@
         if (!loans[inst.loan_id]) loans[inst.loan_id] = { user_id: inst.user_id, loan_id: inst.loan_id, installments: [] };
         loans[inst.loan_id].installments.push(inst);
       }
+      // Sort loan IDs in ascending order (001, 002, ...)
+      const sortedLoanIds = Object.keys(loans).sort((a, b) => {
+        // Try to sort numerically if possible, fallback to string
+        const numA = parseInt(a.replace(/\D/g, ''));
+        const numB = parseInt(b.replace(/\D/g, ''));
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.localeCompare(b);
+      });
       // For each loan, find next due, overdue, etc.
       const today = new Date().toISOString().slice(0,10);
       const rows = [];
-      for (const loanId in loans) {
+      for (const loanId of sortedLoanIds) {
         const loan = loans[loanId];
         const user = userMap[loan.user_id] || {};
         // Find next unpaid installment
