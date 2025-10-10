@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Charges – Penal Code</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b0b0f; color:#fff; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 24px; }
+
+  .toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; }
+  h1 { font-size:28px; font-weight:700; margin:0; }
+  .search input{
+    width: 320px; background: rgba(255,255,255,.05); color:#fff; border:1px solid rgba(255,255,255,.12);
+    padding:10px 12px; border-radius:14px; outline:none; font-size:14px;
+  }
+
+  .section { margin: 14px 0 28px; }
+  .section h2 { margin: 8px 0 10px; font-size:16px; font-weight:700; color: rgba(255,255,255,.9); }
+  .subhead { margin: 8px 0 10px; font-size:13px; font-weight:600; color: rgba(255,255,255,.65); text-transform: uppercase; letter-spacing:.04em; }
+  .cards { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+
+  .card {
+    background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius: 14px;
+    padding: 14px; position: relative; overflow: hidden;
+  }
+  .card::before { content:""; position:absolute; left:0; top:0; width:4px; height:100%; background:#444; border-radius: 14px 0 0 14px; }
+  .sev-Infraction::before { background:#22c55e; }     /* green */
+  .sev-Misdemeanor::before { background:#f5900b; }    /* yellow */
+  .sev-Felony::before { background:#f30303; }         /* red */
+  .sev-HUT::before { background:#7c3aed; }            /* orange */
+  .sev-UTILITY::before { background:#5d95ff; }        /* violet */
+
+  .card h3 { margin: 0 0 6px; font-size:14px; font-weight:600; color:#fff; }
+  .desc { font-size:12px; color: rgba(255,255,255,.72); line-height:1.4; margin-bottom:8px; min-height: 32px; }
+  .meta { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px; }
+  .label { font-size:10px; text-transform: uppercase; letter-spacing:.04em; color: rgba(255,255,255,.55); margin-bottom:4px; }
+  .value { border:1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.3); border-radius:10px; padding:8px 10px; font-size:13px; }
+
+  .muted { color: rgba(255,255,255,.6); font-size:13px; padding:14px; border:1px dashed rgba(255,255,255,.15); border-radius:14px; }
+  @media (max-width:720px){ .search input{ width:220px; } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <h1>Charges</h1>
+      <div class="search"><input id="search" type="search" placeholder="Search charges…"></div>
+    </div>
+
+    <div id="root"></div>
+  </div>
+
+<script>
+/* ----------------------- Data ----------------------- */
+const charges = [
+  /* === INFRACTIONS === */
+  // Traffic & Vehicle
+  c("Distracted Driving","Infraction","Suspect operated a motor vehicle while engaging in a non-driving activity that significantly impairs attention or control of the vehicle.","Traffic & Vehicle"),
+  c("Driving without a Valid License","Infraction","Suspect found operating a motor vehicle without a valid physical license in their possession.","Traffic & Vehicle"),
+  c("Failure to Display License Plate","Infraction","Suspect's vehicle was found to be parked next to, or operated upon State's paved roadway without visible and accurate license plate.","Traffic & Vehicle"),
+  c("Failure to Maintain Lane","Infraction","Suspect failed to operate a vehicle in a proper lane of travel, without lawful justification.","Traffic & Vehicle"),
+  c("Failure to Stop","Infraction","Suspect failed to come to a stop at an appropriate traffic control device or marking.","Traffic & Vehicle"),
+  c("Illegal Parking","Infraction","Suspect's vehicle was found in violation of State parking code, without lawful justification or falling within the parking exemptions. (Subject to tow)","Traffic & Vehicle"),
+  c("Impeading Traffic","Infraction","Suspect's actions continuously disrupted or stopped the flow of traffic.","Traffic & Vehicle"),
+  c("Negligent Driving","Infraction","Suspect was seen breaking multiple traffic laws, creating unnecessary risk to others' safety.","Traffic & Vehicle"),
+  c("Passenger Endangerment","Infraction","Suspect knowingly failed to secure their passengers, transporting them in an unsafe fashion or manner.","Traffic & Vehicle"),
+  c("Unroadworthy Vehicle","Infraction","Suspect operated a vehicle in a state that created unreasonable risk to others' safety. (Subject to tow)","Traffic & Vehicle"),
+
+  // Weapons
+  c("Negligent Ownership of a Firearm","Infraction","Suspect failed to exercise reasonable safety in handling or storing their legally registered firearm, including possession of an expired weapon license.","Weapons"),
+
+  // Person & Violent / Public Order
+  c("Criminal Threats","Infraction","Suspect made clear and convincing threats against a person's life or safety, causing reasonable fear.","Person & Violent"),
+  c("Loitering on Government Property","Infraction","Suspect was found present on Government owned property for an extended period of time without apparent purpose or reason, and refused to leave.","Government & Court"),
+  c("Anti-mask Law","Infraction","Suspect was found obstructing their face while on government ground, without lawful justification, and refused to either take it off or leave the area when confronted by law enforcement.","Government & Court"),
+  c("Disturbing the Peace","Infraction","Suspect acted without lawful justification, in a manner that unreasonably disturbed the public, and refused or failed to cease such actions after being confronted by an LEO.","Person & Violent"),
+  c("Littering","Infraction","Suspect found to be discarding waste outside of a designated area or receptacle.","Other"),
+  c("Misuse of Emergency Systems","Infraction","Suspect knowingly and unlawfully used the emergency line for non-emergency reasons.","Government & Court"),
+  c("Petty Theft","Infraction","Suspect has knowingly and unlawfully taken property of another person or business, without consent, valued at below $50.","Property & Economic"),
+  c("Unlawful Hunting","Infraction","Suspect failed to comply with hunting rules specified within the public legislation.","Other"),
+  c("Vandalism","Infraction","Suspect willfully and unlawfully caused destruction of private or business property.","Property & Economic"),
+  c("Public Waste Offense","Infraction","Suspect willfully relieved themselves outside of designated restroom facilities, thereby creating a public nuisance, sanitation hazard, or offense to public.","Other"),
+
+  /* === MISDEMEANORS === */
+  // Traffic & Vehicle
+  c("Driving Under the Influence","Misdemeanor","Suspect was found operating a motor vehicle while under the influence of alcohol (above 0.08% BAC) or a controlled dangerous substance.","Traffic & Vehicle"),
+  c("Driving with a Suspended License","Misdemeanor","Suspect was found to be operating a motor vehicle while their license was revoked or suspended.","Traffic & Vehicle"),
+  c("Evading","Misdemeanor","Suspect was witnessed fleeing lawful detainment or arrest using a vehicle.","Traffic & Vehicle"),
+  c("Hit and Run (Property)","Misdemeanor","Suspect has struck property with their vehicle causing damage, and fled the scene without identifying oneself to the present, affected party.","Traffic & Vehicle"),
+  c("Reckless Driving","Misdemeanor","Suspect displayed clear disregard for safety of others by driving in a manner that created serious and substantial risk to other's safety or life.","Traffic & Vehicle"),
+  c("Theft of a Motor Vehicle","Misdemeanor","Suspect was found in unlawful possession of a vehicle that's unregistered, or registered to another person.","Traffic & Vehicle"),
+  c("Street Racing","Misdemeanor","Suspect was found participating in an unlawful speed or performance contest of motor vehicles, without proper permission from the State officials.","Traffic & Vehicle"),
+
+  // Drugs
+  c("Possession of a Controlled Substance (Misdemeanor)","Misdemeanor","Suspect was found in possession of a controlled dangerous substance or prescription medication without a valid prescription. (Marijuana – more than 10 joints or 1 baggie.)","Drugs"),
+  c("Possession of Prescription Medication","Misdemeanor","Suspect was found in possession of prescription medication without a valid prescription or lawful authorization.","Drugs"),
+
+  // Weapons
+  c("Brandishing","Misdemeanor","Suspect intentionally displays a weapon without lawful justification, causing reasonable person to fear imminent harm.","Weapons"),
+  c("Criminal Use of a Non-Firearm","Misdemeanor","Suspect used a non-firearm weapon in a commission of a serious crime.","Weapons"),
+  c("Possession of Illegal Firearm Modification","Misdemeanor","Suspect was found in unlawful possession of an illegal firearm attachment or modification.","Weapons"),
+  c("Possession of an Illegal Firearm (Class-1)","Misdemeanor","Suspect was found in unlawful possession of a an improperly registered, self-manufactured, or stolen class-1 firearm.","Weapons"),
+  c("Reckless Use of a Firearm","Misdemeanor","Suspect failed to exercise reasonable safety in handling or use of their legally registered firearm, creating substantial risk to public safety.","Weapons"),
+
+  // Person & Violent
+  c("Aggravated Criminal Threats","Misdemeanor","Suspect made clear and convincing threats against a government employee's life or safety, causing reasonable fear. Victim's occupation was known to the suspect or would be reasonable to conclude.","Person & Violent"),
+  c("Assault","Misdemeanor","Suspect engaged in a physical act that caused reasonable fear of serious harm or extremely offensive contact.","Person & Violent"),
+  c("Battery","Misdemeanor","Suspect engaged in an unlawful physical act resulting in serious injury of another.","Person & Violent"),
+  c("False Imprisonment","Misdemeanor","Suspect intentionally restrained another’s freedom of movement, without lawful authority, by force, threat, or deception.","Person & Violent"),
+  c("Harassment","Misdemeanor","Suspect engaged in a course of unwanted contact or communication, without consent and serving no legitimate or lawful purpose, causing unreasonable interference with daily activities.","Person & Violent"),
+  c("Stalking","Misdemeanor","Suspect was identified to knowingly and repeatedly follow or surveil another person without consent or lawful reason, causing a reasonable fear for their safety.","Person & Violent"),
+  c("Indecent Exposure","Misdemeanor","Suspect willlfully exposed their genitals or engaged in lewd display of their body in a public area, causing offense or alarm to another.","Person & Violent"),
+  c("Public Intoxication","Misdemeanor","Suspect was found under the influence of alcohol or controlled substance while unreasonably disturbing the peace, or presenting danger to themselves or others.","Person & Violent"),
+  c("Unlawful Assembly","Misdemeanor","Suspect was found gathered with others in a public place in a manner that created danger of disorder or violence, and refused to disperse upon lawful order.","Person & Violent"),
+
+  // Government & Court
+  c("Impersonating a Gov. Employee","Misdemeanor","Suspect engaged in actions designed to present themselves in a convincing manner as a government employee.","Government & Court"),
+  c("Introducing Contraband to a Government Facility","Misdemeanor","Suspect introduced contraband to a government facility, including but not limited to; restricted areas of Police Departments, State Prison, City Hall and its Courtroom.","Government & Court"),
+  c("Possession of Gov. Equipment","Misdemeanor","Suspect was found in unlawful possession of government issued equipment.","Government & Court"),
+  c("Contempt of Court","Misdemeanor","Suspect engaged in conduct deemed by a judge presiding over a case to be disruptive and unwelcome (Time and fine up to Judge's discretion).","Government & Court"),
+  c("Disobeying a Lawful Order","Misdemeanor","Suspect knowingly fails or refuses to follow a simple, reasonable order issued by a law enforcement officer acting within lawful authority.","Government & Court"),
+  c("False Reporting","Misdemeanor","Suspect knowingly and unlawfully made a false report of a crime.","Government & Court"),
+  c("Interferance with Emergency Services","Misdemeanor","Suspect knowingly and intentionally acts in a way that interferes with State's emergency services.","Government & Court"),
+  c("Malfeasance","Misdemeanor","Suspect was a government employee, and knowingly engaged in an unlawful activity, which did or could result in harm, suppression of rights or general abuse of power. | To be pushed by DAO.","Government & Court"),
+  c("Obstruction of Justice","Misdemeanor","Suspect knowingly and unlawfully acted in a way that interfered with law enforcement officers' active duty.","Government & Court"),
+  c("Failure to Appear","Misdemeanor","Suspect unreasonably failed to appear in court or at a scheduled legal proceeding as required by lawful order or summons.","Government & Court"),
+  c("False Identification","Misdemeanor","Suspect purposefully provided false or misleading identification when lawfully required to identify.","Government & Court"),
+
+  // Property & Economic
+  c("Aggravated Vandalism","Misdemeanor","Suspect willfully and unlawfully caused destruction of state property.","Property & Economic"),
+  c("Animal Cruelty","Misdemeanor","Suspect knowingly and intentionally partook in actions inflicting unnecessary suffering or pain upon an animal.","Other"),
+  c("Burglary","Misdemeanor","Suspect entered a private or business property without consent or legal justification, in order to commit a crime.","Property & Economic"),
+  c("Possession of Stolen Property","Misdemeanor","Suspect was found in possession of stolen property, with knowledge of its origin or lack of reasonable belief for it to not be such.","Property & Economic"),
+  c("Reckless Endangerment","Misdemeanor","Suspect knowingly and with no lawful justification engaged in conduct that created substantial risk of injury or death to others.","Other"),
+  c("Resisting Arrest","Misdemeanor","Suspect engaged in physical actions designed to avoid lawful detainment.","Government & Court"),
+  c("Robbery","Misdemeanor","Suspect used threats of harm or force against another person or business for financial or personal gain.","Property & Economic"),
+  c("Theft","Misdemeanor","Suspect has knowingly and unlawfully taken property of another person or business, without consent, valued at between $50 and $3000.","Property & Economic"),
+  c("Trespassing","Misdemeanor","Suspect knowingly entered a clearly restricted property, or failed to leave a property upon notice from a party authorized by the owner.","Property & Economic"),
+  c("Vehicle Tampering","Misdemeanor","Suspect deliberately interfered with normal functions of a vehicle, creating potential for operator's injury as results of their actions.","Traffic & Vehicle"),
+  c("Vigilantism","Misdemeanor","Suspect acted in the scope of law enforcement duties without proper legal authority to do so.","Government & Court"),
+
+  /* === FELONIES === */
+  // Traffic & Vehicle
+  c("Aggravated Theft of a Motor Vehicle","Felony","Suspect found in unlawful possession of a government agency owned vehicle, or engaged in the act of stealing a vehicle involving a deadly weapon.","Traffic & Vehicle"),
+  c("Grand Theft Auto","Felony","Suspect found in possession of a stolen vehicle, having taken unlawful actions designed to permanently deprive the vehicle owner of its custody.","Traffic & Vehicle"),
+  c("Hit and Run (Person)","Felony","Suspect has struck person(s) with their vehicle, causing bodily harm, and fled the scene without identifying oneself to the present, affected party.","Traffic & Vehicle"),
+
+  // Drugs
+  c("Possession of a Controlled Substance (Felony)","Felony","Suspect was found in possession of a controlled dangerous substance or prescription medication without a valid prescription. (Marijuana – more than 50 joints or 5 baggies. | More than 5 baggies of any other controlled dangerous substance. | More than 5 bottles of prescription medication.)","Drugs"),
+  c("Manufacturing of a Controlled Substance","Felony","Suspect was found engaging in cultivation or manufacturing of a controlled dangerous substance, without lawful reason or proper state-issued license.","Drugs"),
+  c("Sale of a Controlled Substance","Felony","Suspect was found engaging in unlawful sale or exchange of controlled dangerous substances. Suspect did not have a proper license to sell controlled substances.","Drugs"),
+  c("Sale of Prescription Medication","Felony","Suspect was found unlawfully distributing or selling prescription medication without proper authorization.","Drugs"),
+  c("Money Laundering","Felony","Suspect was found in possession of more than $3,000 in marked or illicit currency, or engaged in financial transactions intended to conceal or legitimize proceeds of personal unlawful activity.","Property & Economic"),
+
+  // Weapons & Explosives
+  c("Criminal Distribution of Firearm","Felony","Suspect knowingly distributed ownership of a firearm without lawful permission from the State.","Weapons"),
+  c("Criminal Use of Illegal Explosives","Felony","Suspect unlawfully used a lethal explosive material or device designed to cause harm or mass-destruction.","Weapons"),
+  c("Criminal Use of a Firearm","Felony","Suspect used a firearm, regardless of legal ownership, in a commission of a serious crime.","Weapons"),
+  c("Possession of Illegal Explosives","Felony","Suspect was found in unlawful possession of lethal explosive material or device designed to cause harm or mass-destruction.","Weapons"),
+  c("Possession of an Illegal Firearm (Class-2)","Felony","Suspect was found in unlawful possession of a an improperly registered, self-manufactured, or stolen class-2 firearm.","Weapons"),
+  c("Possession of an Illegal Firearm (Class-3)","Felony","Suspect was found in unlawful possession of a an improperly registered, self-manufactured, or stolen class-3 firearm.","Weapons"),
+  c("Unlawful Wiretapping","Felony","Suspect was found unlawfully intercepting or monitoring communications through technical means, such as tapping phone lines, planting listening devices, or accessing private communications without; being a party to the conversation, having consent of the party, or lawful authority.","Government & Court"),
+
+  // Person & Violent / Gov & Court mix
+  c("Aggravated Assault","Felony","Suspect engaged in a physical act using a deadly weapon that caused reasonable fear of serious harm, or committed assault against a government employee who's occupation was known to the suspect or would be reasonable to conclude.","Person & Violent"),
+  c("Aggravated Battery","Felony","Suspect engaged in an unlawful physical act resulting in serious injury of a government employee who's occupation was known to the suspect or would be reasonable to conclude, or engaged in battery using a deadly weapon.","Person & Violent"),
+  c("Aggravated False Imprisonment","Felony","Suspect intentionally restrained government employee’s freedom of movement, without lawful authority, by force, threat, or deception.","Person & Violent"),
+  c("Aggravated Hostage Taking","Felony","Suspect intentionally restrained government employee’s freedom of movement, without lawful authority, by force, threat, or deception, for ransom or hostage use, facilitation of another felony, or to obstruct law enforcement. Victim's occupation was known to the suspect or would be reasonable to conclude.","Person & Violent"),
+  c("Aggravated Kidnapping","Felony","Suspect intentionally restrained government employee’s freedom of movement, without lawful authority, by force, threat, or deception, and moves them a substantial distance or confines them in a place of isolation. Victim's occupation was known to the suspect or would be reasonable to conclude.","Person & Violent"),
+  c("Attempted 1st Degree Murder","Felony","Suspect engaged in intentional and unlawful acts clearly designed to end one's life, with prior planning and premeditation.","Person & Violent"),
+  c("Attempted 2nd Degree Murder","Felony","Suspect engaged in intentional and unlawful acts clearly designed to end one's life, without planning or premeditation.","Person & Violent"),
+  c("Attempted Murder of a Gov. Employee","Felony","Suspect engaged in intentional and unlawful acts clearly designed to end one's life against a government employee who's occupation was known to the suspect or would be reasonable to conclude.","Person & Violent"),
+  c("Extortion","Felony","Suspect used threats of harm or force against another person for substantial personal gain, other than theft of property.","Property & Economic"),
+  c("Hostage Taking","Felony","Suspect intentionally restrained another’s freedom of movement, without lawful authority, by force, threat, or deception, for ransom or hostage use, facilitation of another felony, or to obstruct law enforcement.","Person & Violent"),
+  c("Involuntary Manslaughter","Felony","Suspect engaged in acts of gross negligence or disregard for other's safety and life, directly resulting in a death of another.","Person & Violent"),
+  c("Kidnapping","Felony","Suspect intentionally restrained another’s freedom of movement, without lawful authority, by force, threat, or deception, and moves them a substantial distance or confines them in a place of isolation.","Person & Violent"),
+  c("Aggravated Burglary","Felony","Suspect entered a government property, financial institution or occupied dwelling without consent or legal justification, in order to commit a crime.","Property & Economic"),
+  c("Aggravated Interferance with Emergency Services","Felony","Suspect knowingly and intentionally acts in a way that interferes with State's emergency services, using deadly force or threats of thereof.","Government & Court"),
+  c("Aggravated Malfeasance","Felony","Suspect was a government employee, and repeatedly engaged in an unlawful activity, which did or could result in harm, suppression of rights or general abuse of power. | To be pushed by DAO.","Government & Court"),
+  c("Aggravated Obstruction of Justice","Felony","Suspect knowingly and intentionally acts in a way that interferes with law enforcement officers' active duty, using deadly force or threats of thereof.","Government & Court"),
+  c("Aggravated Trespassing","Felony","Suspect knowingly entered a property while an active and served trespass order for said property has been filed.","Property & Economic"),
+  c("Arson","Felony","Suspect engaged in unlawful and deliberate actions through use of fire in order to cause harm or destroy property.","Property & Economic"),
+  c("Blackmail","Felony","Suspect used threats of exposing private, damaging information against another person for personal or financial gain, regardless of information's truthfulness.","Property & Economic"),
+  c("Bribery","Felony","Suspect used a serious offer of personal of financial gain in order to gain favor or preferential treatment from a government employee, within scope of their official duties.","Government & Court"),
+  c("Conspiracy","Felony","Suspect has successfully joined with at least one other to form a plan of violating the law, and acted upon said plan.","Government & Court"),
+  c("Desecration of a Corpse","Felony","Suspect knowingly engaged in unlawful actions involving moving, damaging, or otherwise disturbing a diseased individual.","Other"),
+  c("Escaping Custody","Felony","Suspect escaped custody of law enforcement, prior to full incarceration.","Government & Court"),
+  c("Evidence Tampering","Felony","Suspect unlawfully and directly concealed, removed, transported or tampered with evidence of a crime that could be used by law enforcement or the court to detain, arrest, or prosecute a person(s).","Government & Court"),
+  c("Gang Related Violence","Felony","Suspect knowingly and willingly engaged in an unlawful violent exchange between opposing criminal factions.","Person & Violent"),
+  c("Grand Robbery","Felony","Suspect used threats of harm or force against government agency or financial institution for financial or personal gain.","Property & Economic"),
+  c("Inciting a Riot","Felony","Suspect intentionally urged, commanded, or aided a group to engage in violent, unlawful conduct, creating substantial risk of injury or property damage in the state.","Government & Court"),
+  c("Malpractice","Felony","Suspect acted within a licensed, certified, or otherwise State authorized profession, and through gross negligence, reckless disregard, or willful misconduct and created unreasonable risk of harm, resulted in serious injury or serious violation of one's rights.","Government & Court"),
+  c("Perjury","Felony","Suspect made verifiably false statement on the witness stand, while under oath.","Government & Court"),
+  c("Theft of an Aircraft","Felony","Suspect found in unlawful possession of an aircraft that's unregistered, or registered to another, without owner's explicit consent.","Traffic & Vehicle"),
+  c("Torture","Felony","Suspect was engaged in acts of non-consequential violence or psychological torment aimed at another individual with goals of extracting information, personal gain, or personal enjoyment. Acts exceeded the definition of battery.","Person & Violent"),
+  c("Unlawful Practice","Felony","Suspect acted within a licensed profession without proper licensing or permission from the State.","Government & Court"),
+  c("Violation of a Restraining Order","Felony","Suspect engaged in actions specifically prohibited by a successfully filed, ruled and served court-ordered documentation, without lawful justification.","Government & Court"),
+  c("Witness Tampering","Felony","Suspect used threat, force or deception in order to affect actions taken by a party involved in a court proceeding.","Government & Court"),
+  c("Cybercrime","Felony","Suspect was found unlawfully accessing, manipulating, or disrupting a computer system, network, or electronic data without authorization, for personal gain or to cause harm.","Government & Court"),
+  c("Disrupting a Court Proceeding","Felony","Suspect disrupted a scheduled court proceeding through force or threats thereof, or through repeated behavior which was ordered to cease by an officer of the court.","Government & Court"),
+
+  /* === FELONY (HUT) === */
+  c("2nd Degree Murder","Felony (HUT)","Suspect engaged in intentional and unlawful acts clearly designed to end one's life, without planning or premeditation, resulting in a death of another.","Person & Violent"),
+  c("Aggravated Embezzlement","Felony (HUT)","Suspect used trusted access to steal or misappropriate funds of a public institution or state agency.","Property & Economic"),
+  c("Drug Trafficking","Felony (HUT)","Suspect was found transporting or in possession of a large quantity of controlled dangerous substance. | Marijuana - more than 100 joints/grams. | Cocaine -more than 50 grams. | Meth - more than 50 grams | XTC - more than 50 grams | MDMA - more than 50 grams.","Drugs"),
+  c("Weapons Trafficking","Felony (HUT)","Suspect was found transporting or in possession of a large quantity (over 19) of improperly registered, self-manufactured, or stolen weapons (firearms and illegal explosives).","Weapons"),
+  c("1st Degree Murder","Felony (HUT)","Suspect engaged in intentional and unlawful acts clearly designed to end one's life, with prior planning and premeditation, resulting in a death of another.","Person & Violent"),
+  c("Murder of a Gov. Employee","Felony (HUT)","Suspect engaged in intentional and unlawful acts clearly designed to end one's life against a government employee who's occupation was known to the suspect or would be reasonable to conclude, resulting in a death of another.","Person & Violent"),
+  c("Government Corruption","Felony (HUT)","Suspect either abused their own position as state official, or manipulated/coerced a state official in order to obtain personal, financial or political gain.","Government & Court"),
+  c("Insurrection","Felony (HUT)","Suspect used violence or threat of thereof in order to overthrow the executive branch of the government.","Government & Court"),
+  c("Jailbreak","Felony (HUT)","Suspect escaped custody of law enforcement while being held in the confines of the state prison.","Government & Court"),
+  c("Mayhem","Felony (HUT)","Suspect engaged in repeated torture of individual or group of individuals. The acts must have been spread over multiple days. Acts must have been taken within a 21 days window.","Person & Violent"),
+  c("Terrorism","Felony (HUT)","Suspect engaged or planned acts of deadly violence or extreme intimidation intending to influence the state, the populace or advance an ideology upon the masses.","Government & Court"),
+  c("Human Trafficking","Felony (HUT)","Suspect was found unlawfully kidnapping or transporting five (5) or more individuals through force, threat, or deception for the purpose of exploitation or personal gain.","Person & Violent"),
+  c("Aggravated Money Laundering","Felony (HUT)","Suspect was found in possession of more than $50,000 in marked or illicit currency, or engaged in financial transactions intended to conceal or legitimize proceeds of organized criminal activity.","Property & Economic"),
+  c("Aggravated Torture","Felony (HUT)","Suspect was engaged in unlawful acts of extreme violence, mutilation, or psychological torment aimed at another individual. Acts resulted in severe and long-lasting damage to the victim, including permanent disfigurement, organ removal, or other grievous bodily or psychological harm well beyond the scope of battery.","Person & Violent"),
+  c("Cyberterrorism","Felony (HUT)","Suspect was found using computers, networks, or electronic systems to conduct attacks, intrusions, or disruptions with intent to intimidate, coerce, or cause substantial harm to the State, its infrastructure, or the public.","Government & Court"),
+
+  /* === UTILITY === */
+  c("Accomplice","UTILITY","Utility charge.","Other"),
+  c("Attempted","UTILITY","Utility charge.","Other"),
+];
+
+function c(name, severity, description, group){
+  return { id: Math.random().toString(36).slice(2),
+           name, severity, description, group,
+           fineLabel:"—", sentenceLabel:"—" };
+}
+
+/* ----------------------- Render ----------------------- */
+const ORDER_SEVERITY = ["Infraction","Misdemeanor","Felony","Felony (HUT)","UTILITY"];
+const ORDER_GROUPS = ["Traffic & Vehicle","Weapons","Drugs","Person & Violent","Government & Court","Property & Economic","Other"];
+
+const root = document.getElementById("root");
+const searchEl = document.getElementById("search");
+
+function render(){
+  const q = (searchEl.value||"").toLowerCase();
+  root.innerHTML = "";
+
+  ORDER_SEVERITY.forEach(sev => {
+    const inSev = charges.filter(c => c.severity === sev)
+      .filter(c => (c.name + " " + (c.description||"") + " " + c.group).toLowerCase().includes(q));
+
+    const sec = el("div",{class:"section"});
+    sec.appendChild(el("h2",{}, sev));
+
+    ORDER_GROUPS.forEach(gr => {
+      const list = inSev.filter(c => c.group === gr);
+      if(list.length===0) return;
+      sec.appendChild(el("div",{class:"subhead"}, gr));
+      const cards = el("div",{class:"cards"});
+      list.forEach(ch => cards.appendChild(card(ch)));
+      sec.appendChild(cards);
+    });
+
+    if (!inSev.length){
+      const cards = el("div",{class:"cards"});
+      cards.appendChild(el("div",{class:"muted"},"No charges found in this category."));
+      sec.appendChild(cards);
+    }
+    root.appendChild(sec);
+  });
+}
+
+function card(cg){
+  const cls = cg.severity==="Felony (HUT)" ? "sev-HUT"
+             : cg.severity==="UTILITY" ? "sev-UTILITY"
+             : "sev-"+cg.severity;
+  const card = el("div",{class:"card "+cls});
+  card.appendChild(el("h3",{}, cg.name));
+  card.appendChild(el("div",{class:"desc"}, cg.description||""));
+  const meta = el("div",{class:"meta"});
+  meta.appendChild(field("MAX FINE", cg.fineLabel||"—"));
+  meta.appendChild(field("MAX SENTENCE", cg.sentenceLabel||"—"));
+  card.appendChild(meta);
+  return card;
+}
+
+function field(label, value){
+  const wrap = el("div",{});
+  wrap.appendChild(el("div",{class:"label"}, label));
+  wrap.appendChild(el("div",{class:"value"}, value));
+  return wrap;
+}
+
+function el(tag, attrs={}, text, ...children){
+  const n = document.createElement(tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text!=null) n.textContent = text;
+  children.forEach(ch => n.appendChild(ch));
+  return n;
+}
+
+/* Search */
+searchEl.addEventListener("input", render);
+render();
+</script>
+</body>
+</html>
