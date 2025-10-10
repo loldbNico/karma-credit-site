@@ -1,0 +1,327 @@
+import React, { useMemo, useState } from "react";
+import { Plus, Pencil, Trash2, Info } from "lucide-react";
+
+// ---- Types ----
+export type Charge = {
+  id: string;
+  name: string;
+  severity: "Infraction" | "Misdemeanor" | "Felony" | "Felony (HUT)";
+  description?: string;
+  fineLabel: string; // e.g. "200$ (0$–200$)"
+  sentenceLabel: string; // e.g. "0 months (0–0)"
+};
+
+// ---- Demo data (you can replace with your full penal code) ----
+const CHARGES: Charge[] = [
+  // Infractions
+  {
+    id: "hunt-unlawful",
+    name: "Hunting in Unlawful Manner",
+    severity: "Infraction",
+    description:
+      "Violation of hunting rules specified within public legislation.",
+    fineLabel: "200$ (0$–200$)",
+    sentenceLabel: "0 months (0–0)",
+  },
+  {
+    id: "unlawful-use-motor-vehicle",
+    name: "Unlawful Use of a Motor Vehicle",
+    severity: "Infraction",
+    description:
+      "Operation of a motor vehicle contrary to posted rules or temporary restrictions.",
+    fineLabel: "100$ (0$–100$)",
+    sentenceLabel: "0 months (0–0)",
+  },
+  {
+    id: "unlicensed-operation",
+    name: "Unlicensed Operation of Vehicle",
+    severity: "Infraction",
+    description:
+      "The operation of a motor vehicle without proper licensing. The defendant operated a motor vehicle on a public road and did not hold a valid driver's license recognized by law.",
+    fineLabel: "250$ (0$–250$)",
+    sentenceLabel: "0 months (0–0)",
+  },
+
+  // Misdemeanors
+  {
+    id: "unlawful-assembly",
+    name: "Unlawful Assembly",
+    severity: "Misdemeanor",
+    description:
+      "Gathering with three or more persons in a manner creating danger of disorder/violence and refusing to disperse on lawful command.",
+    fineLabel: "500$ (0$–500$)",
+    sentenceLabel: "10 months (0–10)",
+  },
+
+  // Felonies
+  {
+    id: "unlawful-imprisonment-public",
+    name: "Unlawful Imprisonment of a Public Official",
+    severity: "Felony",
+    description:
+      "Intentional restraint of a public official's freedom of movement without lawful authority.",
+    fineLabel: "700$ (0$–700$)",
+    sentenceLabel: "30 months (0–30)",
+  },
+  {
+    id: "unlawful-practice",
+    name: "Unlawful Practice",
+    severity: "Felony",
+    description:
+      "Acting within a licensed profession without proper licensing or permission from the State.",
+    fineLabel: "750$ (0$–750$)",
+    sentenceLabel: "25 months (0–25)",
+  },
+];
+
+// ---- Utility functions ----
+const SEVERITY_ORDER: Array<Charge["severity"]> = [
+  "Infraction",
+  "Misdemeanor",
+  "Felony",
+  "Felony (HUT)",
+];
+
+function classNames(...cn: Array<string | undefined | false>) {
+  return cn.filter(Boolean).join(" ");
+}
+
+const severityAccent: Record<Charge["severity"], string> = {
+  Infraction: "bg-green-500",
+  Misdemeanor: "bg-yellow-500",
+  Felony: "bg-red-500",
+  "Felony (HUT)": "bg-orange-500",
+};
+
+// ---- Components ----
+function Toolbar({
+  query,
+  setQuery,
+  onCreate,
+}: {
+  query: string;
+  setQuery: (v: string) => void;
+  onCreate: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 pb-6">
+      <h1 className="text-2xl font-semibold">Charges</h1>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onCreate}
+          className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-indigo-500"
+        >
+          <Plus className="h-4 w-4" /> Create new
+        </button>
+        <div className="relative">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search charges…"
+            className="w-64 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder-white/60 outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/50 text-xs">Search</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mb-10">
+      <h2 className="mb-3 text-lg font-semibold text-white/90">{title}</h2>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function Card({ charge, onEdit, onDelete }: { charge: Charge; onEdit: (c: Charge) => void; onDelete: (c: Charge) => void; }) {
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 shadow-sm transition hover:border-white/20">
+      <div className="absolute left-0 top-0 h-full w-1 " style={{ backgroundColor: undefined }}>
+        <span className={classNames("absolute left-0 top-0 h-full w-1", severityAccent[charge.severity])} />
+      </div>
+
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div className="pr-8">
+          <h3 className="line-clamp-1 text-sm font-medium text-white">{charge.name}</h3>
+          {charge.description && (
+            <p className="mt-1 line-clamp-3 text-xs text-white/70">{charge.description}</p>
+          )}
+        </div>
+        <div className="flex shrink-0 items-center gap-2 text-white/70">
+          <button title="Edit" onClick={() => onEdit(charge)} className="rounded-md p-1 hover:bg-white/10">
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button title="Delete" onClick={() => onDelete(charge)} className="rounded-md p-1 hover:bg-white/10">
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-xs uppercase tracking-wide text-white/50">Fine</label>
+          <div className="rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white">{charge.fineLabel}</div>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs uppercase tracking-wide text-white/50">Sentence</label>
+          <div className="rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white">{charge.sentenceLabel}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CreateModal({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (c: Charge) => void; }) {
+  const [form, setForm] = useState<Charge>({
+    id: "",
+    name: "",
+    severity: "Infraction",
+    description: "",
+    fineLabel: "0$ (0$–0$)",
+    sentenceLabel: "0 months (0–0)",
+  });
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-lg rounded-xl border border-white/10 bg-neutral-900 p-5 text-white shadow-xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Create Charge</h3>
+          <button onClick={onClose} className="rounded-md px-2 py-1 text-sm text-white/70 hover:bg-white/10">Close</button>
+        </div>
+        <div className="grid grid-cols-1 gap-3">
+          <div>
+            <label className="mb-1 block text-xs text-white/60">Name</label>
+            <input
+              className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="Charge name"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-white/60">Severity</label>
+            <select
+              className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              value={form.severity}
+              onChange={(e) => setForm({ ...form, severity: e.target.value as Charge["severity"] })}
+            >
+              {SEVERITY_ORDER.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-white/60">Description</label>
+            <textarea
+              className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              rows={3}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Short description / burden of proof"
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs text-white/60">Fine label</label>
+              <input
+                className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                value={form.fineLabel}
+                onChange={(e) => setForm({ ...form, fineLabel: e.target.value })}
+                placeholder="e.g. 500$ (0$–500$)"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-white/60">Sentence label</label>
+              <input
+                className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                value={form.sentenceLabel}
+                onChange={(e) => setForm({ ...form, sentenceLabel: e.target.value })}
+                placeholder="e.g. 10 months (0–10)"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="mt-5 flex items-center justify-end gap-2">
+          <button onClick={onClose} className="rounded-lg px-3 py-2 text-sm text-white/70 hover:bg-white/10">Cancel</button>
+          <button
+            onClick={() => {
+              if (!form.name.trim()) return;
+              onSave({ ...form, id: `${Date.now()}` });
+              onClose();
+            }}
+            className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ChargesDashboard() {
+  const [query, setQuery] = useState("");
+  const [charges, setCharges] = useState<Charge[]>(CHARGES);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const filtered = useMemo(() => {
+    const q = query.toLowerCase();
+    return charges.filter((c) =>
+      [c.name, c.description, c.severity, c.fineLabel, c.sentenceLabel]
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [charges, query]);
+
+  const bySeverity = useMemo(() => {
+    const map = new Map<Charge["severity"], Charge[]>();
+    SEVERITY_ORDER.forEach((s) => map.set(s, []));
+    filtered.forEach((c) => map.get(c.severity)?.push(c));
+    return map;
+  }, [filtered]);
+
+  function handleDelete(c: Charge) {
+    if (!confirm(`Delete charge: ${c.name}?`)) return;
+    setCharges((prev) => prev.filter((x) => x.id !== c.id));
+  }
+
+  function handleEdit(c: Charge) {
+    alert(`Edit not wired in this demo. You can remove and recreate or extend the modal to support editing.\n\nSelected: ${c.name}`);
+  }
+
+  return (
+    <div className="min-h-screen bg-neutral-950 p-6 text-white">
+      <div className="mx-auto max-w-7xl">
+        <Toolbar query={query} setQuery={setQuery} onCreate={() => setCreateOpen(true)} />
+
+        {SEVERITY_ORDER.map((sev) => (
+          <Section key={sev} title={sev}>
+            {bySeverity.get(sev)!.length === 0 ? (
+              <div className="col-span-full rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white/60">
+                No charges found in this category.
+              </div>
+            ) : (
+              bySeverity.get(sev)!.map((c) => (
+                <Card key={c.id} charge={c} onEdit={handleEdit} onDelete={handleDelete} />
+              ))
+            )}
+          </Section>
+        ))}
+      </div>
+
+      <CreateModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onSave={(c) => setCharges((prev) => [...prev, c])}
+      />
+    </div>
+  );
+}
