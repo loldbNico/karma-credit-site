@@ -2280,7 +2280,7 @@
       </div>
 
       <div class="securserve-badge" id="securserveBadge" aria-hidden="true">
-        <img src="./logos/SS.png" alt="" draggable="false" />
+        <img src="./SS.png" alt="" draggable="false" onerror="this.onerror=null; this.src='./logos/SS.png';" />
       </div>
     </main>
     <div class="restricted-overlay" id="restrictedOverlay" aria-hidden="true">
@@ -2434,7 +2434,7 @@
         </div>
 
         <div class="boot-ss" id="bootSecuroserv" aria-hidden="true">
-          <img class="boot-ssLogo" id="bootSecuroLogo" src="./logos/SS2.png" alt="" draggable="false" />
+            <img class="boot-ssLogo" id="bootSecuroLogo" src="./SS2.png" alt="" draggable="false" onerror="this.onerror=null; this.src='./logos/SS2.png';" />
           <div class="boot-ssBar"><div class="boot-ssFill" id="bootSecuroFill"></div></div>
           <div class="boot-ssMeta"><span id="bootSecuroPct">0%</span><span id="bootSecuroPhase">reboot</span></div>
         </div>
@@ -2783,8 +2783,14 @@
       cursorLogo.addEventListener("error", () => {
         cursorLogo.dataset.failed = "1";
         cursorLogo.classList.remove("on");
-        if(cursorLogo.dataset.key){
-          term(`[LOGO] missing: ./logos/${cursorLogo.dataset.key}.png`);
+        const file = String(cursorLogo.dataset.file || "");
+        if(file && cursorLogo.dataset.triedLegacy !== "1"){
+          cursorLogo.dataset.triedLegacy = "1";
+          cursorLogo.src = `./logos/${file}`;
+          return;
+        }
+        if(file){
+          term(`[LOGO] missing: ./${file}`);
         }
       });
     }
@@ -2795,9 +2801,15 @@
       });
       detailLogo.addEventListener("error", () => {
         const key = detailLogo.dataset.key || "";
+        const file = String(detailLogo.dataset.file || "");
         detailLogo.classList.remove("on");
+        if(file && detailLogo.dataset.triedLegacy !== "1"){
+          detailLogo.dataset.triedLegacy = "1";
+          detailLogo.src = `./logos/${file}`;
+          return;
+        }
         detailLogo.removeAttribute("src");
-        if(key) term(`[DETAILLOGO] missing: ./logos/${key}.png`);
+        if(file) term(`[DETAILLOGO] missing: ./${file}`);
       });
     }
 
@@ -3510,15 +3522,24 @@
         img.alt = "";
         img.draggable = false;
         img.loading = "lazy";
-        img.src = isSecuroserv ? `./logos/securoserv_port.png` : `./logos/${key}.png`;
+        const file = isSecuroserv ? `securoserv_port.png` : `${key}.png`;
+        img.dataset.file = file;
+        img.dataset.triedLegacy = "0";
+        img.src = `./${file}`;
         img.addEventListener("load", () => {
           wrap.classList.add("ready");
         });
         img.addEventListener("error", () => {
+          const f = String(img.dataset.file || "");
+          if(f && img.dataset.triedLegacy !== "1"){
+            img.dataset.triedLegacy = "1";
+            img.src = `./logos/${f}`;
+            return;
+          }
           wrap.remove();
           if(!missingDistrictLogos.has(key)){
             missingDistrictLogos.add(key);
-            const p = isSecuroserv ? "./logos/securoserv_port.png" : `./logos/${key}.png`;
+            const p = isSecuroserv ? "./securoserv_port.png" : `./${key}.png`;
             term(`[LOGO] missing: ${p}`);
           }
         });
@@ -5316,8 +5337,8 @@
         return;
       }
 
-      // Naming convention: ./logos/<NORMALIZED_REGION_ID>.png
-      // Example: id="MERRYWEATHER_BASE" -> logos/MERRYWEATHER_BASE.png
+      // Naming convention: ./<NORMALIZED_REGION_ID>.png
+      // Example: id="MERRYWEATHER_BASE" -> ./MERRYWEATHER_BASE.png
       const key = normalizeRegionKey(el.id || el.getAttribute("data-name") || "");
       if(!key){
         cursorLogo.classList.remove("on");
@@ -5339,7 +5360,9 @@
         if(shouldReload){
           cursorLogo.classList.remove("on");
           const bust = (cursorLogo.dataset.failed === "1") ? `?v=${Date.now()}` : "";
-          cursorLogo.src = `./logos/securoserv_port.png${bust}`;
+          cursorLogo.dataset.triedLegacy = "0";
+          cursorLogo.dataset.file = `securoserv_port.png${bust}`;
+          cursorLogo.src = `./securoserv_port.png${bust}`;
         }else{
           cursorLogo.classList.add("on");
         }
@@ -5353,7 +5376,9 @@
         cursorLogo.classList.remove("on"); // wait for load
         // Only cache-bust when retrying a previously-failed load
         const bust = (cursorLogo.dataset.failed === "1") ? `?v=${Date.now()}` : "";
-        cursorLogo.src = `./logos/${key}.png${bust}`;
+        cursorLogo.dataset.triedLegacy = "0";
+        cursorLogo.dataset.file = `${key}.png${bust}`;
+        cursorLogo.src = `./${key}.png${bust}`;
       }else{
         // Same key, already loaded previously: show immediately.
         cursorLogo.classList.add("on");
@@ -5365,6 +5390,8 @@
       if(!el || el.classList.contains("wall")){
         detailLogo.classList.remove("on");
         detailLogo.dataset.key = "";
+        detailLogo.dataset.file = "";
+        detailLogo.dataset.triedLegacy = "0";
         detailLogo.removeAttribute("src");
         return;
       }
@@ -5373,6 +5400,8 @@
       if(!key){
         detailLogo.classList.remove("on");
         detailLogo.dataset.key = "";
+        detailLogo.dataset.file = "";
+        detailLogo.dataset.triedLegacy = "0";
         detailLogo.removeAttribute("src");
         return;
       }
@@ -5387,14 +5416,18 @@
         }
 
         detailLogo.dataset.key = "SECUROSERV_LOGO";
+        detailLogo.dataset.file = "securoserv_port.png";
+        detailLogo.dataset.triedLegacy = "0";
         detailLogo.classList.remove("on");
-        detailLogo.src = `./logos/securoserv_port.png`;
+        detailLogo.src = `./securoserv_port.png`;
         return;
       }
 
       detailLogo.dataset.key = key;
+      detailLogo.dataset.file = `${key}.png`;
+      detailLogo.dataset.triedLegacy = "0";
       detailLogo.classList.remove("on"); // wait for load
-      detailLogo.src = `./logos/${key}.png`;
+      detailLogo.src = `./${key}.png`;
     }
 
     function moveCursorLogo(e){
