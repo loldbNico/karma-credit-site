@@ -2774,24 +2774,66 @@
     const zoomBar = document.getElementById("zoomBar");
     const logosLayer = document.getElementById("logosLayer");
 
+    function uniq(arr){
+      const out = [];
+      const seen = new Set();
+      for(const v of (arr || [])){
+        const s = String(v || "");
+        if(!s) continue;
+        if(seen.has(s)) continue;
+        seen.add(s);
+        out.push(s);
+      }
+      return out;
+    }
+
+    function expandLogoPaths(fileNames){
+      const paths = [];
+      for(const f of (fileNames || [])){
+        paths.push(`./${f}`);
+        paths.push(`./logos/${f}`);
+      }
+      return uniq(paths);
+    }
+
+    function setImgCandidates(img, paths){
+      if(!img) return;
+      const list = uniq(paths);
+      img.dataset.logoCandidates = JSON.stringify(list);
+      img.dataset.logoIndex = "0";
+      img.src = list[0] || "";
+    }
+
+    function advanceImgCandidate(img, missingTag){
+      if(!img) return false;
+      let list = [];
+      try{ list = JSON.parse(img.dataset.logoCandidates || "[]"); }catch{ list = []; }
+      const idx = parseInt(img.dataset.logoIndex || "0", 10);
+      const nextIdx = idx + 1;
+      if(nextIdx < list.length){
+        img.dataset.logoIndex = String(nextIdx);
+        img.src = list[nextIdx];
+        return true;
+      }
+
+      // Exhausted candidates
+      const last = list[list.length - 1] || "";
+      if(last){
+        term(`[${missingTag}] missing: ${last}`);
+      }
+      return false;
+    }
+
     if(cursorLogo){
       cursorLogo.addEventListener("load", () => {
-        // Only show if it's still the expected asset
         cursorLogo.dataset.failed = "0";
         cursorLogo.classList.add("on");
       });
       cursorLogo.addEventListener("error", () => {
         cursorLogo.dataset.failed = "1";
         cursorLogo.classList.remove("on");
-        const file = String(cursorLogo.dataset.file || "");
-        if(file && cursorLogo.dataset.triedLegacy !== "1"){
-          cursorLogo.dataset.triedLegacy = "1";
-          cursorLogo.src = `./logos/${file}`;
-          return;
-        }
-        if(file){
-          term(`[LOGO] missing: ./${file}`);
-        }
+        // Try next candidate (root vs ./logos, securoserv_port vs SECUROSERV_PORT)
+        advanceImgCandidate(cursorLogo, "LOGO");
       });
     }
 
@@ -2800,16 +2842,10 @@
         detailLogo.classList.add("on");
       });
       detailLogo.addEventListener("error", () => {
-        const key = detailLogo.dataset.key || "";
-        const file = String(detailLogo.dataset.file || "");
         detailLogo.classList.remove("on");
-        if(file && detailLogo.dataset.triedLegacy !== "1"){
-          detailLogo.dataset.triedLegacy = "1";
-          detailLogo.src = `./logos/${file}`;
-          return;
+        if(!advanceImgCandidate(detailLogo, "DETAILLOGO")){
+          detailLogo.removeAttribute("src");
         }
-        detailLogo.removeAttribute("src");
-        if(file) term(`[DETAILLOGO] missing: ./${file}`);
       });
     }
 
@@ -3522,26 +3558,18 @@
         img.alt = "";
         img.draggable = false;
         img.loading = "lazy";
-        const file = isSecuroserv ? `securoserv_port.png` : `${key}.png`;
-        img.dataset.file = file;
-        img.dataset.triedLegacy = "0";
-        img.src = `./${file}`;
+
+        const primaryFiles = isSecuroserv
+          ? ["securoserv_port.png", `${key}.png`]
+          : [`${key}.png`];
+
+        setImgCandidates(img, expandLogoPaths(primaryFiles));
         img.addEventListener("load", () => {
           wrap.classList.add("ready");
         });
         img.addEventListener("error", () => {
-          const f = String(img.dataset.file || "");
-          if(f && img.dataset.triedLegacy !== "1"){
-            img.dataset.triedLegacy = "1";
-            img.src = `./logos/${f}`;
-            return;
-          }
+          if(advanceImgCandidate(img, "LOGO")) return;
           wrap.remove();
-          if(!missingDistrictLogos.has(key)){
-            missingDistrictLogos.add(key);
-            const p = isSecuroserv ? "./securoserv_port.png" : `./${key}.png`;
-            term(`[LOGO] missing: ${p}`);
-          }
         });
 
         wrap.appendChild(img);
@@ -5360,9 +5388,8 @@
         if(shouldReload){
           cursorLogo.classList.remove("on");
           const bust = (cursorLogo.dataset.failed === "1") ? `?v=${Date.now()}` : "";
-          cursorLogo.dataset.triedLegacy = "0";
-          cursorLogo.dataset.file = `securoserv_port.png${bust}`;
-          cursorLogo.src = `./securoserv_port.png${bust}`;
+          const files = [`securoserv_port.png${bust}`, `${key}.png${bust}`];
+          setImgCandidates(cursorLogo, expandLogoPaths(files));
         }else{
           cursorLogo.classList.add("on");
         }
@@ -5376,9 +5403,8 @@
         cursorLogo.classList.remove("on"); // wait for load
         // Only cache-bust when retrying a previously-failed load
         const bust = (cursorLogo.dataset.failed === "1") ? `?v=${Date.now()}` : "";
-        cursorLogo.dataset.triedLegacy = "0";
-        cursorLogo.dataset.file = `${key}.png${bust}`;
-        cursorLogo.src = `./${key}.png${bust}`;
+        const files = [`${key}.png${bust}`];
+        setImgCandidates(cursorLogo, expandLogoPaths(files));
       }else{
         // Same key, already loaded previously: show immediately.
         cursorLogo.classList.add("on");
@@ -5390,8 +5416,8 @@
       if(!el || el.classList.contains("wall")){
         detailLogo.classList.remove("on");
         detailLogo.dataset.key = "";
-        detailLogo.dataset.file = "";
-        detailLogo.dataset.triedLegacy = "0";
+        detailLogo.dataset.logoCandidates = "[]";
+        detailLogo.dataset.logoIndex = "0";
         detailLogo.removeAttribute("src");
         return;
       }
@@ -5400,8 +5426,8 @@
       if(!key){
         detailLogo.classList.remove("on");
         detailLogo.dataset.key = "";
-        detailLogo.dataset.file = "";
-        detailLogo.dataset.triedLegacy = "0";
+        detailLogo.dataset.logoCandidates = "[]";
+        detailLogo.dataset.logoIndex = "0";
         detailLogo.removeAttribute("src");
         return;
       }
@@ -5416,18 +5442,14 @@
         }
 
         detailLogo.dataset.key = "SECUROSERV_LOGO";
-        detailLogo.dataset.file = "securoserv_port.png";
-        detailLogo.dataset.triedLegacy = "0";
         detailLogo.classList.remove("on");
-        detailLogo.src = `./securoserv_port.png`;
+        setImgCandidates(detailLogo, expandLogoPaths(["securoserv_port.png", `${key}.png`]));
         return;
       }
 
       detailLogo.dataset.key = key;
-      detailLogo.dataset.file = `${key}.png`;
-      detailLogo.dataset.triedLegacy = "0";
       detailLogo.classList.remove("on"); // wait for load
-      detailLogo.src = `./${key}.png`;
+      setImgCandidates(detailLogo, expandLogoPaths([`${key}.png`]));
     }
 
     function moveCursorLogo(e){
