@@ -1,0 +1,3564 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GTA V Cyberpunk Map Viewer</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+    :root{
+      --bg0:#01061b;
+      --bg1:#07112a;
+      --ui:#608fff;    /* buildings + UI */
+      --yl:#eeff5e;    /* roads + highlights */
+      /* UI text uses only the two palette colors (via mixing) */
+      --text: color-mix(in srgb, var(--ui) 82%, var(--yl) 18%);
+      --muted: color-mix(in srgb, var(--ui) 62%, transparent);
+
+      --panel: rgba(6,10,22,.72);
+      --line: rgba(96,143,255,.55);
+      --line2: rgba(96,143,255,.25);
+
+      --glowB: 0 0 14px rgba(96,143,255,.20), 0 0 32px rgba(96,143,255,.10);
+      --glowY: 0 0 10px rgba(238,255,94,.22), 0 0 26px rgba(238,255,94,.10);
+
+      --sw-region: 0.1px;
+      --sw-road: 0.15px;
+      --sw-building: 0.1px;
+      --sw-wall: 0.2px;      /* walls slightly stronger than roads */
+
+      --topbar-h: 48px;
+      --term-h: 240px;
+    }
+
+    *{ box-sizing:border-box; }
+    /* Ensure controls inherit the global UI font (buttons often default otherwise). */
+    button, input, textarea, select{ font-family: inherit; font-size: inherit; }
+    html, body{ height:100%; margin:0; color:var(--text); overflow:hidden; }
+    body{
+      font-family: "Rajdhani", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      background: var(--bg0);
+      position: relative;
+    }
+
+    /* Top tabs (game-like) */
+    .topnav{
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--topbar-h);
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding: 0 14px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      font-size: 13px;
+      user-select:none;
+      z-index: 30;
+      /* Dark translucent backdrop so tabs stay readable over bright map areas */
+      background: rgba(1,6,27,.70);
+    }
+    .topnav .tabs{
+      display:flex;
+      gap: 24px;
+      align-items:flex-end;
+      /* Keep underline baseline at the very bottom of the header */
+      padding-bottom: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Left-side district menu (tab-like) */
+    .sidemenu{
+      position: fixed;
+      left: 14px;
+      top: calc(var(--topbar-h) + 10px);
+      display:flex;
+      align-items:flex-end;
+      justify-content:flex-start;
+      padding: 10px 12px 0;
+      background: rgba(1,6,27,.70);
+      border: 1px solid rgba(96,143,255,.18);
+      box-shadow: var(--glowB);
+      z-index: 35;
+      user-select:none;
+    }
+    .sidemenu .arrow{
+      appearance:none;
+      background: transparent;
+      border: none;
+      padding: 0;
+      margin: 0;
+      color: rgba(96,143,255,.82);
+      cursor: default;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      font-size: 44px;
+      font-weight: 700;
+    }
+    .sidemenu .arrow span{
+      display:inline-block;
+      padding: 0 10px 8px 10px;
+      /* Tall, thick, not wide */
+      transform: scaleX(.80) scaleY(1.28);
+    }
+    .sidemenu .tabs{
+      display:flex;
+      gap: 24px;
+      align-items:flex-end;
+      padding-bottom: 0;
+      position: relative;
+    }
+    .sidemenu .tab{
+      appearance:none;
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: rgba(96,143,255,.82);
+      cursor: default;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      font-size: 13px;
+      position: relative;
+      z-index: 1;
+    }
+    .sidemenu .tab.on{ color: var(--yl); font-weight: 700; z-index: 3; }
+    .sidemenu .tab span{
+      display:inline-block;
+      padding: 0 0 8px 0;
+      border-bottom: 2px solid rgba(96,143,255,.28);
+    }
+    .sidemenu .tab.on span{
+      border-bottom: 2px solid rgba(238,255,94,.85);
+      filter:
+        drop-shadow(0 0 10px rgba(238,255,94,.16))
+        drop-shadow(0 0 18px rgba(238,255,94,.10));
+    }
+
+    /* Interactivity: blue glow on hover; yellow only when selected */
+    .sidemenu .tab:hover:not(.on),
+    .sidemenu .arrow:hover{
+      color: rgba(96,143,255,.98);
+    }
+    .sidemenu .tab:hover:not(.on) span,
+    .sidemenu .arrow:hover span{
+      filter:
+        drop-shadow(0 0 10px rgba(96,143,255,.22))
+        drop-shadow(0 0 18px rgba(96,143,255,.12));
+    }
+    .sidemenu .tab:hover:not(.on) span{
+      border-bottom-color: rgba(96,143,255,.65);
+    }
+
+    /* Bottom-right pan readout */
+    .cornerReadout{
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 24;
+      pointer-events:none;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      align-items:flex-end;
+    }
+
+    .securserve-badge{
+      position: fixed;
+      top: calc(var(--topbar-h) + 14px);
+      right: 14px;
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none;
+      z-index: 18;
+    }
+    .securserve-badge img{
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
+      animation: securserveSpin 16s linear infinite;
+    }
+    @keyframes securserveSpin{
+      from{ transform: rotate(0deg); }
+      to{ transform: rotate(360deg); }
+    }
+    /* Side underline segments: start at the sides with a gap = tab spacing */
+    .topnav .tabs::before,
+    .topnav .tabs::after{
+      content:"";
+      position:absolute;
+      bottom: 0;
+      border-bottom: 2px solid rgba(96,143,255,.18); /* slightly dimmer than inactive tab underline */
+      pointer-events:none;
+    }
+    .topnav .tabs::before{
+      left: -100vw;
+      right: calc(100% + 24px);
+    }
+    .topnav .tabs::after{
+      left: calc(100% + 24px);
+      right: -100vw;
+    }
+    .topnav .tab{
+      appearance:none;
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: rgba(96,143,255,.82);
+      cursor: default;
+      line-height: 1;
+    }
+    .topnav .tab.on{ color: var(--yl); }
+    .topnav .tab span{
+      display:inline-block;
+      padding: 0 0 8px 0;
+      border-bottom: 2px solid rgba(96,143,255,.28);
+    }
+    .topnav .tab.on span{
+      border-bottom: 2px solid rgba(238,255,94,.85);
+    }
+    .topnav .tab.on{ font-weight: 700; }
+
+    /* Layout */
+    .stage{
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      padding: 0;
+    }
+    .hudcol{ display:flex; flex-direction:column; gap: 14px; min-width:0; }
+
+    /* Old HUD filter buttons are deprecated (replaced by left-side menu) */
+    #hudFilters{ display:none !important; }
+
+    .termDock{
+      position: fixed;
+      left: 14px;
+      bottom: 14px;
+      padding: 0;
+      background: transparent;
+      z-index: 40;
+    }
+    .termDock #panelTerm{ width: 300px; }
+
+    /* Panels */
+    .hudpanel, .hudpopup, .dockpanel{
+      background: var(--panel);
+      border: 1px solid var(--line2);
+      box-shadow: var(--glowB);
+      position: relative;
+    }
+    .hudpanel::before, .hudpopup::before, .dockpanel::before{
+      content:"";
+      position:absolute; inset:-1px;
+      border: 1px solid rgba(96,143,255,.12);
+      pointer-events:none;
+    }
+    .hudpanel::after, .hudpopup::after, .dockpanel::after{
+      content:"";
+      position:absolute;
+      left:-1px; top:-1px;
+      width: 18px; height: 18px;
+      border-left: 2px solid var(--yl);
+      border-top: 2px solid var(--yl);
+      opacity:.55;
+      pointer-events:none;
+    }
+
+    /* =========================
+       CUT-CORNER PANELS (ONLY)
+       ========================= */
+    #panelTerm,
+    #popupDetails{
+      --cut: 16px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      clip-path: polygon(
+        var(--cut) 0,
+        calc(100% - var(--cut)) 0,
+        100% var(--cut),
+        100% calc(100% - var(--cut)),
+        calc(100% - var(--cut)) 100%,
+        0 100%,
+        0 var(--cut)
+      );
+    }
+
+    #panelTerm::before,
+    #popupDetails::before{
+      content:"";
+      position:absolute;
+      inset: 0;
+      background: var(--panel);
+      border: 1px solid var(--line2);
+      box-shadow: var(--glowB);
+      clip-path: polygon(
+        var(--cut) 0,
+        calc(100% - var(--cut)) 0,
+        100% var(--cut),
+        100% calc(100% - var(--cut)),
+        calc(100% - var(--cut)) 100%,
+        0 100%,
+        0 var(--cut)
+      );
+      pointer-events:none;
+      z-index: 0;
+    }
+
+    /* Disable the global corner mark on these two */
+    #panelTerm::after,
+    #popupDetails::after{ display:none; }
+
+    #panelTerm > .hudhead,
+    #panelTerm > .hudbody,
+    #panelTerm > .hudfoot,
+    #popupDetails > .hudhead,
+    #popupDetails > .hudbody,
+    #popupDetails > .hudfoot{
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Small side tab protrusion */
+    #panelTerm .hudhead,
+    #popupDetails .hudhead{
+      position: relative;
+    }
+    #panelTerm .hudhead::before,
+    #popupDetails .hudhead::before{
+      content:"";
+      position:absolute;
+      left: -14px;
+      top: 10px;
+      width: 18px;
+      height: 22px;
+      background: rgba(6,10,22,.55);
+      border: 1px solid var(--line2);
+      border-right: none;
+      clip-path: polygon(0 0, 100% 6px, 100% 100%, 0 100%);
+      pointer-events:none;
+    }
+
+    /* Little top tab */
+    #panelTerm .hudhead::after,
+    #popupDetails .hudhead::after{
+      content:"";
+      position:absolute;
+      left: 22px;
+      top: -10px;
+      width: 76px;
+      height: 12px;
+      background: rgba(6,10,22,.55);
+      border: 1px solid var(--line2);
+      border-bottom: none;
+      clip-path: polygon(0 100%, 12px 0, 100% 0, 100% 100%);
+      pointer-events:none;
+    }
+
+    /* Headers/Footers */
+    .hudhead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line2);
+      background: rgba(6,10,22,.55);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      font-size: 12px;
+    }
+    .hudtitle{ color: rgba(96,143,255,.95); }
+    .hudmeta{ color: var(--yl); }
+    .hudbody{ padding: 12px; }
+    .hudfoot{
+      display:flex; justify-content:space-between;
+      padding: 8px 12px;
+      border-top: 1px solid var(--line2);
+      color: rgba(215,230,255,.52);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Restricted theming (defaults to Merryweather-style yellow) */
+    .restricted-overlay,
+    #popupDetails.restricted{
+      --restrictedRGB: 255, 238, 152;
+      --restrictedRGBHot: 255, 196, 44;
+      --restrictedTextRGB: 255, 238, 152;
+    }
+    .restricted-overlay.theme-blue,
+    #popupDetails.restricted.theme-blue{
+      --restrictedRGB: 96, 143, 255;
+      --restrictedRGBHot: 96, 143, 255;
+      --restrictedTextRGB: 96, 143, 255;
+    }
+    .restricted-overlay.theme-red,
+    #popupDetails.restricted.theme-red{
+      --restrictedRGB: 207, 0, 0;
+      --restrictedRGBHot: 255, 65, 65;
+      --restrictedTextRGB: 255, 65, 65;
+    }
+
+    #popupDetails.restricted{
+      animation: restrictedPanelPulse 4s ease-in-out infinite;
+    }
+    #popupDetails.restricted::before{
+      background: rgba(0,0,0,.95);
+      border: 4px solid rgba(0,0,0,1);
+      box-shadow:
+        0 0 32px rgba(var(--restrictedRGB), .85),
+        inset 0 0 26px rgba(0,0,0,.65);
+    }
+    #popupDetails.restricted .hudhead{
+      background: linear-gradient(120deg, rgba(var(--restrictedRGB), .18), rgba(6,10,22,.6));
+    }
+    #popupDetails.restricted .hudhead::before{
+      background: linear-gradient(120deg, rgba(var(--restrictedRGB), .45), rgba(6,10,22,.55));
+      border-color: rgba(var(--restrictedRGB), .8);
+    }
+    #popupDetails.restricted .hudhead::after{
+      background: rgba(var(--restrictedRGB), .14);
+      border-color: rgba(var(--restrictedRGB), .45);
+    }
+    #popupDetails.restricted .hudtitle{
+      color: rgba(var(--restrictedTextRGB), .95);
+      text-shadow: 0 0 8px rgba(var(--restrictedRGBHot), .55);
+      font-weight: 700;
+      letter-spacing: 3px;
+    }
+    #popupDetails.restricted .hudmeta{
+      color: rgba(var(--restrictedTextRGB), .95);
+      text-shadow: 0 0 8px rgba(var(--restrictedRGBHot), .55);
+      font-weight: 700;
+    }
+    #popupDetails.restricted .hudfoot{
+      border-top-color: rgba(var(--restrictedRGB), .6);
+      color: rgba(var(--restrictedTextRGB), .95);
+      text-shadow: 0 0 8px rgba(var(--restrictedRGBHot), .35);
+      font-weight: 600;
+    }
+    #popupDetails.restricted .hudbody,
+    #popupDetails.restricted .hudhead,
+    #popupDetails.restricted .hudfoot{
+      background: rgba(4,6,12,.75);
+      border-color: transparent;
+    }
+    #popupDetails.restricted::after{
+      content:"";
+      position:absolute;
+      inset: 2px;
+      pointer-events:none;
+      border-radius: inherit;
+      background:
+        linear-gradient(115deg, rgba(255,255,255,.08) 0 2px, transparent 2px 4px),
+        linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 6px);
+      mix-blend-mode: screen;
+      clip-path: inherit;
+      opacity: .45;
+      animation: restrictedGlitch 1.4s linear infinite;
+      background-size: 120% 120%;
+      animation-timing-function: steps(2, start);
+    }
+    @keyframes restrictedGlitch{
+      0%{ transform: translate(0,0); opacity:.45; }
+      20%{ transform: translate(-3px, 1px); }
+      40%{ transform: translate(2px, -1px); opacity:.6; }
+      60%{ transform: translate(-2px, 0); }
+      80%{ transform: translate(1px, -1px); opacity:.55; }
+      100%{ transform: translate(0,0); }
+    }
+    @keyframes restrictedPanelPulse{
+      0%,100%{ filter: drop-shadow(0 0 0 rgba(var(--restrictedRGB), 0.4)); }
+      40%{ filter:
+        drop-shadow(0 0 26px rgba(var(--restrictedRGB), .6))
+        drop-shadow(0 0 42px rgba(var(--restrictedRGBHot), .35)); }
+    }
+    #popupDetails.restricted .details .dRow{
+      border-color: rgba(var(--restrictedRGB), .35);
+    }
+    #popupDetails.restricted .details .dK{
+      color: rgba(var(--restrictedTextRGB), .95);
+      font-weight: 600;
+    }
+    #popupDetails.restricted .details .dV{
+      color: rgba(var(--restrictedTextRGB), .95);
+      font-weight: 600;
+    }
+    #popupDetails.restricted .details .dMedia{
+      border-color: rgba(var(--restrictedRGB), .95);
+      box-shadow: 0 0 24px rgba(var(--restrictedRGB), .45);
+      background: rgba(4,2,8,.85);
+    }
+    #popupDetails.restricted .dNoteText{
+      background: rgba(0,0,0,.8);
+      border-color: rgba(var(--restrictedRGB), .85);
+      color: rgba(var(--restrictedTextRGB), .95);
+      box-shadow: inset 0 0 24px rgba(var(--restrictedRGB), .3);
+    }
+
+    /* Terminal */
+    .term{
+      height: 280px;
+      overflow:auto;
+      font-family: inherit;
+      font-size: 12px;
+      line-height: 1.35;
+      color: rgba(238,255,94,.85);
+      background: rgba(4,7,16,.45);
+      border: 1px solid rgba(238,255,94,.18);
+    }
+    .termline{ padding: 3px 0; opacity:.92; }
+
+    /* Fake body scan */
+    .scanbox{
+      position:relative;
+      height: 320px;
+      border: 1px solid var(--line2);
+      background: linear-gradient(180deg, rgba(96,143,255,.10), rgba(6,10,22,.0));
+      overflow:hidden;
+    }
+    .scanfigure{
+      position:absolute; inset: 18px;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(96,143,255,.22), transparent 40%),
+        radial-gradient(circle at 50% 70%, rgba(96,143,255,.14), transparent 45%);
+      opacity:.8;
+    }
+    .scanmarks span{
+      position:absolute;
+      width: 10px; height: 10px;
+      border: 1px solid rgba(96,143,255,.55);
+      background: rgba(6,10,22,.35);
+    }
+    .scanmarks span:nth-child(1){ left: 26px; top: 90px; }
+    .scanmarks span:nth-child(2){ right: 44px; top: 130px; }
+    .scanmarks span:nth-child(3){ left: 60px; bottom: 82px; }
+    .scanmarks span:nth-child(4){ right: 80px; bottom: 110px; }
+    .scanline{
+      position:absolute; left:-10%;
+      top: 24px;
+      width: 120%; height: 2px;
+      background: rgba(238,255,94,.55);
+      box-shadow: var(--glowY);
+      animation: scan 2.6s linear infinite;
+      opacity:.55;
+    }
+    @keyframes scan{ 0%{ transform: translateY(0);} 100%{ transform: translateY(280px);} }
+
+    /* Right visuals */
+    .wavebox{
+      height: 170px;
+      border: 1px solid var(--line2);
+      background: rgba(4,7,16,.35);
+      overflow:hidden;
+      position:relative;
+    }
+    .wave{
+      position:absolute; inset:0;
+      background:
+        linear-gradient(transparent 60%, rgba(96,143,255,.06) 60%),
+        repeating-linear-gradient(90deg, rgba(96,143,255,.06), rgba(96,143,255,.06) 1px, transparent 1px, transparent 18px);
+      opacity:.8;
+    }
+    .wave::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(90deg, transparent, rgba(238,255,94,.10), transparent);
+      animation: sweep 2.2s linear infinite;
+    }
+    @keyframes sweep{ 0%{ transform: translateX(-60%);} 100%{ transform: translateX(60%);} }
+
+    .gridbox{
+      height: 260px;
+      border: 1px solid var(--line2);
+      background:
+        repeating-linear-gradient(0deg, rgba(96,143,255,.08), rgba(96,143,255,.08) 1px, transparent 1px, transparent 18px),
+        repeating-linear-gradient(90deg, rgba(96,143,255,.08), rgba(96,143,255,.08) 1px, transparent 1px, transparent 18px);
+      position:relative;
+    }
+    .gridbox::after{
+      content:"";
+      position:absolute; inset: 22px;
+      background: radial-gradient(circle at 50% 50%, rgba(238,255,94,.75) 1px, transparent 1.2px);
+      background-size: 22px 22px;
+      opacity:.35;
+    }
+
+    /* Center map */
+    .mapstage{ position:absolute; inset: 0; min-width:0; }
+    .maphud{
+      position:absolute;
+      top: var(--topbar-h);
+      left: 0;
+      display:flex;
+      gap: 10px;
+      z-index: 6;
+    }
+    .hudchip{
+      margin-top: 6px;
+      padding: 8px 10px;
+      background: rgba(6,10,22,.62);
+      border: 1px solid var(--line2);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: rgba(215,230,255,.68);
+      box-shadow: var(--glowB);
+    }
+    .hudchip span{ color: var(--yl); }
+
+    /* Always-visible filter buttons */
+    .hudfilters{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      margin-top: 6px;
+    }
+    .hudf{
+      background: rgba(6,10,22,.62);
+      border: 1px solid var(--line2);
+      color: rgba(215,230,255,.72);
+      padding: 8px 10px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      cursor:pointer;
+      box-shadow: var(--glowB);
+    }
+    .hudf:hover{
+      border-color: rgba(238,255,94,.35);
+      color: var(--yl);
+      box-shadow: var(--glowY);
+    }
+    .hudf.on{
+      background: var(--yl);
+      color:#0a1024;
+      border-color: rgba(238,255,94,.65);
+      box-shadow: var(--glowY);
+    }
+
+    .mapwrap{
+      position:absolute;
+      inset: 0;
+      border: none;
+      background: transparent;
+      overflow:hidden;
+    }
+
+    /* Side zoom bar (blue outline, yellow fill from center) */
+    .zoomBar{
+      position:absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 10px;
+      height: 190px;
+      border: 1px solid var(--ui);
+      background: transparent;
+      z-index: 12;
+      pointer-events:none;
+      --fill: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .zoomReadout{
+      position: absolute;
+      right: 100%;
+      margin-right: 8px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: rgba(96,143,255,.72);
+      font-weight: 600;
+      white-space: nowrap;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      pointer-events: none;
+    }
+    .zoomBar .fill{
+      position:absolute;
+      left: 1px;
+      right: 1px;
+      background: var(--yl);
+    }
+    .zoomBar .fill.up{
+      bottom: 50%;
+      height: calc(var(--fill) * 50%);
+    }
+    .zoomBar .fill.down{
+      top: 50%;
+      height: calc(var(--fill) * 50%);
+    }
+    /* Map stack: raster layers + SVG share one transform */
+    #mapStack{
+      position:absolute;
+      left: 0;
+      top: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+      cursor: grab;
+    }
+    #mapStack.grabbing{ cursor: grabbing; }
+    /* Only raster base layers are direct children of #mapStack.
+       Keep this rule from affecting district logo <img> elements. */
+    #mapStack > img{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit: fill;
+      pointer-events:none;
+      user-select:none;
+      z-index: 1;
+    }
+
+    #labelsLayer{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index: 8;
+      display: none;
+    }
+
+    #logosLayer{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index: 7;
+      --logoZoomScale: 1;
+    }
+    .districtLogo{
+      position:absolute;
+      transform: translate(-50%, -50%) scale(calc(0.72 * var(--logoZoomScale, 1)));
+      transform-origin: 50% 50%;
+      opacity: .40;
+      transition: transform .12s ease, opacity .12s ease, filter .12s ease;
+      filter:
+        drop-shadow(0 0 10px rgba(96,143,255,.10));
+    }
+    .districtLogo.ready{ opacity: .40; }
+    .districtLogo img{
+      width: 88px;
+      height: 88px;
+      object-fit: contain;
+      display:block;
+      opacity: 1;
+    }
+    .districtLogo.hot{
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(calc(1.05 * var(--logoZoomScale, 1)));
+      filter:
+        drop-shadow(0 0 12px rgba(96,143,255,.18))
+        drop-shadow(0 0 18px rgba(238,255,94,.10));
+    }
+    .districtLabel{
+      position:absolute;
+      transform: translate(-50%, -50%);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--yl);
+      text-shadow: 0 0 6px rgba(238,255,94,.35), 0 0 12px rgba(238,255,94,.25);
+      white-space: nowrap;
+    }
+    #svgHost{
+      position:absolute;
+      inset: 0;
+      display:block;
+      transform-origin: 0 0;
+      z-index: 6;
+    }
+
+    #restrictedBlurLayer{
+      position:absolute;
+      inset: 0;
+      z-index: 5; /* above raster, below regions */
+      pointer-events:none;
+      opacity: 0;
+      transition: opacity .16s ease;
+    }
+    #restrictedBlurLayer.on{ opacity: 1; }
+    #restrictedBlurSvg{
+      position:absolute;
+      inset:0;
+      display:block;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    /* Tooltip */
+    .tip{
+      position:absolute;
+      pointer-events:none;
+      z-index: 10;
+      padding: 10px 12px;
+      border: 1px solid var(--ui); /* blue box */
+      background: rgba(6,10,22,.78); /* dark blue, barely transparent */
+      box-shadow: 0 0 10px rgba(96,143,255,.18), 0 0 18px rgba(96,143,255,.12); /* subtle blue glow */
+      color: var(--yl); /* neon yellow text */
+      opacity: 0;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      transition: opacity .12s ease;
+      max-width: 360px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 1.15px;
+      text-shadow: 0 0 6px rgba(238,255,94,.35), 0 0 12px rgba(238,255,94,.22); /* subtle yellow glow */
+      border-bottom: none;
+      border-radius: 0;
+    }
+    .tip.on{ opacity: 1; }
+
+    /* HARD RULE: no rounded edges anywhere */
+    *, *::before, *::after{ border-radius: 0 !important; }
+
+    /* Cursor-following district logo */
+    .cursorLogo{
+      position:absolute;
+      z-index: 11;
+      width: 69px;
+      height: 69px;
+      object-fit: contain;
+      pointer-events:none;
+      user-select:none;
+      opacity: 0;
+      /* anchor: immediately to the right of cursor, vertically centered */
+      transform: translate(16px, -50%);
+      transition: opacity .12s ease;
+      filter:
+        drop-shadow(0 0 10px rgba(96,143,255,.18))
+        drop-shadow(0 0 18px rgba(96,143,255,.10));
+    }
+    /* Disabled: logos are now rendered in-district */
+    .cursorLogo{ display:none !important; }
+    .cursorLogo.on{
+      opacity: 1;
+      animation: logoGlitchInCursor .36s ease-out both;
+    }
+
+    @keyframes logoGlitchInCursor{
+      0%{ opacity: 0; transform: translate(16px, -50%) scale(.82) skewX(12deg); filter: drop-shadow(0 0 22px rgba(96,143,255,.32)) drop-shadow(0 0 36px rgba(96,143,255,.18)); }
+      16%{ opacity: .85; transform: translate(18px, -50%) scale(1.06) skewX(-10deg); }
+      26%{ opacity: .25; transform: translate(14px, -50%) scale(.98) skewX(8deg); }
+      38%{ opacity: .95; transform: translate(17px, -50%) scale(1.02) skewX(-6deg); }
+      54%{ opacity: .55; transform: translate(15px, -50%) scale(1.00) skewX(4deg); }
+      72%{ opacity: 1; transform: translate(16px, -50%) scale(1.00) skewX(-2deg); }
+      100%{ opacity: 1; transform: translate(16px, -50%) scale(1) skewX(0deg); filter: drop-shadow(0 0 10px rgba(96,143,255,.18)) drop-shadow(0 0 18px rgba(96,143,255,.10)); }
+    }
+
+    /* Popup window */
+    .hudpopup{
+      position:fixed;
+      left: 14px;
+      bottom: calc(14px + var(--dockH, 0px) + 14px);
+      width: 360px;
+      max-height: calc(100vh - var(--topbar-h) - (14px + var(--dockH, 0px) + 14px) - 14px);
+      overflow:auto;
+      z-index: 7;
+      display:none;
+    }
+    .hudpopup.on{ display:block; }
+
+    .hudhead-actions{ display:flex; gap: 8px; align-items:center; }
+    .hudbtn{
+      background: rgba(6,10,22,.45);
+      border: 1px solid var(--line2);
+      color: var(--text);
+      padding: 6px 10px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor:pointer;
+    }
+    .hudbtn:hover{
+      border-color: rgba(238,255,94,.35);
+      color: var(--yl);
+      box-shadow: var(--glowY);
+    }
+    .hudbtn-x{ width: 30px; padding: 6px 0; color: var(--yl); }
+
+    /* Field */
+    .field{ margin-top: 12px; }
+    .field label{
+      display:block;
+      font-size: 10px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: rgba(96,143,255,.95);
+      margin-bottom: 6px;
+    }
+    .field input{
+      width: 100%;
+      background: rgba(4,7,16,.45);
+      border: 1px solid var(--line2);
+      color: var(--text);
+      padding: 10px;
+      outline:none;
+    }
+    .field input:focus{
+      border-color: rgba(238,255,94,.40);
+      box-shadow: var(--glowY);
+    }
+
+    /* Pills */
+    .pillbar{ display:flex; gap: 10px; flex-wrap:wrap; margin-top: 12px; }
+    .pill{
+      padding: 6px 10px;
+      border: 1px solid var(--line2);
+      background: rgba(4,7,16,.35);
+      color: rgba(215,230,255,.68);
+      text-transform: uppercase;
+      letter-spacing: 1.1px;
+      font-size: 10px;
+      cursor:pointer;
+    }
+    .pill.on{
+      background: var(--yl);
+      color:#0a1024;
+      border-color: rgba(238,255,94,.65);
+      box-shadow: var(--glowY);
+    }
+
+    /* Details panel */
+    .details .dHeader{
+      display:flex;
+      gap: 12px;
+      align-items:flex-start;
+    }
+    .details .dKV{ flex: 1; min-width: 0; }
+    .details .dMedia{
+      width: 78px;
+      height: 78px;
+      border: 1px solid var(--ui);
+      background: color-mix(in srgb, var(--ui) 10%, transparent);
+      box-shadow: var(--glowB);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex: 0 0 auto;
+      overflow:hidden;
+    }
+    .details .dMedia img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+      image-rendering: auto;
+    }
+    .details .dMedia img.on{ display:block; }
+
+    .details .dRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(96,143,255,.12);
+    }
+    .details .dRow:last-child{ border-bottom:none; }
+    .details .dK{
+      color: rgba(96,143,255,.95);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+    .details .dV{
+      color: var(--text);
+      font-size: 11px;
+      text-align:right;
+    }
+    .details .dSep{
+      height: 1px;
+      background: rgba(96,143,255,.25);
+      margin: 12px 0;
+    }
+    .details .dActions{
+      display:flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .details .dLore{ display:none; }
+    .details .dLore.on{ display:block; }
+    .details .dLore .dNoteText{
+      width: 100%;
+      min-height: 56px;
+      background: rgba(4,7,16,.35);
+      border: 1px solid var(--line2);
+      color: var(--text);
+      padding: 8px;
+      font-family: inherit;
+      font-size: 11px;
+      line-height: 1.35;
+      white-space: pre-wrap;
+      user-select: text;
+    }
+
+    /* (Scrapped) feed/dock/biometric UI styles removed */
+
+    /* =========================
+       SVG LAYERS (THIN STROKES)
+       ========================= */
+
+    #svgHost .region{
+      transition: filter .12s ease, opacity .12s ease, stroke .12s ease, fill .12s ease;
+      /* default (normal areas): match restricted baseline thickness */
+      stroke-width: calc(var(--sw-region) + 1.0px) !important;
+      vector-effect: non-scaling-stroke !important;
+      opacity: .92;
+      --selectionGlowColorR: 96;
+      --selectionGlowColorG: 143;
+      --selectionGlowColorB: 255;
+    }
+
+    /* HOVERED: use region's own border color (brighter) + glow (non-restricted only) */
+    #svgHost .region.hot:not(.selected):not(.restricted){
+      opacity: 1;
+      stroke-width: calc(var(--sw-region) + 2.0px) !important;
+      filter:
+        drop-shadow(0 0 12px var(--hotGlow1, rgba(96,143,255,.22)))
+        drop-shadow(0 0 22px var(--hotGlow2, rgba(96,143,255,.14)));
+    }
+
+    /* RESTRICTED: thicker baseline; glow only when selected */
+    #svgHost .region.restricted{
+      opacity: .96;
+      stroke-width: calc(var(--sw-region) + 2.6px) !important;
+    }
+    /* SELECTED (clicked): thicker so it's not only color change */
+    #svgHost .region.selected{
+      opacity: 1;
+      stroke-width: calc(var(--sw-region) + 3.4px) !important;
+      filter: url(#selectionGlowInner);
+    }
+
+    .restricted-overlay{
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 6;
+      opacity: 0;
+      transition: opacity .6s ease;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding-bottom: 12vh;
+    }
+    .restricted-overlay.on{
+      opacity: 1;
+    }
+    .restricted-overlay::before{
+      content:"";
+      position:absolute;
+      top: -20px;
+      left: -20px;
+      right: -20px;
+      bottom: -20px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(var(--restrictedRGB), .34), transparent 45%),
+        radial-gradient(circle at 50% 100%, rgba(var(--restrictedRGBHot), .28), transparent 45%),
+        radial-gradient(circle at 0% 50%, rgba(var(--restrictedRGB), .24), transparent 40%),
+        radial-gradient(circle at 100% 50%, rgba(var(--restrictedRGBHot), .24), transparent 40%);
+      filter: blur(16px);
+      opacity: .55;
+      mix-blend-mode: screen;
+      pointer-events:none;
+      z-index:-1;
+    }
+    .restricted-overlay::after{
+      content:"";
+      position:absolute;
+      top: calc(var(--topbar-h) + 4px);
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 0;
+      border: none;
+      background:
+        linear-gradient(0deg, rgba(var(--restrictedRGB), .14), transparent 40%),
+        linear-gradient(90deg, rgba(var(--restrictedRGB), .14), transparent 60%);
+      box-shadow:
+        0 0 42px rgba(var(--restrictedRGB), .32),
+        0 0 80px rgba(var(--restrictedRGBHot), .22);
+      opacity: .6;
+      pointer-events:none;
+      mix-blend-mode: screen;
+      z-index:-1;
+    }
+    .restricted-overlay .restricted-message{
+      position:relative;
+      color: var(--yl);
+      font-size: clamp(20px, 3vw, 38px);
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      font-weight: 700;
+      line-height: 1.15;
+      text-align:center;
+      text-shadow:
+        0 0 12px rgba(var(--restrictedTextRGB), .9),
+        0 0 26px rgba(var(--restrictedRGBHot), .55),
+        0 0 46px rgba(var(--restrictedRGBHot), .35);
+      filter: drop-shadow(0 0 26px rgba(var(--restrictedRGB), .55));
+      animation: restrictedPulse 2.5s ease-in-out infinite;
+      z-index: 1;
+    }
+    @keyframes restrictedPulse{
+      0%{ transform: translate3d(0, 0, 0) scale(1); opacity:.92; }
+      40%{ transform: translate3d(0, -6px, 0) scale(1.04); opacity:1; }
+      100%{ transform: translate3d(0, 0, 0) scale(1); opacity:.92; }
+    }
+    @keyframes restrictedScan{
+      from{ transform: translateY(-100%); }
+      to{ transform: translateY(100%); }
+    }
+    #svgHost .region.dimmed{ opacity: .14; }
+    #svgHost .region.hidden{ display: none !important; }
+
+    #svgHost.dimmedOthers .region:not(.selected):not(.wall){
+      opacity: .46;
+      filter:
+        drop-shadow(0 0 4px rgba(0,0,0,.18));
+    }
+
+    /* WALLS: no fill, slightly stronger outline */
+    #svgHost .wall, #svgHost .wall *{
+      fill: none !important;
+      stroke: rgba(96,143,255,.85) !important;      /* default wall color (blue) */
+      stroke-width: var(--sw-wall) !important;
+      vector-effect: non-scaling-stroke !important;
+      stroke-linecap: square !important;
+      stroke-linejoin: miter !important;
+      opacity: .95 !important;
+
+      /* subtle barrier glow */
+      filter:
+        drop-shadow(0 0 8px rgba(96,143,255,.14)) !important;
+    }
+
+    /* PERFORMANCE OPTIMIZATIONS */
+    /* Transform now applies to #mapStack; svgHost renders regions only */
+
+    /* =======================
+       BOOT LOADING OVERLAY
+       ======================= */
+    .boot{
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(900px 600px at 30% 20%, rgba(96,143,255,.18), transparent 60%),
+        radial-gradient(700px 500px at 70% 70%, rgba(238,255,94,.10), transparent 62%),
+        linear-gradient(180deg, rgba(3,5,12,.95), rgba(6,10,22,.92));
+      border-top: 2px solid rgba(238,255,94,.55);
+      border-bottom: 2px solid rgba(96,143,255,.35);
+    }
+    .boot-inner{
+      width: min(760px, calc(100vw - 40px));
+      border: 1px solid rgba(96,143,255,.25);
+      background: rgba(6,10,22,.72);
+      box-shadow: var(--glowB);
+      position: relative;
+      overflow: hidden;
+    }
+    .boot-inner::before{
+      content:"";
+      position:absolute; inset:-1px;
+      border: 1px solid rgba(96,143,255,.12);
+      pointer-events:none;
+    }
+    .boot-inner::after{
+      content:"";
+      position:absolute; left:-1px; top:-1px;
+      width: 18px; height: 18px;
+      border-left: 2px solid var(--yl);
+      border-top: 2px solid var(--yl);
+      opacity:.75;
+      pointer-events:none;
+    }
+    .boot-top{
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid rgba(96,143,255,.25);
+      display: grid;
+      gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+    .boot-tag{
+      display:inline-block;
+      width: fit-content;
+      padding: 4px 10px;
+      background: var(--yl);
+      color: #0a1024;
+      box-shadow: var(--glowY);
+      font-size: 12px;
+    }
+    .boot-title{ font-size: 14px; color: rgba(96,143,255,.95); }
+    .boot-sub{ font-size: 12px; color: rgba(215,230,255,.62); }
+    .boot-mid{ padding: 14px 16px 16px; }
+    .boot-lines{
+      height: 220px;
+      border: 1px solid rgba(238,255,94,.18);
+      background: rgba(4,7,16,.45);
+      overflow: hidden;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 12px;
+      line-height: 1.35;
+      color: rgba(238,255,94,.85);
+    }
+    .boot-line{ opacity:.92; padding: 2px 0; }
+    .boot-line.dim{ opacity:.65; color: rgba(215,230,255,.55); }
+    .boot-bar{
+      margin-top: 12px;
+      height: 10px;
+      border: 1px solid rgba(238,255,94,.25);
+      background: rgba(4,7,16,.35);
+      overflow:hidden;
+    }
+    .boot-bar-fill{
+      width: 0%;
+      height: 100%;
+      background: rgba(238,255,94,.85);
+      box-shadow: var(--glowY);
+      transition: width .18s linear;
+    }
+    .boot-meta{
+      margin-top: 10px;
+      display:flex;
+      justify-content: space-between;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: rgba(215,230,255,.65);
+    }
+    #bootPct{ color: var(--yl); }
+    .boot-foot{
+      padding: 10px 16px;
+      border-top: 1px solid rgba(96,143,255,.25);
+      display:flex;
+      justify-content: space-between;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: rgba(215,230,255,.55);
+    }
+    .boot.off{ opacity: 0; transition: opacity .35s ease; }
+    .boot.hidden{ display:none; }
+  </style>
+</head>
+<body>
+  <!-- TOP TABS -->
+  <header class="topnav" aria-label="Top navigation">
+    <div class="tabs" role="tablist" aria-label="Menu">
+      <button class="tab" role="tab" aria-selected="false" tabindex="-1"><span>CYBERWARE</span></button>
+      <button class="tab" role="tab" aria-selected="false" tabindex="-1"><span>INVENTORY</span></button>
+      <button class="tab on" role="tab" aria-selected="true"><span>MAP</span></button>
+      <button class="tab" role="tab" aria-selected="false" tabindex="-1"><span>CHARACTER</span></button>
+      <button class="tab" role="tab" aria-selected="false" tabindex="-1"><span>JOURNAL</span></button>
+    </div>
+  </header>
+
+  <div class="securserve-badge" aria-hidden="true">
+    <img src="./logos/SS.PNG" alt="Securserve" />
+  </div>
+
+  <!-- MAIN STAGE -->
+  <div class="stage">
+    <!-- MAP (full page) -->
+    <main class="mapstage">
+      <div class="maphud">
+
+        <div class="hudfilters" id="hudFilters">
+          <button class="hudf" id="btnShowAllDistricts">SHOW ALL DISTRICTS</button>
+          <button class="hudf" id="btnRestricted">RESTRICTED ZONE</button>
+          <button class="hudf" id="btnHideAll">HIDE ALL DISTRICTS</button>
+        </div>
+      </div>
+
+      <div class="mapwrap">
+        <div id="mapStack">
+          <img id="layerOcean" draggable="false" />
+          <img id="layerLand" draggable="false" />
+          <img id="layerBuildings" draggable="false" />
+          <img id="layerRoads" draggable="false" />
+          <div id="restrictedBlurLayer" aria-hidden="true">
+            <svg id="restrictedBlurSvg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" aria-hidden="true"></svg>
+          </div>
+          <div id="svgHost"></div>
+          <div id="logosLayer"></div>
+          <div id="labelsLayer"></div>
+        </div>
+        <div class="tip" id="tooltip"></div>
+        <img id="cursorLogo" class="cursorLogo" draggable="false" alt="" />
+        <div id="zoomBar" class="zoomBar" aria-hidden="true">
+          <div id="zoomReadout" class="zoomReadout">100%</div>
+          <div class="fill up" id="zoomFillUp"></div>
+          <div class="fill down" id="zoomFillDown"></div>
+        </div>
+      </div>
+
+      <div class="cornerReadout" aria-hidden="true">
+        <div class="hudchip" id="hintReadout">LOAD: <span id="loadState">pending</span></div>
+        <div class="hudchip">PAN: <span id="panReadout">0,0</span></div>
+      </div>
+    </main>
+    <div class="restricted-overlay" id="restrictedOverlay" aria-hidden="true">
+      <div class="restricted-message">WARNING:// RESTRICTED AREA SELECTED</div>
+    </div>
+  </div>
+
+  <!-- LEFT DISTRICT MENU (replaces the 3 HUD buttons) -->
+  <nav class="sidemenu" aria-label="District filters">
+    <button class="arrow" id="menuPrev" type="button" aria-label="Previous filter"><span>‹</span></button>
+    <div class="tabs" role="tablist" aria-label="District filters">
+      <button class="tab on" id="menuShowAll" type="button" role="tab" aria-selected="true"><span>SHOW ALL</span></button>
+      <button class="tab" id="menuRestricted" type="button" role="tab" aria-selected="false"><span>RESTRICTED</span></button>
+      <button class="tab" id="menuHideAll" type="button" role="tab" aria-selected="false"><span>HIDE ALL</span></button>
+    </div>
+    <button class="arrow" id="menuNext" type="button" aria-label="Next filter"><span>›</span></button>
+  </nav>
+
+  <!-- AREA DETAILS (POPUP WINDOW) -->
+  <section class="hudpopup" id="popupDetails" aria-live="polite">
+    <div class="hudhead">
+      <span class="hudtitle">AREA DETAILS</span>
+      <div class="hudhead-actions">
+        <span class="hudmeta" id="detailState">NO TARGET</span>
+        <button class="hudbtn hudbtn-x" id="btnCloseDetails" title="Close">X</button>
+      </div>
+    </div>
+
+    <div class="hudbody details">
+      <div class="dHeader">
+        <div class="dKV">
+          <div class="dRow"><div class="dK">NAME</div><div class="dV" id="dName">—</div></div>
+          <div class="dRow"><div class="dK">ID</div><div class="dV" id="dId">—</div></div>
+          <div class="dRow"><div class="dK">TYPE</div><div class="dV" id="dType">—</div></div>
+          <div class="dRow"><div class="dK">ZONE</div><div class="dV" id="dZone">—</div></div>
+          <div class="dRow"><div class="dK">BOUNDS</div><div class="dV" id="dBounds">—</div></div>
+        </div>
+        <div class="dMedia" aria-hidden="true">
+          <img id="detailLogo" alt="" draggable="false" />
+        </div>
+      </div>
+
+      <div class="dSep"></div>
+
+      <div class="dActions"></div>
+
+      <div class="dLore">
+        <div class="dK" style="margin-bottom:6px;">LORE / NOTES</div>
+        <div class="dNoteText" id="dNotes"></div>
+      </div>
+    </div>
+
+    <div class="hudfoot">
+      <span>MAP/INTEL</span><span id="detailFoot">waiting</span>
+    </div>
+  </section>
+
+  <!-- TERMINAL (BOTTOM) -->
+  <footer class="termDock" aria-label="Terminal">
+    <section class="hudpanel" id="panelTerm">
+      <div class="hudhead">
+        <span class="hudtitle">TERMINAL</span>
+        <span class="hudmeta">RX</span>
+      </div>
+      <div class="hudbody term" id="termLog">
+        <div class="termline">[BOOT] initializing map interface…</div>
+        <div class="termline">[NET] handshake ok • data stream stable</div>
+        <div class="termline">[SVG] awaiting payload…</div>
+      </div>
+      <div class="hudfoot">
+        <span>NET/TTY</span><span>secure</span>
+      </div>
+    </section>
+  </footer>
+
+  <!-- BOOT OVERLAY -->
+  <div class="boot" id="boot">
+    <div class="boot-inner">
+      <div class="boot-top">
+        <div class="boot-tag">NETRUN</div>
+        <div class="boot-title">INITIALIZING MAP INTERFACE</div>
+        <div class="boot-sub">SUBSYSTEM: LS-GRID • ACCESS LEVEL: LOCAL</div>
+      </div>
+
+      <div class="boot-mid">
+        <div class="boot-lines" id="bootLines" aria-live="polite"></div>
+
+        <div class="boot-bar">
+          <div class="boot-bar-fill" id="bootFill"></div>
+        </div>
+
+        <div class="boot-meta">
+          <span id="bootPct">0%</span>
+          <span id="bootPhase">handshake</span>
+        </div>
+      </div>
+
+      <div class="boot-foot">
+        <span>PRESS ANY KEY: DISABLED</span>
+        <span id="bootHint">LINK STABLE</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * CONFIG
+     * Put your SVG file next to this HTML and name it "map.svg", or change this path.
+     */
+    const SVG_URL = "./REGIONS.svg";
+    const LAYERS = {
+      ocean: "./FINAL OCEAN.webp",
+      land: "./FINAL LAND.webp",
+      buildings: "./FINAL BUILDINGS.webp",
+      roads: "./FINAL ROADS.webp",
+    };
+    // Load raster layers
+    document.getElementById("layerOcean").src = LAYERS.ocean;
+    document.getElementById("layerLand").src = LAYERS.land;
+    document.getElementById("layerBuildings").src = LAYERS.buildings;
+    document.getElementById("layerRoads").src = LAYERS.roads;
+
+    function ensureRestrictedBlurSvg(){
+      const svg = document.getElementById("restrictedBlurSvg");
+      if(!svg) return null;
+
+      // One-time build
+      if(svg.querySelector("defs")) return svg;
+
+      const NS = "http://www.w3.org/2000/svg";
+      const defs = document.createElementNS(NS, "defs");
+
+      const filter = document.createElementNS(NS, "filter");
+      filter.setAttribute("id", "restrictedBlurFilter");
+      filter.setAttribute("x", "-12%");
+      filter.setAttribute("y", "-12%");
+      filter.setAttribute("width", "124%");
+      filter.setAttribute("height", "124%");
+      const blur = document.createElementNS(NS, "feGaussianBlur");
+      blur.setAttribute("stdDeviation", "3.2");
+      filter.appendChild(blur);
+      defs.appendChild(filter);
+
+      const clip = document.createElementNS(NS, "clipPath");
+      clip.setAttribute("id", "restrictedBlurClip");
+      clip.setAttribute("clipPathUnits", "userSpaceOnUse");
+      defs.appendChild(clip);
+
+      svg.appendChild(defs);
+
+      const g = document.createElementNS(NS, "g");
+      g.setAttribute("id", "restrictedBlurGroup");
+      g.setAttribute("clip-path", "url(#restrictedBlurClip)");
+      g.setAttribute("filter", "url(#restrictedBlurFilter)");
+
+      const mkImg = (key, href) => {
+        const im = document.createElementNS(NS, "image");
+        im.setAttribute("data-blur-layer", key);
+        im.setAttribute("x", "0");
+        im.setAttribute("y", "0");
+        im.setAttribute("preserveAspectRatio", "none");
+        if(href) im.setAttribute("href", href);
+        return im;
+      };
+      g.appendChild(mkImg("ocean", LAYERS.ocean));
+      g.appendChild(mkImg("land", LAYERS.land));
+      g.appendChild(mkImg("buildings", LAYERS.buildings));
+      g.appendChild(mkImg("roads", LAYERS.roads));
+      svg.appendChild(g);
+      return svg;
+    }
+
+    function rebuildRestrictedBlurClip(){
+      const blurLayer = document.getElementById("restrictedBlurLayer");
+      const blurSvg = ensureRestrictedBlurSvg();
+      const clip = blurSvg?.querySelector?.("#restrictedBlurClip");
+      if(!blurLayer || !blurSvg || !clip || !svgEl){
+        if(blurLayer) blurLayer.classList.remove("on");
+        return;
+      }
+
+      clip.replaceChildren();
+
+      const candidates = Array.from(svgEl.querySelectorAll(".region.restricted:not(.wall):not(.hidden)"));
+      for(const src of candidates){
+        try{
+          const clone = src.cloneNode(true);
+          clone.removeAttribute?.("style");
+          clone.removeAttribute?.("filter");
+          clone.removeAttribute?.("mask");
+          clone.removeAttribute?.("clip-path");
+          clone.removeAttribute?.("opacity");
+          clone.removeAttribute?.("stroke");
+          clone.removeAttribute?.("fill");
+
+          const m = src?.getCTM?.();
+          clone.removeAttribute?.("transform");
+          if(m){
+            clone.setAttribute?.("transform", `matrix(${m.a} ${m.b} ${m.c} ${m.d} ${m.e} ${m.f})`);
+          }
+          clip.appendChild(clone);
+        }catch(e){
+          // ignore bad shapes
+        }
+      }
+
+      blurLayer.classList.toggle("on", clip.childNodes.length > 0);
+    }
+
+    function syncRestrictedBlurLayerSources(){
+      const svg = ensureRestrictedBlurSvg();
+      if(!svg) return;
+      const set = (key, href) => {
+        const im = svg.querySelector(`image[data-blur-layer='${key}']`);
+        if(im) im.setAttribute("href", href);
+      };
+      set("ocean", LAYERS.ocean);
+      set("land", LAYERS.land);
+      set("buildings", LAYERS.buildings);
+      set("roads", LAYERS.roads);
+    }
+    syncRestrictedBlurLayerSources();
+
+    // BOOT CONTROLLER
+    const boot = {
+      el: document.getElementById("boot"),
+      linesEl: document.getElementById("bootLines"),
+      fillEl: document.getElementById("bootFill"),
+      pctEl: document.getElementById("bootPct"),
+      phaseEl: document.getElementById("bootPhase"),
+      hintEl: document.getElementById("bootHint"),
+    };
+
+    function bootLine(text, dim=false){
+      if(!boot.linesEl) return;
+      const div = document.createElement("div");
+      div.className = "boot-line" + (dim ? " dim" : "");
+      div.textContent = text;
+      boot.linesEl.appendChild(div);
+      boot.linesEl.scrollTop = boot.linesEl.scrollHeight;
+    }
+
+    function bootSet(pct, phase){
+      pct = Math.max(0, Math.min(100, pct));
+      if(boot.fillEl) boot.fillEl.style.width = pct + "%";
+      if(boot.pctEl) boot.pctEl.textContent = Math.round(pct) + "%";
+      if(boot.phaseEl) boot.phaseEl.textContent = phase || "";
+    }
+
+    function bootClose(){
+      if(!boot.el) return;
+      boot.el.classList.add("off");
+      setTimeout(() => boot.el.classList.add("hidden"), 420);
+    }
+
+    function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+    async function startBoot(){
+      bootSet(0, "handshake");
+      bootLine("[BOOT] initializing runtime…");
+      await sleep(180);
+
+      bootSet(12, "handshake");
+      bootLine("[NET] link stable • encryption ok");
+      await sleep(220);
+
+      bootSet(25, "auth");
+      bootLine("[AUTH] credentials verified • LS-07");
+      await sleep(220);
+
+      bootSet(40, "mount");
+      bootLine("[FS] mounting local asset…");
+      await sleep(220);
+
+      bootSet(55, "request");
+      bootLine(`[SVG] requesting payload: ${SVG_URL}`);
+      bootLine("[SVG] awaiting payload stream…", true);
+
+      // start actual load
+      loadSvg();
+    }
+
+    // State
+    let svgEl = null;
+    let selectedEl = null;
+    let hoveredEl = null;
+
+    // Labels are currently disabled (names hidden).
+    const SHOW_LABELS = false;
+
+    const missingDistrictLogos = new Set();
+    let selectionGlowFilter = null;
+    let selectionGlowAnimation = null;
+
+    function term(msg){
+      const log = document.getElementById("termLog");
+      const div = document.createElement("div");
+      div.className = "termline";
+      div.textContent = msg;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+
+      // Keep popup offset in sync with dock size
+      if(typeof updateDockMetrics === "function") updateDockMetrics();
+    }
+
+    // =========================
+    // AREA NOTES (READ-ONLY)
+    // =========================
+    // Replace these TEMPLATE lines with your own intel.
+    // Notes only render if a non-empty entry exists for the selected area.
+    const AREA_NOTES = {
+      APEX_HQ: "TEMPLATE APEX_HQ — Corporate command node; replace intel.",
+      DISTRICT_HARMONY: "TEMPLATE DISTRICT_HARMONY — Residential/market district; replace intel.",
+      HUMANE_LABS: "TEMPLATE HUMANE_LABS — Research site with restricted access; replace intel.",
+      LA_PUERTA: "TEMPLATE LA_PUERTA — Industrial/harbor-adjacent zone; replace intel.",
+      LITTLE_SOEUL: "TEMPLATE LITTLE_SOEUL — Neon retail blocks; replace intel.",
+      MERRYWEATHER_BASE: "TEMPLATE MERRYWEATHER_BASE — Private military installation; replace intel.",
+      MERRYWEATHER_PORT: "TEMPLATE MERRYWEATHER_PORT — Secured port logistics; replace intel.",
+      MIRROR_HILLS: "TEMPLATE MIRROR_HILLS — Hillside housing sector; replace intel.",
+      NEON_CITY_NATIONAL_AIRPORT: "TEMPLATE NEON_CITY_NATIONAL_AIRPORT — Air traffic hub; replace intel.",
+      NEON_CITY_PORTS: "TEMPLATE NEON_CITY_PORTS — Cargo docks & transit lanes; replace intel.",
+      NEON_CITY_PRISON: "TEMPLATE NEON_CITY_PRISON — Restricted detention complex; replace intel.",
+      NEON_CORE: "TEMPLATE NEON_CORE — Central metro/core district; replace intel.",
+      PACIFIC_BLUFFS: "TEMPLATE PACIFIC_BLUFFS — Coastal luxury zone; replace intel.",
+      PALAMINO_LANDS: "TEMPLATE PALAMINO_LANDS — Rural outskirts; replace intel.",
+      PATH1: "TEMPLATE PATH1 — Replace this area intel.",
+      PATH104: "TEMPLATE PATH104 — Replace this area intel.",
+      PATH14: "TEMPLATE PATH14 — Replace this area intel.",
+      PATH18: "TEMPLATE PATH18 — Replace this area intel.",
+      PATH19: "TEMPLATE PATH19 — Replace this area intel.",
+      PATH2: "TEMPLATE PATH2 — Replace this area intel.",
+      PATH20: "TEMPLATE PATH20 — Replace this area intel.",
+      PATH21: "TEMPLATE PATH21 — Replace this area intel.",
+      PATH3: "TEMPLATE PATH3 — Replace this area intel.",
+      PATH4: "TEMPLATE PATH4 — Replace this area intel.",
+      PATH46: "TEMPLATE PATH46 — Replace this area intel.",
+      PATH47: "TEMPLATE PATH47 — Replace this area intel.",
+      PATH48: "TEMPLATE PATH48 — Replace this area intel.",
+      PATH49: "TEMPLATE PATH49 — Replace this area intel.",
+      PATH5: "TEMPLATE PATH5 — Replace this area intel.",
+      PATH50: "TEMPLATE PATH50 — Replace this area intel.",
+      PATH6: "TEMPLATE PATH6 — Replace this area intel.",
+      PATH68: "TEMPLATE PATH68 — Replace this area intel.",
+      PATH8: "TEMPLATE PATH8 — Replace this area intel.",
+      PATH81: "TEMPLATE PATH81 — Replace this area intel.",
+      PATH84: "TEMPLATE PATH84 — Replace this area intel.",
+      ROCKFORD_HILLS: "TEMPLATE ROCKFORD_HILLS — Wealthy hillside estates; replace intel.",
+      SOUTH_SIDE: "TEMPLATE SOUTH_SIDE — Street-level sprawl; replace intel.",
+      VESPUCCI: "TEMPLATE VESPUCCI — Beachfront strip; replace intel.",
+      VINEWOOD_HILLS: "TEMPLATE VINEWOOD_HILLS — Hills + media mansions; replace intel.",
+    };
+
+    function setAreaNotesFor(el){
+      const box = document.getElementById("dNotes");
+      const wrap = document.querySelector("#popupDetails .dLore");
+      if(!box || !wrap){
+        return;
+      }
+
+      if(!el){
+        box.textContent = "";
+        wrap.classList.remove("on");
+        return;
+      }
+
+      const key = normalizeRegionKey(el.id || el.getAttribute("data-name") || "");
+      const note = (AREA_NOTES[key] || "").trim();
+      if(!note){
+        box.textContent = "";
+        wrap.classList.remove("on");
+        return;
+      }
+
+      box.textContent = note;
+      wrap.classList.add("on");
+    }
+
+    // Popup close handlers
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-close]");
+      if(!btn) return;
+      document.getElementById(btn.getAttribute("data-close"))?.classList.remove("on");
+    });
+
+    // Pan/zoom transform on #mapStack; #svgHost holds regions SVG.
+    const mapStack = document.getElementById("mapStack");
+    const host = document.getElementById("svgHost");
+    const tooltip = document.getElementById("tooltip");
+    const cursorLogo = document.getElementById("cursorLogo");
+    const detailLogo = document.getElementById("detailLogo");
+    const selectionText = document.getElementById("selectionText");
+    const zoomReadout = document.getElementById("zoomReadout");
+    const zoomBar = document.getElementById("zoomBar");
+    const logosLayer = document.getElementById("logosLayer");
+
+    if(cursorLogo){
+      cursorLogo.addEventListener("load", () => {
+        // Only show if it's still the expected asset
+        cursorLogo.dataset.failed = "0";
+        cursorLogo.classList.add("on");
+      });
+      cursorLogo.addEventListener("error", () => {
+        cursorLogo.dataset.failed = "1";
+        cursorLogo.classList.remove("on");
+        if(cursorLogo.dataset.key){
+          term(`[LOGO] missing: ./logos/${cursorLogo.dataset.key}.png`);
+        }
+      });
+    }
+
+    if(detailLogo){
+      detailLogo.addEventListener("load", () => {
+        detailLogo.classList.add("on");
+      });
+      detailLogo.addEventListener("error", () => {
+        const key = detailLogo.dataset.key || "";
+        detailLogo.classList.remove("on");
+        detailLogo.removeAttribute("src");
+        if(key) term(`[DETAILLOGO] missing: ./logos/${key}.png`);
+      });
+    }
+
+    // =========================
+    // GAME CAMERA (SMOOTH)
+    // =========================
+    const camera = {
+      x: 0, y: 0,
+      zoom: 1,
+      targetX: 0, targetY: 0,
+      targetZoom: 1,
+      minZoom: 0.06,
+      maxZoom: 6.0,
+
+      // smoothing (higher = snappier)
+      panSmooth: 0.18,
+      zoomSmooth: 0.20,
+
+      // bounds from SVG viewBox
+      vb: null, // {x,y,width,height}
+
+      // original viewBox origin (used to convert SVG units -> stack pixels)
+      vbOrigin: { x: 0, y: 0 },
+
+      // viewport size cache
+      vw: 1, vh: 1,
+
+      // transitions
+      anim: null, // {t0, dur, from, to}
+    };
+
+    // Cache viewport size (no getBoundingClientRect spam)
+    const mapwrap = document.querySelector(".mapwrap");
+    function updateViewport(){
+      const r = mapwrap.getBoundingClientRect();
+      camera.vw = r.width;
+      camera.vh = r.height;
+    }
+    updateViewport();
+    new ResizeObserver(updateViewport).observe(mapwrap);
+
+    function updateDockMetrics(){
+      const panel = document.getElementById("panelTerm");
+      if(!panel) return;
+      const h = Math.round(panel.getBoundingClientRect().height);
+      document.documentElement.style.setProperty("--dockH", h + "px");
+    }
+    window.addEventListener("resize", () => requestAnimationFrame(updateDockMetrics));
+    requestAnimationFrame(updateDockMetrics);
+
+    // perf mode removed; transforms now apply to lightweight raster stack
+
+    // Easing
+    function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+
+    // Clamp helpers
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+    function lerp(a,b,t){ return a + (b-a)*t; }
+
+    // User preference: no movement restrictions (no clamping).
+    const DISABLE_CAMERA_CLAMP = true;
+
+    // Keep camera from losing the map entirely.
+    // This is intentionally loose: you can pan freely, and the only constraint is that
+    // the map cannot be completely off-screen.
+    function clampToBounds(){
+      if(!camera.vb) return;
+      if(DISABLE_CAMERA_CLAMP) return;
+
+      const vb = camera.vb;
+
+      // half-viewport in world units
+      const halfW = (camera.vw / 2) / camera.targetZoom;
+      const halfH = (camera.vh / 2) / camera.targetZoom;
+
+      // Ensure viewport intersects map bounds (non-empty overlap).
+      // viewport in world = [targetX-halfW, targetX+halfW]
+      // map in world      = [vb.x, vb.x+vb.width]
+      const minX = vb.x - halfW;
+      const maxX = (vb.x + vb.width) + halfW;
+      const minY = vb.y - halfH;
+      const maxY = (vb.y + vb.height) + halfH;
+
+      camera.targetX = clamp(camera.targetX, minX, maxX);
+      camera.targetY = clamp(camera.targetY, minY, maxY);
+    }
+
+    // Render camera transform (centered)
+    function renderCamera(){
+      const cx = camera.vw / 2;
+      const cy = camera.vh / 2;
+      mapStack.style.transform =
+        `translate3d(${cx}px, ${cy}px, 0) scale(${camera.zoom}) translate(${-camera.x}px, ${-camera.y}px)`;
+      if(zoomReadout) zoomReadout.textContent = `ZOOM: ${Math.round(camera.zoom * 100)}%`;
+      document.getElementById("panReadout").textContent = `${Math.round(camera.x)},${Math.round(camera.y)}`;
+      if(logosLayer){
+        const scale = camera.zoom > 0 ? 1 / camera.zoom : 1;
+        logosLayer.style.setProperty('--logoZoomScale', String(scale));
+      }
+
+      // Side zoom bar fills from center: up for zoom-in, down for zoom-out
+      if(zoomBar){
+        // True percentage meter from min->max, drawn symmetrically from the center.
+        const z = camera.zoom;
+        const denom = Math.max(0.0001, (camera.maxZoom - camera.minZoom));
+        const fill = (z - camera.minZoom) / denom;
+        zoomBar.style.setProperty('--fill', String(clamp(fill, 0, 1)));
+      }
+    }
+
+
+    // Animation loop (smooth inertial pan/zoom + transitions)
+    let rafId = null;
+    function startTick(){
+      if(rafId) return; // already running
+      const loop = () => {
+        rafId = requestAnimationFrame(loop);
+
+        // run scripted animation if any
+        if(camera.anim){
+          const now = performance.now();
+          const t = (now - camera.anim.t0) / camera.anim.dur;
+          const k = easeOutCubic(clamp(t, 0, 1));
+          camera.targetX = lerp(camera.anim.from.x, camera.anim.to.x, k);
+          camera.targetY = lerp(camera.anim.from.y, camera.anim.to.y, k);
+          camera.targetZoom = lerp(camera.anim.from.zoom, camera.anim.to.zoom, k);
+          clampToBounds();
+          if(t >= 1) camera.anim = null;
+        }
+
+        // smooth approach targets (inertial feel)
+        camera.zoom = lerp(camera.zoom, camera.targetZoom, camera.zoomSmooth);
+        camera.x = lerp(camera.x, camera.targetX, camera.panSmooth);
+        camera.y = lerp(camera.y, camera.targetY, camera.panSmooth);
+
+        renderCamera();
+      };
+      loop();
+    }
+
+    // Set camera instantly (no smoothing)
+    function cameraSetInstant(x,y,z){
+      camera.x = camera.targetX = x;
+      camera.y = camera.targetY = y;
+      camera.zoom = camera.targetZoom = z;
+      clampToBounds();
+      renderCamera();
+    }
+
+    // Animate camera to target (selection transitions)
+    function cameraFlyTo(x,y,z, dur=420){
+      camera.anim = {
+        t0: performance.now(),
+        dur,
+        from: { x: camera.targetX, y: camera.targetY, zoom: camera.targetZoom },
+        to: { x, y, zoom: z }
+      };
+    }
+
+    function flyToElement(el, zoom=2.2, dur=520, allowAutoZoom=true){
+      if(!el) return;
+      try{
+        updateViewport();
+
+        // Center: use screen->world inversion so we don't depend on SVG viewBox origin quirks.
+        const c = regionCenterInWorld(el);
+
+        // Size: use SVG bbox (width/height are stable even if viewBox x/y is negative).
+        const b = el.getBBox();
+        const pad = 80; // in world units (same units as b.width/b.height)
+
+        let z = zoom;
+        if(allowAutoZoom){
+          const fitX = camera.vw / (b.width + pad);
+          const fitY = camera.vh / (b.height + pad);
+          const fit = clamp(Math.min(fitX, fitY), camera.minZoom, camera.maxZoom);
+          // Fit always wins (guarantees it stays fully visible). Clamp handles max zoom.
+          z = fit;
+        }
+
+        if(c){
+          cameraFlyTo(c.x, c.y, clamp(z, camera.minZoom, camera.maxZoom), dur);
+          return;
+        }
+
+        // Fallback: compute center from bbox (using vbOrigin shift)
+        if(!camera.vbOrigin) return;
+        const cx = (b.x - camera.vbOrigin.x) + b.width/2;
+        const cy = (b.y - camera.vbOrigin.y) + b.height/2;
+        cameraFlyTo(cx, cy, clamp(z, camera.minZoom, camera.maxZoom), dur);
+      }catch{
+        // ignore
+      }
+    }
+
+    function centerOnElement(el, dur=320){
+      if(!el || !camera.vbOrigin) return;
+      try{
+        updateViewport();
+        const c = regionCenterInWorld(el);
+        if(c){
+          cameraFlyTo(c.x, c.y, camera.targetZoom, dur);
+          return;
+        }
+        const b = el.getBBox();
+        const cx = (b.x - camera.vbOrigin.x) + b.width/2;
+        const cy = (b.y - camera.vbOrigin.y) + b.height/2;
+        cameraFlyTo(cx, cy, camera.targetZoom, dur);
+      }catch{
+        // ignore
+      }
+    }
+
+    // Pan + zoom controls
+    let isDragging = false;
+    let last = { x: 0, y: 0 };
+
+    mapwrap.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      last.x = e.clientX;
+      last.y = e.clientY;
+      mapStack.classList.add("grabbing");
+    });
+
+    window.addEventListener("mouseup", () => {
+      isDragging = false;
+      mapStack.classList.remove("grabbing");
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if(!isDragging) return;
+      const dx = e.clientX - last.x;
+      const dy = e.clientY - last.y;
+      last.x = e.clientX;
+      last.y = e.clientY;
+
+      // Move camera opposite to drag direction
+      camera.targetX -= dx / camera.targetZoom;
+      camera.targetY -= dy / camera.targetZoom;
+      clampToBounds();
+    });
+
+    mapwrap.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      updateViewport();
+      const rect = mapwrap.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      // World point under cursor (using target values for stability)
+      const wx = camera.targetX + (mx - camera.vw/2) / camera.targetZoom;
+      const wy = camera.targetY + (my - camera.vh/2) / camera.targetZoom;
+
+      const zoomFactor = (e.deltaY > 0) ? 0.92 : 1.08;
+      const newZ = clamp(camera.targetZoom * zoomFactor, camera.minZoom, camera.maxZoom);
+      if(newZ === camera.targetZoom) return;
+
+      camera.targetZoom = newZ;
+      // Keep mouse anchored in world space
+      camera.targetX = wx - (mx - camera.vw/2) / camera.targetZoom;
+      camera.targetY = wy - (my - camera.vh/2) / camera.targetZoom;
+      clampToBounds();
+    }, { passive:false });
+
+    // Note: no post-pan/post-zoom snapping. Selection is centered once on click.
+
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+    function hashToHue(str){
+      // stable hash -> 0..359
+      let h = 2166136261;
+      for(let i=0;i<str.length;i++){
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return Math.abs(h) % 360;
+    }
+
+    function normalizeRegionKey(s){
+      return String(s || "")
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+    }
+
+    function getRegionAccentColor(el){
+      const key = normalizeRegionKey(el?.id || el?.getAttribute?.("data-name") || "");
+
+      // Exact overrides requested
+      if(key === "NEON_CITY_PRISON") return "#608fff";
+      if(key === "APEX" || key === "APEX_HQ" || key.startsWith("APEX_")) return "#608fff";
+      if(key === "MERRYWEATHER_PORT" || key === "MERRYWEATHER_BASE" || key.startsWith("MERRYWEATHER_")) return "#d9b026";
+
+      return null;
+    }
+
+    function getRegionColorOverride(key){
+      const k = normalizeRegionKey(key);
+
+      function hexToRgba(hex, a){
+        const h = String(hex || "").trim().replace(/^#/, "");
+        if(h.length !== 6) return hex;
+        const r = parseInt(h.slice(0,2), 16);
+        const g = parseInt(h.slice(2,4), 16);
+        const b = parseInt(h.slice(4,6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${a})`;
+      }
+
+      // User-specified district palette
+      if(k === "NEON_CITY_PRISON" || k === "APEX" || k === "APEX_HQ" || k.startsWith("APEX_")){
+        const patternId = ensureRestrictedMatrixPatternBlue();
+        const fill = patternId ? `url(#${patternId})` : hexToRgba("0b1f52", 0.42);
+        return { stroke: "#608fff", fill };
+      }
+
+      if(k === "SOUTH_SIDE"){
+        return { stroke: "#ff0000", fill: hexToRgba("360000", 0.68) };
+      }
+
+      if(k === "NEON_CORE"){
+        return { stroke: "#7dc5bd", fill: hexToRgba("2c063c", 0.72) };
+      }
+
+      if(k === "VESPUCCI"){
+        return { stroke: "#ffd164", fill: hexToRgba("6000bb", 0.44) };
+      }
+
+      if(k === "LA_PUERTA"){
+        return { stroke: "#eb55d8", fill: hexToRgba("260240", 0.72) };
+      }
+
+      if(k === "HUMANE_LABS"){
+        return { stroke: "#48afff", fill: hexToRgba("00213b", 0.6) };
+      }
+
+      if(k === "MERRYWEATHER_BASE"){
+        return { stroke: "#d9b026" };
+      }
+
+      if(k === "MERRYWEATHER_PORT"){
+        return { stroke: "#d9b026" };
+      }
+
+      if(k === "SECUROSERV_PORT" || k === "SECUROSERVE_PORT"){
+        const patternId = ensureRestrictedMatrixPatternSecuroserv();
+        const fill = patternId ? `url(#${patternId})` : "#000000";
+        return { stroke: "#cf0000", fill };
+      }
+
+      return null;
+    }
+
+    function ensureStripePattern(svg, id, color){
+      if(!svg) return null;
+      const safeId = String(id);
+      if(svg.querySelector(`#${CSS.escape(safeId)}`)) return safeId;
+
+      let defs = svg.querySelector("defs");
+      if(!defs){
+        defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+        svg.insertBefore(defs, svg.firstChild);
+      }
+
+      const pattern = document.createElementNS("http://www.w3.org/2000/svg", "pattern");
+      pattern.setAttribute("id", safeId);
+      pattern.setAttribute("patternUnits", "userSpaceOnUse");
+      pattern.setAttribute("width", "14");
+      pattern.setAttribute("height", "14");
+      pattern.setAttribute("patternTransform", "rotate(45)");
+
+      // Slightly visible tinted fill behind stripes
+      const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      bg.setAttribute("x", "0");
+      bg.setAttribute("y", "0");
+      bg.setAttribute("width", "14");
+      bg.setAttribute("height", "14");
+      bg.setAttribute("fill", color);
+      bg.setAttribute("opacity", ".16");
+      pattern.appendChild(bg);
+
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("data-stripe", "1");
+      line.setAttribute("x1", "0");
+      line.setAttribute("y1", "0");
+      line.setAttribute("x2", "0");
+      line.setAttribute("y2", "14");
+      line.setAttribute("stroke", color);
+      line.setAttribute("stroke-width", "2.6");
+      line.setAttribute("stroke-linecap", "square");
+      line.setAttribute("opacity", ".85");
+
+      pattern.appendChild(line);
+      defs.appendChild(pattern);
+      return safeId;
+    }
+
+    function setStripeThicknessForRegion(el, mode){
+      if(!el) return;
+      const patId = el.getAttribute("data-stripe-pat");
+      if(!patId || !svgEl) return;
+      const line = svgEl.querySelector(`#${CSS.escape(patId)} line[data-stripe='1']`);
+      if(!line) return;
+      const w = mode === "selected" ? 4.2 : mode === "hover" ? 3.4 : 2.6;
+      line.setAttribute("stroke-width", String(w));
+    }
+
+    function colorizeRegions(){
+      if(!svgEl) return;
+      const regions = svgEl.querySelectorAll(".region");
+
+      regions.forEach((r, i) => {
+        if(r.classList.contains("wall")){
+          r.style.fill = "none";
+          return;
+        }
+
+        const rawKey = r.id || r.getAttribute("data-name") || String(i);
+        const hue = hashToHue(rawKey);
+        r.setAttribute("data-hue", String(hue));
+
+        const normKey = normalizeRegionKey(rawKey);
+        const isDanger =
+          (normKey === "NEON_CITY_PRISON") ||
+          (normKey === "APEX") || (normKey === "APEX_HQ") || normKey.startsWith("APEX_");
+        r.classList.toggle("danger", isDanger);
+
+        const restricted = isRegionRestricted(r);
+        r.classList.toggle("restricted", restricted);
+
+        const override = getRegionColorOverride(normKey);
+        const fallback = (!override && !restricted) ? {
+          // Unset districts (non-restricted only): intentionally obnoxious neon green
+          stroke: "#39ff14",
+          fill: "rgba(57, 255, 20, 0.38)",
+        } : null;
+        const effective = override || fallback;
+
+        // Stroke color:
+        // - Normal areas: let CSS control (blue base, yellow hover/selected)
+        // - Restricted or explicitly-accented: set stroke via JS
+        const accent = getRegionAccentColor(r);
+        if(effective?.stroke){
+          r.style.stroke = effective.stroke;
+        }else if(accent || restricted){
+          const strokeCol = accent || `rgba(96,143,255,.65)`;
+          r.style.stroke = strokeCol;
+        }else{
+          r.style.removeProperty("stroke");
+        }
+
+        // Fill:
+        // - Overrides always win (even if restricted)
+        // - Restricted default: dense scrolling "RESTRICTED" wall-of-text
+        // - Non-restricted: apply overrides/fallback
+        r.removeAttribute("data-stripe-pat");
+        if(effective?.fill){
+          r.style.fill = effective.fill;
+        }else if(restricted){
+          const pat = (normKey === "SECUROSERV_PORT")
+            ? ensureRestrictedMatrixPatternSecuroserv()
+            : ensureRestrictedMatrixPattern();
+          if(pat) r.style.fill = `url(#${pat})`;
+          else r.style.fill = "rgba(0,0,0,.18)";
+        }else{
+          r.style.removeProperty("fill");
+        }
+      });
+
+      // Keep restricted blur mask in sync with current visibility/state
+      rebuildRestrictedBlurClip();
+
+      // Enforce paint order: normal < restricted < walls
+      restackRegionLayers();
+    }
+
+    function isRegionRestricted(el){
+      if(!el) return false;
+
+      // Preferred marker: restriction="y"
+      const restriction = (el.getAttribute("restriction") || "").trim().toLowerCase();
+      if(restriction === "y") return true;
+
+      // Back-compat markers
+      const restrictedAttr = (el.getAttribute("data-restricted") || "").trim().toLowerCase() === "true";
+      if(restrictedAttr) return true;
+      if(el.classList?.contains("restricted")) return true;
+
+      return false;
+    }
+
+    function regionCenterInWorld(el, mapRect){
+      if(!el || !mapwrap) return null;
+      const r = el.getBoundingClientRect();
+      if(!r || !isFinite(r.left) || !isFinite(r.top) || (r.width === 0 && r.height === 0)) return null;
+
+      const wrapRect = mapRect || mapwrap.getBoundingClientRect();
+      const sx = (r.left + r.right) / 2 - wrapRect.left;
+      const sy = (r.top + r.bottom) / 2 - wrapRect.top;
+
+      // Invert renderCamera transform:
+      // screen = (world - camera.xy) * zoom + (vw/2, vh/2)
+      const x = camera.x + (sx - camera.vw / 2) / camera.zoom;
+      const y = camera.y + (sy - camera.vh / 2) / camera.zoom;
+      if(!isFinite(x) || !isFinite(y)) return null;
+      return { x, y };
+    }
+
+    function buildLabels(filterFn = null){
+      const layer = document.getElementById("labelsLayer");
+      if(!layer || !svgEl) return;
+      layer.innerHTML = "";
+      if(!SHOW_LABELS) return;
+      const mapRect = mapwrap.getBoundingClientRect();
+      svgEl.querySelectorAll(".region:not(.wall)").forEach(r => {
+        if(r.classList.contains("hidden")) return;
+        const key = normalizeRegionKey(r.id || r.getAttribute("data-name") || "");
+        if(!key || key.startsWith("PATH")) return;
+        const name = (r.getAttribute("data-name") || r.id || "(unnamed)");
+        const restricted = isRegionRestricted(r);
+        if(filterFn && !filterFn({el:r, restricted})) return;
+        const c = regionCenterInWorld(r, mapRect);
+        if(!c) return;
+        const x = c.x;
+        const y = c.y;
+        const hue = parseInt(r.getAttribute("data-hue") || "210", 10);
+        const color = `hsl(${hue}, 85%, 68%)`;
+        const div = document.createElement("div");
+        div.className = "districtLabel";
+        div.textContent = name;
+        div.style.left = x + "px";
+        div.style.top = y + "px";
+        div.style.color = color;
+        div.style.textShadow = `0 0 6px hsla(${hue}, 85%, 65%, .35), 0 0 12px hsla(${hue}, 85%, 65%, .25)`;
+        layer.appendChild(div);
+      });
+    }
+
+    function setDistrictLogoStateFor(el, state){
+      if(!el) return;
+      const key = normalizeRegionKey(el.id || el.getAttribute?.("data-name") || "");
+      const node = document.querySelector(`#logosLayer .districtLogo[data-key="${CSS.escape(key)}"]`);
+      if(!node) return;
+      if(state === "base"){
+        node.classList.remove("hot");
+        return;
+      }
+      const isActive = state === "hover" || state === "selected";
+      node.classList.toggle("hot", isActive);
+    }
+
+    function buildDistrictLogos(filterFn = null){
+      const layer = document.getElementById("logosLayer");
+      if(!layer || !svgEl) return;
+      layer.innerHTML = "";
+
+      const mapRect = mapwrap.getBoundingClientRect();
+
+      svgEl.querySelectorAll(".region:not(.wall)").forEach(r => {
+        if(r.classList.contains("hidden")) return;
+
+        const restricted = isRegionRestricted(r);
+        if(filterFn && !filterFn({el:r, restricted})) return;
+
+        const c = regionCenterInWorld(r, mapRect);
+        if(!c) return;
+        const x = c.x;
+        const y = c.y;
+
+        const key = normalizeRegionKey(r.id || r.getAttribute("data-name") || "");
+        if(!key || key.startsWith("PATH")) return;
+        if(!key) return;
+
+        const wrap = document.createElement("div");
+        wrap.className = "districtLogo";
+        wrap.dataset.key = key;
+        wrap.style.left = x + "px";
+        wrap.style.top = y + "px";
+
+        const img = document.createElement("img");
+        img.alt = "";
+        img.draggable = false;
+        img.loading = "lazy";
+        img.src = `./logos/${key}.png`;
+        img.addEventListener("load", () => {
+          wrap.classList.add("ready");
+        });
+        img.addEventListener("error", () => {
+          wrap.remove();
+          if(!missingDistrictLogos.has(key)){
+            missingDistrictLogos.add(key);
+            term(`[LOGO] missing: ./logos/${key}.png`);
+          }
+        });
+
+        wrap.appendChild(img);
+        layer.appendChild(wrap);
+      });
+
+      // Apply current hover/selection state to rebuilt layer
+      if(hoveredEl) setDistrictLogoStateFor(hoveredEl, "hover");
+      if(selectedEl) setDistrictLogoStateFor(selectedEl, "selected");
+    }
+
+    // COMPAT: prevent crashes if old loader code still calls setProgress()
+    function setProgress(p, label, meta=""){
+      // p is 0..1
+      const pct = Math.round(Math.max(0, Math.min(1, p)) * 100);
+
+      // Drive the boot overlay (55%+ is handled by real download too, this is fine)
+      bootSet(pct, label || "");
+      if(meta) bootLine(`[PROGRESS] ${label} • ${meta}`, true);
+    }
+
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const SELECTION_GLOW_FILTER_ID = "selectionGlowInner";
+    const RESTRICTED_TEXT_PATTERN_ID = "restricted-text-pattern";
+    const RESTRICTED_MATRIX_PATTERN_ID = "restricted-matrix-pattern";
+
+    function fnv1a32(str){
+      str = String(str || "");
+      let h = 2166136261;
+      for(let i=0;i<str.length;i++){
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0);
+    }
+
+    function makeRng(seedStr){
+      let x = fnv1a32(seedStr) || 1;
+      return function rand(){
+        // xorshift32
+        x ^= (x << 13);
+        x ^= (x >>> 17);
+        x ^= (x << 5);
+        x >>>= 0;
+        return x / 4294967296;
+      };
+    }
+
+    function ensureRestrictedMatrixPatternCustom(patternId, opts){
+      if(!svgEl) return null;
+      const safeId = String(patternId || "").trim();
+      if(!safeId) return null;
+
+      let defs = svgEl.querySelector("defs");
+      if(!defs){
+        defs = document.createElementNS(SVG_NS, "defs");
+        svgEl.insertBefore(defs, svgEl.firstChild);
+      }
+      const existing = svgEl.querySelector(`#${CSS.escape(safeId)}`);
+      if(existing){
+        // If an older/smaller pattern exists, rebuild it so the wall is continuous across the whole map.
+        const isWall = existing.getAttribute("data-wall") === "1";
+        const wantW = Math.ceil(camera?.vb?.width || svgEl.viewBox?.baseVal?.width || 0);
+        const wantH = Math.ceil(camera?.vb?.height || svgEl.viewBox?.baseVal?.height || 0);
+        const curW = Number(existing.getAttribute("width")) || 0;
+        const curH = Number(existing.getAttribute("height")) || 0;
+        if(isWall && wantW > 0 && wantH > 0 && curW === wantW && curH === wantH){
+          return safeId;
+        }
+        existing.remove();
+      }
+
+      const {
+        color = "#ffee98",
+        opacity = 0.34,
+        rotate = 0,
+        // When true, the pattern is built to the full map size so fills are seamless across shapes.
+        fullMap = true,
+        width = 220,
+        height = 220,
+        fontSize = 10,
+        letterSpacing = 0.25,
+        lineHeight = 11,
+        pad = 0,
+        charset = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ$#%*+_",
+      } = opts || {};
+
+      const rand = makeRng(safeId);
+
+      const worldW = Math.ceil(camera?.vb?.width || svgEl.viewBox?.baseVal?.width || width);
+      const worldH = Math.ceil(camera?.vb?.height || svgEl.viewBox?.baseVal?.height || height);
+      const baseW = (fullMap && worldW > 0) ? worldW : width;
+      const baseH = (fullMap && worldH > 0) ? worldH : height;
+
+      // Snap tile dimensions to the text grid and overscan; when fullMap=true, this creates one continuous wall.
+      const charW = Math.max(5.0, (fontSize * 0.62) + letterSpacing);
+      const colsBase = Math.max(32, Math.ceil((baseW - pad * 2) / charW));
+      const rowsBase = Math.max(24, Math.ceil((baseH - pad * 2) / lineHeight));
+      // Overscan by 2 columns/rows and start negative; this removes visible gaps at tile boundaries.
+      const cols = colsBase + 2;
+      const rows = rowsBase + 2;
+      const tileW = Math.round(colsBase * charW);
+      const tileH = Math.round(rowsBase * lineHeight);
+      const startX = -charW;
+      const startY = -lineHeight;
+
+      const pattern = document.createElementNS(SVG_NS, "pattern");
+      pattern.setAttribute("id", safeId);
+      pattern.setAttribute("data-wall", "1");
+      pattern.setAttribute("patternUnits", "userSpaceOnUse");
+      pattern.setAttribute("width", String(tileW));
+      pattern.setAttribute("height", String(tileH));
+      pattern.setAttribute("patternTransform", `rotate(${rotate})`);
+
+      const g = document.createElementNS(SVG_NS, "g");
+      g.setAttribute("opacity", String(opacity));
+
+      const textEl = document.createElementNS(SVG_NS, "text");
+      textEl.setAttribute("x", String(startX));
+      textEl.setAttribute("y", String(startY));
+      textEl.setAttribute("fill", color);
+      textEl.setAttribute("font-family", "Rajdhani, sans-serif");
+      textEl.setAttribute("font-size", String(fontSize));
+      textEl.setAttribute("letter-spacing", String(letterSpacing));
+      textEl.setAttribute("font-weight", "800");
+      textEl.setAttribute("dominant-baseline", "text-before-edge");
+
+      const pick = () => charset[Math.floor(rand() * charset.length)] || "0";
+      for(let r=0;r<rows;r++){
+        let line = "";
+        for(let c=0;c<cols;c++) line += pick();
+        const sp = document.createElementNS(SVG_NS, "tspan");
+        sp.setAttribute("x", String(startX));
+        sp.setAttribute("dy", r === 0 ? "0" : String(lineHeight));
+        sp.textContent = line;
+        textEl.appendChild(sp);
+      }
+
+      g.appendChild(textEl);
+      pattern.appendChild(g);
+      defs.appendChild(pattern);
+      return safeId;
+    }
+
+    function ensureRestrictedMatrixPattern(){
+      return ensureRestrictedMatrixPatternCustom(RESTRICTED_MATRIX_PATTERN_ID, {
+        color: "#ffee98",
+        rotate: 0,
+        opacity: 0.34,
+        fullMap: true,
+        fontSize: 10,
+        letterSpacing: 0.25,
+        lineHeight: 11,
+        pad: 0,
+        charset: "01ABCDEFGHIJKLMNOPQRSTUVWXYZ$#%*+_",
+      });
+    }
+
+    function ensureRestrictedMatrixPatternBlue(){
+      return ensureRestrictedMatrixPatternCustom("restricted-matrix-pattern-blue", {
+        color: "#608fff",
+        rotate: 0,
+        opacity: 0.32,
+        fullMap: true,
+        fontSize: 10,
+        letterSpacing: 0.28,
+        lineHeight: 11,
+        pad: 0,
+        charset: "01ABCDEFGHIJKLMNOPQRSTUVWXYZ$#%*+_",
+      });
+    }
+
+    function ensureRestrictedMatrixPatternSecuroserv(){
+      return ensureRestrictedMatrixPatternCustom("restricted-matrix-pattern-securoserv", {
+        color: "#cf0000",
+        opacity: 0.30,
+        rotate: 0,
+        fullMap: true,
+        fontSize: 10,
+        letterSpacing: 0.42,
+        lineHeight: 11,
+        pad: 0,
+        charset: "01ACCESSRESTRICTED$#%*+_",
+      });
+    }
+
+    function ensureRestrictedTextPatternCustom(patternId, opts){
+      if(!svgEl) return null;
+      const safeId = String(patternId || "").trim();
+      if(!safeId) return null;
+
+      let defs = svgEl.querySelector("defs");
+      if(!defs){
+        defs = document.createElementNS(SVG_NS, "defs");
+        svgEl.insertBefore(defs, svgEl.firstChild);
+      }
+      if(svgEl.querySelector(`#${CSS.escape(safeId)}`)) return safeId;
+
+      const {
+        bg = "transparent",
+        text = "#ffffff",
+        textOpacity = 0.34,
+        stroke = "currentColor",
+        strokeOpacity = 0.30,
+        strokeWidth = 1.05,
+        fontWeight = 900,
+        rotate = -14,
+        width = 190,
+        height = 48,
+        y1 = 4,
+        y2 = 20,
+        y3 = 36,
+        y4 = null,
+        fontSize = 10,
+        letterSpacing = 1.6,
+        textRepeat = 7,
+        label = "RESTRICTED ACCESS",
+        animDy = null,
+        dur = "1.25s",
+      } = opts || {};
+
+      const scrollDy = (animDy == null) ? height : animDy;
+
+      const pattern = document.createElementNS(SVG_NS, "pattern");
+      pattern.setAttribute("id", safeId);
+      pattern.setAttribute("patternUnits", "userSpaceOnUse");
+      pattern.setAttribute("width", String(width));
+      pattern.setAttribute("height", String(height));
+      pattern.setAttribute("patternTransform", `rotate(${rotate})`);
+
+      if(bg && String(bg).toLowerCase() !== "transparent"){
+        const rect = document.createElementNS(SVG_NS, "rect");
+        rect.setAttribute("width", String(width));
+        rect.setAttribute("height", String(height));
+        rect.setAttribute("fill", bg);
+        pattern.appendChild(rect);
+      }
+
+      const n = Math.max(2, Math.min(24, Number(textRepeat) || 7));
+      const core = String(label || "RESTRICTED ACCESS").trim();
+      const repeated = `- ${Array.from({length:n}, () => core).join(" - ")} -`;
+
+      const createText = (y, x = 0) => {
+        const t = document.createElementNS(SVG_NS, "text");
+        t.setAttribute("x", String(x));
+        t.setAttribute("y", String(y));
+        t.setAttribute("dominant-baseline", "text-before-edge");
+        t.setAttribute("fill", text);
+        t.setAttribute("opacity", String(textOpacity));
+        t.setAttribute("stroke", stroke === "currentColor" ? text : stroke);
+        t.setAttribute("stroke-opacity", String(strokeOpacity));
+        t.setAttribute("stroke-width", String(strokeWidth));
+        t.setAttribute("paint-order", "stroke");
+        t.setAttribute("font-family", "Rajdhani, sans-serif");
+        t.setAttribute("font-size", String(fontSize));
+        t.setAttribute("letter-spacing", String(letterSpacing));
+        t.setAttribute("font-weight", String(fontWeight));
+        t.textContent = repeated;
+        return t;
+      };
+
+      // Staggered rows to reduce visible gaps and clipping
+      pattern.appendChild(createText(y1, 0));
+      pattern.appendChild(createText(y2, -width * 0.52));
+      if(typeof y3 === "number") pattern.appendChild(createText(y3, -width * 0.18));
+      if(typeof y4 === "number") pattern.appendChild(createText(y4, -width * 0.78));
+
+      const anim = document.createElementNS(SVG_NS, "animateTransform");
+      anim.setAttribute("attributeName", "patternTransform");
+      anim.setAttribute("type", "translate");
+      // One-way infinite scroll (no bounce)
+      anim.setAttribute("values", `0 0;0 -${scrollDy}`);
+      anim.setAttribute("dur", dur);
+      anim.setAttribute("repeatCount", "indefinite");
+      anim.setAttribute("additive", "sum");
+      pattern.appendChild(anim);
+
+      defs.appendChild(pattern);
+      return safeId;
+    }
+
+    function ensureRestrictedTextPattern(){
+      return ensureRestrictedTextPatternCustom(RESTRICTED_TEXT_PATTERN_ID, {
+        bg: "transparent",
+        text: "#ffee98",
+        textOpacity: 0.34,
+        stroke: "#ffee98",
+        strokeOpacity: 0.30,
+        strokeWidth: 1.05,
+        fontWeight: 900,
+        rotate: -14,
+        width: 150,
+        height: 34,
+        fontSize: 10,
+        letterSpacing: 1.6,
+        textRepeat: 7,
+        animDy: 34,
+        dur: "1.35s",
+      });
+    }
+
+    function ensureRestrictedTextPatternSecuroserv(){
+      return ensureRestrictedTextPatternCustom("restricted-text-pattern-securoserv", {
+        text: "#cf0000",
+        textOpacity: 0.36,
+        stroke: "#cf0000",
+        strokeOpacity: 0.32,
+        strokeWidth: 1.15,
+        fontWeight: 900,
+        rotate: -16,
+        width: 130,
+        height: 30,
+        fontSize: 9,
+        letterSpacing: 1.3,
+        textRepeat: 8,
+        animDy: 30,
+        dur: "1.15s",
+      });
+    }
+
+    function ensureSelectionGlowFilter(){
+      if(selectionGlowFilter) return selectionGlowFilter;
+      if(!svgEl) return null;
+      let defs = svgEl.querySelector("defs");
+      if(!defs){
+        defs = document.createElementNS(SVG_NS, "defs");
+        svgEl.insertBefore(defs, svgEl.firstChild);
+      }
+      let filter = defs.querySelector(`#${SELECTION_GLOW_FILTER_ID}`);
+      if(filter){
+        selectionGlowFilter = filter;
+        selectionGlowAnimation = filter.querySelector("animate");
+        return filter;
+      }
+
+      filter = document.createElementNS(SVG_NS, "filter");
+      filter.setAttribute("id", SELECTION_GLOW_FILTER_ID);
+      filter.setAttribute("filterUnits", "objectBoundingBox");
+      filter.setAttribute("x", "-40%");
+      filter.setAttribute("y", "-40%");
+      filter.setAttribute("width", "180%");
+      filter.setAttribute("height", "180%");
+
+      const blur = document.createElementNS(SVG_NS, "feGaussianBlur");
+      blur.setAttribute("in", "SourceAlpha");
+      blur.setAttribute("stdDeviation", "4");
+      blur.setAttribute("result", "blur");
+      filter.appendChild(blur);
+
+      const inner = document.createElementNS(SVG_NS, "feComposite");
+      inner.setAttribute("in", "blur");
+      inner.setAttribute("in2", "SourceAlpha");
+      inner.setAttribute("operator", "in");
+      inner.setAttribute("result", "inner");
+      filter.appendChild(inner);
+
+      const flood = document.createElementNS(SVG_NS, "feFlood");
+      flood.setAttribute("flood-color", "rgb(var(--selectionGlowColorR,96), var(--selectionGlowColorG,143), var(--selectionGlowColorB,255))");
+      flood.setAttribute("flood-opacity", ".32");
+      flood.setAttribute("result", "glowColor");
+      filter.appendChild(flood);
+
+      const fade = document.createElementNS(SVG_NS, "animate");
+      fade.setAttribute("attributeName", "flood-opacity");
+      fade.setAttribute("values", "0.32;1.44;0.32");
+      fade.setAttribute("keyTimes", "0;0.5;1");
+      fade.setAttribute("calcMode", "spline");
+      fade.setAttribute("keySplines", "0.4 0 0.2 1;0.4 0 0.2 1");
+      fade.setAttribute("dur", "2.2s");
+      fade.setAttribute("repeatCount", "indefinite");
+      flood.appendChild(fade);
+      selectionGlowAnimation = fade;
+
+      const compose = document.createElementNS(SVG_NS, "feComposite");
+      compose.setAttribute("in", "glowColor");
+      compose.setAttribute("in2", "inner");
+      compose.setAttribute("operator", "in");
+      compose.setAttribute("result", "glow");
+      filter.appendChild(compose);
+
+      const merge = document.createElementNS(SVG_NS, "feMerge");
+      const glowNode = document.createElementNS(SVG_NS, "feMergeNode");
+      glowNode.setAttribute("in", "glow");
+      const sourceNode = document.createElementNS(SVG_NS, "feMergeNode");
+      sourceNode.setAttribute("in", "SourceGraphic");
+      merge.appendChild(glowNode);
+      merge.appendChild(sourceNode);
+      filter.appendChild(merge);
+
+      defs.appendChild(filter);
+      selectionGlowFilter = filter;
+      return filter;
+    }
+
+    function updateSelectionGlowColor(glow){
+      const filter = ensureSelectionGlowFilter();
+      if(!filter) return;
+      if(glow){
+        filter.style.setProperty('--selectionGlowColorR', glow.r);
+        filter.style.setProperty('--selectionGlowColorG', glow.g);
+        filter.style.setProperty('--selectionGlowColorB', glow.b);
+      }else{
+        filter.style.removeProperty('--selectionGlowColorR');
+        filter.style.removeProperty('--selectionGlowColorG');
+        filter.style.removeProperty('--selectionGlowColorB');
+      }
+      updateSelectionGlowPeak(glow);
+    }
+
+    function updateSelectionGlowPeak(rgb){
+      if(!selectionGlowAnimation) return;
+      const peak = computeGlowPeak(rgb);
+      selectionGlowAnimation.setAttribute("values", `0.32;${peak};0.32`);
+    }
+
+    async function loadSvg(){
+      try{
+        bootSet(55, "download");
+        term("[SVG] fetch initiated");
+
+        // --- Download with progress (stream) ---
+        bootLine("[SVG] downloading payload…");
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout
+        
+        const res = await fetch(SVG_URL, { cache: "no-store", signal: controller.signal });
+        clearTimeout(timeoutId);
+        if(!res.ok) throw new Error(`Failed to load SVG (${res.status})`);
+
+        const contentLength = res.headers.get("Content-Length");
+        const total = contentLength ? parseInt(contentLength, 10) : null;
+
+        // Simplified: just use res.text() regardless
+        bootSet(70, "parsing");
+        term("[SVG] converting response to text…");
+        const txt = await res.text();
+        bootSet(80, "parsing");
+        term("[SVG] response received: " + txt.length + " bytes");
+        setProgress(0.60, "parsing…", total ? `${total.toLocaleString()} bytes` : "download complete");
+        
+        bootSet(85, "rendering");
+        term("[SVG] rendering DOM…");
+        host.innerHTML = txt;
+        bootSet(87, "rendering");
+
+        // --- Parse & setup phase ---
+        bootSet(88, "wiring");
+        term("[SVG] parsing complete • initializing…");
+
+        svgEl = host.querySelector("svg");
+        if(!svgEl) throw new Error("No <svg> element found in file.");
+
+        svgEl.style.maxWidth = "none";
+        svgEl.style.maxHeight = "none";
+
+        if(!svgEl.getAttribute("viewBox")){
+          const w = parseFloat(svgEl.getAttribute("width")) || 1920;
+          const h = parseFloat(svgEl.getAttribute("height")) || 1080;
+          svgEl.setAttribute("viewBox", `0 0 ${w} ${h}`);
+        }
+
+        // Set camera bounds + lock stack coordinate space to SVG viewBox (1 unit == 1px)
+        updateViewport(); // force correct viewport now that layout is real
+        const vb = svgEl.viewBox.baseVal;
+        camera.vbOrigin = { x: vb.x, y: vb.y };
+        // Use stack coordinate space (0..width/height) for camera + overlays
+        camera.vb = { x: 0, y: 0, width: vb.width, height: vb.height };
+
+        // Size the stack to world dimensions so camera math uses consistent units.
+        // This avoids the old mismatch where SVG/raster were scaled-to-fit but camera was using viewBox units.
+        mapStack.style.width = vb.width + "px";
+        mapStack.style.height = vb.height + "px";
+        svgEl.style.width = vb.width + "px";
+        svgEl.style.height = vb.height + "px";
+
+        // Size restricted blur SVG to the same world coordinate space
+        const blurSvg = ensureRestrictedBlurSvg();
+        if(blurSvg){
+          blurSvg.setAttribute("viewBox", `0 0 ${vb.width} ${vb.height}`);
+          blurSvg.setAttribute("width", String(vb.width));
+          blurSvg.setAttribute("height", String(vb.height));
+          blurSvg.style.width = vb.width + "px";
+          blurSvg.style.height = vb.height + "px";
+          blurSvg.querySelectorAll("image[data-blur-layer]").forEach(im => {
+            im.setAttribute("width", String(vb.width));
+            im.setAttribute("height", String(vb.height));
+          });
+        }
+
+        function resetCameraToFitCenter(){
+          if(!camera.vb) return;
+          updateViewport();
+          const vw = camera.vw || 1;
+          const vh = camera.vh || 1;
+          const fit = clamp(Math.min(vw / camera.vb.width, vh / camera.vb.height), camera.minZoom, camera.maxZoom);
+          cameraSetInstant(camera.vb.width/2, camera.vb.height/2, fit);
+        }
+
+        ensureSelectionGlowFilter();
+        ensureRestrictedMatrixPattern();
+        ensureRestrictedMatrixPatternSecuroserv();
+
+        // Deterministic initial view: centered + fully visible
+        resetCameraToFitCenter();
+        requestAnimationFrame(resetCameraToFitCenter);
+
+        // Wire up regions
+        bootSet(95, "ready");
+        bootLine("[SVG] regions wired • colorizing…");
+        const regions = svgEl.querySelectorAll(".region, [data-region='true']");
+        regions.forEach(r => {
+          r.classList.add("region");
+          r.style.cursor = "pointer";
+          r.addEventListener("mousemove", onRegionMove);
+          r.addEventListener("mouseenter", onRegionEnter);
+          r.addEventListener("mouseleave", onRegionLeave);
+          r.addEventListener("click", (e) => {
+            e.stopPropagation();
+            selectRegion(r);
+          });
+        });
+
+        // Build the constant restricted blur mask once regions exist
+        rebuildRestrictedBlurClip();
+
+        // Robust hover tracking (fixes edge cases where enter/move can be missed)
+        bindGlobalHoverTracking();
+
+        svgEl.querySelectorAll(".region:not(.wall)").forEach(r => {
+          r.addEventListener("dblclick", (e) => {
+            e.stopPropagation();
+            flyToElement(r, 2.6);
+          });
+        });
+
+        colorizeRegions();
+        buildDistrictLogos();
+
+        // Clicking empty map should do nothing (selection/popup stays)
+        
+        // Start animation loop now that SVG is ready
+        startTick();
+
+        setProgress(1, "ready", `ok (${regions.length} regions)`);
+        bootSet(100, "ready");
+        boot.hintEl.textContent = "MAP UNLOCKED";
+        bootLine("[OK] map online • " + regions.length + " regions");
+        setTimeout(() => {
+          bootClose();
+          // Recenter once overlay is gone (viewport might change)
+          resetCameraToFitCenter();
+          requestAnimationFrame(resetCameraToFitCenter);
+
+          // Ensure popup offset matches final terminal layout
+          if(typeof updateDockMetrics === "function"){
+            updateDockMetrics();
+            requestAnimationFrame(updateDockMetrics);
+          }
+        }, 250);
+        document.getElementById("loadState").textContent = "ready";
+        term("[SVG] ready • " + regions.length + " regions loaded");
+
+      }catch(err){
+        // show failure
+        bootSet(100, "error");
+        if(boot.hintEl) boot.hintEl.textContent = "LINK FAILED";
+        bootLine("[ERROR] " + err.message);
+
+        term("[ERROR] " + err.message);
+        console.error(err);
+      }
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, (m) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[m]));
+    }
+
+    function regionLabel(el){
+      const name = el.getAttribute("data-name") || el.id || "(unnamed)";
+      const id = el.id ? `#${el.id}` : "(no id)";
+      const zone = el.getAttribute("data-zone");
+      return { name, id, zone };
+    }
+
+    function refreshHoverTab(){
+      const el = hoveredEl || selectedEl;
+      if(!el){
+        tooltip.classList.remove("on");
+        return;
+      }
+      const { name } = regionLabel(el);
+      tooltip.textContent = name;
+      tooltip.classList.add("on");
+    }
+
+    function setCursorLogoFor(el){
+      if(!cursorLogo) return;
+      if(!el || el.classList.contains("wall")){
+        cursorLogo.classList.remove("on");
+        return;
+      }
+
+      // Naming convention: ./logos/<NORMALIZED_REGION_ID>.png
+      // Example: id="MERRYWEATHER_BASE" -> logos/MERRYWEATHER_BASE.png
+      const key = normalizeRegionKey(el.id || el.getAttribute("data-name") || "");
+      if(!key){
+        cursorLogo.classList.remove("on");
+        return;
+      }
+
+      const shouldReload = (cursorLogo.dataset.key !== key) || (cursorLogo.dataset.failed === "1");
+      cursorLogo.dataset.key = key;
+
+      if(shouldReload){
+        cursorLogo.classList.remove("on"); // wait for load
+        // Only cache-bust when retrying a previously-failed load
+        const bust = (cursorLogo.dataset.failed === "1") ? `?v=${Date.now()}` : "";
+        cursorLogo.src = `./logos/${key}.png${bust}`;
+      }else{
+        // Same key, already loaded previously: show immediately.
+        cursorLogo.classList.add("on");
+      }
+    }
+
+    function setDetailLogoFor(el){
+      if(!detailLogo) return;
+      if(!el || el.classList.contains("wall")){
+        detailLogo.classList.remove("on");
+        detailLogo.dataset.key = "";
+        detailLogo.removeAttribute("src");
+        return;
+      }
+
+      const key = normalizeRegionKey(el.id || el.getAttribute("data-name") || "");
+      if(!key){
+        detailLogo.classList.remove("on");
+        detailLogo.dataset.key = "";
+        detailLogo.removeAttribute("src");
+        return;
+      }
+
+      detailLogo.dataset.key = key;
+      detailLogo.classList.remove("on"); // wait for load
+      detailLogo.src = `./logos/${key}.png`;
+    }
+
+    function moveCursorLogo(e){
+      if(!cursorLogo || !cursorLogo.dataset.key) return;
+      const wrapRect = mapwrap.getBoundingClientRect();
+      const x = e.clientX - wrapRect.left;
+      const y = e.clientY - wrapRect.top;
+      cursorLogo.style.left = x + "px";
+      cursorLogo.style.top = y + "px";
+    }
+
+    function regionFromClientPoint(clientX, clientY){
+      const el = document.elementFromPoint(clientX, clientY);
+      return el?.closest?.('.region') || null;
+    }
+
+    function restackRegionLayers(){
+      if(!svgEl) return;
+
+      const regions = Array.from(svgEl.querySelectorAll('.region'));
+      const parents = Array.from(new Set(regions.map(r => r.parentNode).filter(Boolean)));
+      parents.forEach((p) => {
+        const direct = Array.from(p.children).filter(n => n?.classList?.contains('region'));
+        if(direct.length < 2) return;
+
+        const normals = direct.filter(n => !n.classList.contains('wall') && !n.classList.contains('restricted'));
+        const restricted = direct.filter(n => !n.classList.contains('wall') && n.classList.contains('restricted'));
+        const walls = direct.filter(n => n.classList.contains('wall'));
+
+        normals.forEach(n => p.appendChild(n));
+        restricted.forEach(n => p.appendChild(n));
+        walls.forEach(n => p.appendChild(n));
+      });
+
+      // Keep current selection at the top of its layer.
+      keepSelectedOnTop();
+    }
+
+    function bringRegionToFront(el){
+      if(!el || !el.parentNode) return;
+
+      // SVG paint order follows DOM order: later siblings render on top.
+      // Layering rule: normal < restricted < walls (restricted always above normal).
+      const p = el.parentNode;
+      const kids = Array.from(p.children).filter(n => n?.classList?.contains?.('region'));
+
+      const firstWall = kids.find(n => n.classList.contains('wall')) || null;
+      const firstRestricted = kids.find(n => n.classList.contains('restricted') && !n.classList.contains('wall')) || null;
+
+      if(el.classList.contains('wall')){
+        p.appendChild(el);
+        return;
+      }
+
+      if(el.classList.contains('restricted')){
+        // Place at end of restricted layer (just before walls).
+        if(firstWall) p.insertBefore(el, firstWall);
+        else p.appendChild(el);
+        return;
+      }
+
+      // Normal: place at end of normal layer (just before first restricted, else before walls).
+      if(firstRestricted) p.insertBefore(el, firstRestricted);
+      else if(firstWall) p.insertBefore(el, firstWall);
+      else p.appendChild(el);
+    }
+
+    function keepSelectedOnTop(){
+      if(!selectedEl) return;
+      // If hover reorders DOM, re-position selected at the top of its layer.
+      bringRegionToFront(selectedEl);
+    }
+
+    function parseCssColorToRgb(color){
+      const c = String(color || "").trim();
+      if(!c) return null;
+
+      // #RRGGBB
+      const hex = c.startsWith('#') ? c.slice(1) : c;
+      if(/^[0-9a-fA-F]{6}$/.test(hex)){
+        return {
+          r: parseInt(hex.slice(0,2), 16),
+          g: parseInt(hex.slice(2,4), 16),
+          b: parseInt(hex.slice(4,6), 16),
+        };
+      }
+
+      // rgb()/rgba()
+      const m = c.match(/rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)/i);
+      if(m){
+        return { r: Math.round(Number(m[1])), g: Math.round(Number(m[2])), b: Math.round(Number(m[3])) };
+      }
+
+      // Modern syntax: rgb(r g b / a)
+      const m2 = c.match(/rgb\(\s*([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)(?:\s*\/\s*([0-9.]+))?\s*\)/i);
+      if(m2){
+        return { r: Math.round(Number(m2[1])), g: Math.round(Number(m2[2])), b: Math.round(Number(m2[3])) };
+      }
+
+      return null;
+    }
+
+    function rgbToHsl(rgb){
+      const r = rgb.r / 255;
+      const g = rgb.g / 255;
+      const b = rgb.b / 255;
+      const max = Math.max(r,g,b);
+      const min = Math.min(r,g,b);
+      const l = (max + min) / 2;
+      if(max === min){
+        return { h: 0, s: 0, l };
+      }
+      const d = max - min;
+      const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      let h;
+      switch(max){
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        default: h = ((r - g) / d + 4) / 6; break;
+      }
+      return { h, s, l };
+    }
+
+    function hslToRgb(hsl){
+      const { h, s, l } = hsl;
+      if(s === 0){
+        const val = Math.round(l * 255);
+        return { r: val, g: val, b: val };
+      }
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      const hue2rgb = (p, q, t) =>{
+        if(t < 0) t += 1;
+        if(t > 1) t -= 1;
+        if(t < 1/6) return p + (q - p) * 6 * t;
+        if(t < 1/2) return q;
+        if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      };
+      return {
+        r: Math.round(hue2rgb(p, q, h + 1/3) * 255),
+        g: Math.round(hue2rgb(p, q, h) * 255),
+        b: Math.round(hue2rgb(p, q, h - 1/3) * 255),
+      };
+    }
+
+    function boostGlowColor(rgb){
+      if(!rgb) return null;
+      const hsl = rgbToHsl(rgb);
+      const minLightness = 0.65;
+      if(hsl.l >= minLightness) return rgb;
+      return hslToRgb({ ...hsl, l: minLightness });
+    }
+
+    function computeGlowPeak(rgb){
+      const base = rgb
+        ? (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255
+        : 0.45;
+      const extra = (1 - base) * 1.6;
+      return clamp(1.44 + extra, 1.44, 3.0);
+    }
+
+    function brightenRgb(rgb, factor){
+      const f = Number(factor) || 1;
+      return {
+        r: clamp(Math.round(rgb.r * f), 0, 255),
+        g: clamp(Math.round(rgb.g * f), 0, 255),
+        b: clamp(Math.round(rgb.b * f), 0, 255),
+      };
+    }
+
+    function applyHotStyle(el){
+      if(!el || el.classList.contains('selected')) return;
+
+      // Prefer current inline stroke (district overrides), else computed.
+      const stroke = el.style.stroke || getComputedStyle(el).stroke || "";
+      const base = parseCssColorToRgb(stroke);
+      if(!base) return;
+      const hot = brightenRgb(base, 1.25);
+      // Brighten the actual border color by temporarily overriding inline stroke.
+      if(el.dataset.baseStrokeInline === undefined){
+        el.dataset.baseStrokeInline = el.style.stroke || "";
+      }
+      el.style.stroke = `rgb(${hot.r}, ${hot.g}, ${hot.b})`;
+
+      el.style.setProperty('--hotGlow1', `rgba(${hot.r}, ${hot.g}, ${hot.b}, 0.28)`);
+      el.style.setProperty('--hotGlow2', `rgba(${hot.r}, ${hot.g}, ${hot.b}, 0.16)`);
+    }
+
+    function clearHotStyle(el){
+      if(!el) return;
+      el.style.removeProperty('--hotGlow1');
+      el.style.removeProperty('--hotGlow2');
+
+      if(el.dataset.baseStrokeInline !== undefined){
+        const prev = el.dataset.baseStrokeInline;
+        delete el.dataset.baseStrokeInline;
+        if(prev){
+          el.style.stroke = prev;
+        }else{
+          el.style.removeProperty('stroke');
+        }
+      }
+    }
+
+    let globalHoverBound = false;
+    function bindGlobalHoverTracking(){
+      if(globalHoverBound) return;
+      globalHoverBound = true;
+
+      mapwrap.addEventListener('pointermove', (e) => {
+        if(!svgEl) return;
+        const r = regionFromClientPoint(e.clientX, e.clientY);
+
+        if(r && hoveredEl !== r){
+          const prev = hoveredEl;
+          if(prev){
+            prev.classList.remove('hot');
+            clearHotStyle(prev);
+            setDistrictLogoStateFor(prev, prev === selectedEl ? "selected" : "base");
+          }
+          hoveredEl = r;
+          hoveredEl.classList.add('hot');
+          applyHotStyle(hoveredEl);
+          bringRegionToFront(r);
+          keepSelectedOnTop();
+          setDistrictLogoStateFor(hoveredEl, hoveredEl === selectedEl ? "selected" : "hover");
+          refreshHoverTab();
+          setCursorLogoFor(r);
+        }else if(!r && hoveredEl){
+          hoveredEl.classList.remove('hot');
+          clearHotStyle(hoveredEl);
+          setDistrictLogoStateFor(hoveredEl, hoveredEl === selectedEl ? "selected" : "base");
+          hoveredEl = null;
+          refreshHoverTab();
+          if(cursorLogo) cursorLogo.classList.remove('on');
+        }
+
+        moveCursorLogo(e);
+      }, { passive:true });
+
+      mapwrap.addEventListener('pointerleave', () => {
+        if(hoveredEl){
+          hoveredEl.classList.remove('hot');
+          clearHotStyle(hoveredEl);
+          setDistrictLogoStateFor(hoveredEl, hoveredEl === selectedEl ? "selected" : "base");
+        }
+        hoveredEl = null;
+        refreshHoverTab();
+        if(cursorLogo) cursorLogo.classList.remove('on');
+      });
+    }
+
+    function onRegionMove(e){
+      // Cursor-following district logo (title is handled as a bottom tab)
+      const r = e.target.closest('.region');
+      if(r && hoveredEl !== r){
+        hoveredEl = r;
+        refreshHoverTab();
+        setCursorLogoFor(r);
+      }
+      moveCursorLogo(e);
+    }
+
+    function onRegionEnter(e){
+      const r = e.target.closest('.region');
+      if(!r) return;
+      hoveredEl = r;
+      r.classList.add('hot');
+      applyHotStyle(r);
+      bringRegionToFront(r);
+      keepSelectedOnTop();
+      refreshHoverTab();
+
+      setDistrictLogoStateFor(r, r === selectedEl ? "selected" : "hover");
+
+      if(r.classList.contains("restricted") && !r.classList.contains("selected")){
+        setStripeThicknessForRegion(r, "hover");
+      }
+    }
+
+    function onRegionLeave(e){
+      const r = e.target.closest('.region');
+      if(r){
+        r.classList.remove('hot');
+        clearHotStyle(r);
+      }
+      if(r && r.classList.contains("restricted")){
+        setStripeThicknessForRegion(r, r.classList.contains("selected") ? "selected" : "base");
+      }
+
+      if(hoveredEl === r) hoveredEl = null;
+      refreshHoverTab();
+
+      if(r){
+        setDistrictLogoStateFor(r, r.classList.contains("selected") ? "selected" : "base");
+      }
+    }
+
+    function selectRegion(el){
+      if(selectedEl === el) return;
+      bringRegionToFront(el);
+      const prev = selectedEl;
+      if(prev) {
+        prev.classList.remove("selected");
+      }
+      selectedEl = el;
+      if(selectedEl) selectedEl.classList.add("selected");
+
+      // Ensure selection stays top even if the click happened during hover.
+      keepSelectedOnTop();
+
+      // Update district logo states
+      if(prev) setDistrictLogoStateFor(prev, prev === hoveredEl ? "hover" : "base");
+      if(selectedEl) setDistrictLogoStateFor(selectedEl, "selected");
+
+      function getRestrictedThemeForKey(normKey){
+        const k = normalizeRegionKey(normKey);
+
+        // Requested mapping:
+        // - Merryweather base: yellow
+        // - APEX + PRISON: blue
+        // - SecuroServ: red
+        if(k === "MERRYWEATHER_BASE") return { theme: "yellow", glow: { r: 255, g: 238, b: 152 } };
+        if(k === "NEON_CITY_PRISON" || k === "APEX" || k === "APEX_HQ" || k.startsWith("APEX_")){
+          return { theme: "blue", glow: { r: 96, g: 143, b: 255 } };
+        }
+        if(k === "SECUROSERV_PORT" || k === "SECUROSERVE_PORT" || k.startsWith("SECUROSERV_")){
+          return { theme: "red", glow: { r: 255, g: 65, b: 65 } };
+        }
+
+        // Default restricted theme (keeps existing look)
+        return { theme: "yellow", glow: { r: 255, g: 238, b: 152 } };
+      }
+
+      if(selectedEl){
+        const isRestricted = selectedEl.classList.contains("restricted");
+        if(isRestricted){
+          const normKey = normalizeRegionKey(selectedEl.id || selectedEl.getAttribute("data-name") || "");
+          const themed = getRestrictedThemeForKey(normKey);
+          updateSelectionGlowColor(boostGlowColor(themed.glow));
+        }else{
+          const strokeColor = getComputedStyle(selectedEl).stroke || "";
+          const glow = parseCssColorToRgb(strokeColor);
+          updateSelectionGlowColor(boostGlowColor(glow));
+        }
+      }else{
+        updateSelectionGlowColor(null);
+      }
+
+      if(prev && prev.classList.contains("restricted")){
+        setStripeThicknessForRegion(prev, "base");
+      }
+      if(selectedEl && selectedEl.classList.contains("restricted")){
+        setStripeThicknessForRegion(selectedEl, "selected");
+      }
+
+      refreshHoverTab();
+      updateSelectionDimming();
+      updateRestrictedOverlayState();
+
+      // Show district logo in details panel (only when selected)
+      setDetailLogoFor(selectedEl);
+
+      // Notes: read-only + only if present in AREA_NOTES
+      setAreaNotesFor(selectedEl);
+
+      // Pop the window when a district is selected
+      document.getElementById("popupDetails")?.classList.add("on");
+
+      const { name, id, zone } = regionLabel(el);
+      const type = el.getAttribute("data-type") || "unknown";
+      const bounds = el.getAttribute("data-bounds") || "—";
+
+      // Update right panel
+      document.getElementById("detailState").textContent = "TARGET";
+      document.getElementById("dName").textContent = name;
+      document.getElementById("dId").textContent = id;
+      document.getElementById("dType").textContent = type;
+      document.getElementById("dZone").textContent = zone || "—";
+      document.getElementById("dBounds").textContent = bounds;
+      document.getElementById("detailFoot").textContent = "active";
+
+      // Animate camera to selected sector (lore terminal vibe)
+      if(el.classList.contains("region") && !el.classList.contains("wall")){
+        // Click behavior: zoom in and fit the selected district, centered.
+        flyToElement(el, 2.2, 520, true);
+      }
+
+      term(`[SELECT] ${name} (${id})`);
+    }
+
+    function updateSelectionDimming(){
+      const host = document.getElementById("svgHost");
+      if(!host) return;
+      host.classList.toggle("dimmedOthers", Boolean(selectedEl));
+    }
+
+    function updateRestrictedOverlayState(){
+      const activeRestricted = Boolean(selectedEl && selectedEl.classList.contains("restricted"));
+      const overlay = document.getElementById("restrictedOverlay");
+      if(overlay){
+        overlay.classList.toggle("on", activeRestricted);
+
+        overlay.classList.remove("theme-blue", "theme-red");
+        if(activeRestricted){
+          const normKey = normalizeRegionKey(selectedEl?.id || selectedEl?.getAttribute?.("data-name") || "");
+          const themed = (function(){
+            if(normKey === "MERRYWEATHER_BASE") return "yellow";
+            if(normKey === "NEON_CITY_PRISON" || normKey === "APEX" || normKey === "APEX_HQ" || normKey.startsWith("APEX_")) return "blue";
+            if(normKey === "SECUROSERV_PORT" || normKey === "SECUROSERVE_PORT" || normKey.startsWith("SECUROSERV_")) return "red";
+            return "yellow";
+          })();
+          if(themed === "blue") overlay.classList.add("theme-blue");
+          if(themed === "red") overlay.classList.add("theme-red");
+        }
+      }
+      const detailPanel = document.getElementById("popupDetails");
+      if(detailPanel){
+        detailPanel.classList.toggle("restricted", activeRestricted);
+
+        detailPanel.classList.remove("theme-blue", "theme-red");
+        if(activeRestricted){
+          const normKey = normalizeRegionKey(selectedEl?.id || selectedEl?.getAttribute?.("data-name") || "");
+          if(normKey === "NEON_CITY_PRISON" || normKey === "APEX" || normKey === "APEX_HQ" || normKey.startsWith("APEX_")){
+            detailPanel.classList.add("theme-blue");
+          }else if(normKey === "SECUROSERV_PORT" || normKey === "SECUROSERVE_PORT" || normKey.startsWith("SECUROSERV_")){
+            detailPanel.classList.add("theme-red");
+          }
+        }
+      }
+    }
+
+    function clearSelection(){
+      const prev = selectedEl;
+      if(prev) {
+        prev.classList.remove("selected");
+      }
+      selectedEl = null;
+      updateSelectionGlowColor(null);
+      updateSelectionDimming();
+      updateRestrictedOverlayState();
+
+      // Reset district logo visual state (selected -> base/hover)
+      if(prev) setDistrictLogoStateFor(prev, prev === hoveredEl ? "hover" : "base");
+
+      // Reset restricted stripe thickness when selection is cleared
+      if(prev && prev.classList.contains("restricted")){
+        setStripeThicknessForRegion(prev, "base");
+      }
+
+      setDetailLogoFor(null);
+      setAreaNotesFor(null);
+
+      // Reset right panel
+      document.getElementById("detailState").textContent = "NO TARGET";
+      document.getElementById("dName").textContent = "—";
+      document.getElementById("dId").textContent = "—";
+      document.getElementById("dType").textContent = "—";
+      document.getElementById("dZone").textContent = "—";
+      document.getElementById("dBounds").textContent = "—";
+      document.getElementById("detailFoot").textContent = "waiting";
+
+      term("[CLEAR] selection cleared");
+    }
+
+    function closeDetailsPopup(){
+      document.getElementById("popupDetails")?.classList.remove("on");
+      clearSelection();
+    }
+
+    // Details popup buttons
+    document.getElementById("btnCloseDetails")?.addEventListener("click", closeDetailsPopup);
+
+    // ESC closes the details popup (same as clicking X)
+    window.addEventListener("keydown", (e) => {
+      if(e.key !== "Escape") return;
+      const popup = document.getElementById("popupDetails");
+      if(!popup || !popup.classList.contains("on")) return;
+      e.preventDefault();
+      closeDetailsPopup();
+    });
+
+    // DISTRICT CONTROLS
+    function showAllDistricts(){
+      if(!svgEl) return;
+      svgEl.querySelectorAll('.region').forEach(r => r.classList.remove('dimmed','hidden'));
+      buildLabels();
+      buildDistrictLogos();
+      rebuildRestrictedBlurClip();
+      restackRegionLayers();
+    }
+    function showRestrictedZones(){
+      if(!svgEl) return;
+      const regions = Array.from(svgEl.querySelectorAll('.region:not(.wall)'));
+      regions.forEach(r => {
+        const restricted = isRegionRestricted(r);
+        r.classList.toggle('hidden', !restricted);
+        r.classList.remove('dimmed');
+      });
+      buildLabels(({restricted}) => restricted);
+      buildDistrictLogos(({restricted}) => restricted);
+      rebuildRestrictedBlurClip();
+      restackRegionLayers();
+    }
+    function hideAllDistricts(){
+      if(!svgEl) return;
+      svgEl.querySelectorAll('.region').forEach(r => r.classList.add('hidden'));
+      const layer = document.getElementById('labelsLayer');
+      if(layer) layer.innerHTML = '';
+      const logos = document.getElementById('logosLayer');
+      if(logos) logos.innerHTML = '';
+      rebuildRestrictedBlurClip();
+      restackRegionLayers();
+    }
+    document.getElementById('btnShowAllDistricts')?.addEventListener('click', showAllDistricts);
+    document.getElementById('btnRestricted')?.addEventListener('click', showRestrictedZones);
+    document.getElementById('btnHideAll')?.addEventListener('click', hideAllDistricts);
+
+    // Left-side menu bindings
+    function setMenuOn(id){
+      const ids = ["menuShowAll","menuRestricted","menuHideAll"];
+      ids.forEach(k => {
+        const btn = document.getElementById(k);
+        if(!btn) return;
+        const on = (k === id);
+        btn.classList.toggle("on", on);
+        btn.setAttribute("aria-selected", on ? "true" : "false");
+      });
+    }
+
+    function activateMenu(id){
+      setMenuOn(id);
+      if(id === 'menuShowAll') showAllDistricts();
+      else if(id === 'menuRestricted') showRestrictedZones();
+      else if(id === 'menuHideAll') hideAllDistricts();
+    }
+
+    document.getElementById('menuShowAll')?.addEventListener('click', () => activateMenu('menuShowAll'));
+    document.getElementById('menuRestricted')?.addEventListener('click', () => activateMenu('menuRestricted'));
+    document.getElementById('menuHideAll')?.addEventListener('click', () => activateMenu('menuHideAll'));
+
+    function getActiveMenuId(){
+      const ids = ['menuShowAll','menuRestricted','menuHideAll'];
+      for(const id of ids){
+        const el = document.getElementById(id);
+        if(el && el.classList.contains('on')) return id;
+      }
+      return 'menuShowAll';
+    }
+
+    function stepMenu(dir){
+      const ids = ['menuShowAll','menuRestricted','menuHideAll'];
+      const cur = getActiveMenuId();
+      const idx = Math.max(0, ids.indexOf(cur));
+      const next = (idx + dir + ids.length) % ids.length;
+      activateMenu(ids[next]);
+    }
+
+    document.getElementById('menuPrev')?.addEventListener('click', () => stepMenu(-1));
+    document.getElementById('menuNext')?.addEventListener('click', () => stepMenu(1));
+
+    /**
+     * API you can call from other scripts / buttons:
+     * highlightById("area_pillbox")
+     */
+    window.highlightById = function(id){
+      if(!svgEl) return;
+      const el = svgEl.querySelector(`#${CSS.escape(id)}`);
+      if(el){
+        // clear dimming
+        svgEl.querySelectorAll(".region").forEach(r => r.classList.remove("dimmed","hidden"));
+        selectRegion(el);
+      }
+    };
+
+    startBoot();
+  </script>
+</body>
+</html>

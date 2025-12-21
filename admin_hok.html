@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>House of Karma – Legal Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      background: linear-gradient(120deg, #2d1f00 0%, #a496f1 100%);
+      color: #18142a;
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      margin: 0;
+    }
+    .hok-admin-card {
+      background: #fff;
+      border-radius: 1.2em;
+      box-shadow: 0 0 24px 8px #0002;
+      padding: 2.5em 2em 2em 2em;
+      max-width: 900px;
+      width: 100%;
+      margin: 2.5em auto 0 auto;
+    }
+    .hok-admin-title {
+      font-family: 'Montserrat', serif;
+      font-size: 2.1rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      color: #4b4181;
+      margin-bottom: 0.5em;
+      text-align: center;
+    }
+    .hok-admin-logo {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      margin: 0 auto 1em auto;
+      box-shadow: 0 0 12px 2px #a496f1aa;
+      background: #fff;
+      object-fit: cover;
+      display: block;
+    }
+    .hok-nav {
+      display: flex;
+      justify-content: center;
+      gap: 1.2em;
+      margin-bottom: 2em;
+    }
+    .hok-nav-btn {
+      background: linear-gradient(90deg,#a496f1 0%,#ffd700 100%);
+      color: #18142a;
+      font-weight: 800;
+      border-radius: 0.8em;
+      font-size: 1.08rem;
+      padding: 0.7em 2.1em;
+      border: none;
+      box-shadow: 0 2px 12px #a496f1aa;
+      letter-spacing: 0.01em;
+      transition: filter 0.18s, box-shadow 0.18s, background 0.18s;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .hok-nav-btn:hover, .hok-nav-btn:focus {
+      filter: brightness(1.13) drop-shadow(0 0 12px #ffd70088);
+      background: linear-gradient(90deg,#ffd700 0%,#a496f1 100%);
+    }
+    .hok-section-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #4b4181;
+      margin-top: 1.5em;
+      margin-bottom: 0.7em;
+    }
+    .hok-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2em;
+      background: #f7f6fa;
+      border-radius: 0.7em;
+      overflow: hidden;
+      box-shadow: 0 2px 8px #a496f122;
+    }
+    .hok-table th, .hok-table td {
+      padding: 0.8em 1em;
+      text-align: left;
+    }
+    .hok-table th {
+      background: #a496f1;
+      color: #fff;
+      font-weight: 800;
+    }
+    .hok-table tr:nth-child(even) {
+      background: #edeaf7;
+    }
+    .hok-table tr:nth-child(odd) {
+      background: #f7f6fa;
+    }
+    .hok-action-btn {
+      background: #ffd700;
+      color: #18142a;
+      font-weight: 700;
+      border-radius: 0.5em;
+      padding: 0.4em 1.1em;
+      border: none;
+      margin-right: 0.5em;
+      transition: background 0.18s;
+      cursor: pointer;
+    }
+    .hok-action-btn:hover {
+      background: #a496f1;
+      color: #fff;
+    }
+    @media (max-width: 700px) {
+      .hok-admin-card { padding: 1.2em 0.3em; }
+      .hok-table th, .hok-table td { padding: 0.5em 0.4em; font-size: 0.98rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="hok-admin-card">
+    <img src="https://i.postimg.cc/KcLVGFWY/logo6.png" alt="House of Karma Logo" class="hok-admin-logo" />
+    <div class="hok-admin-title">House of Karma Legal Admin</div>
+    <div class="hok-nav">
+      <a href="#" class="hok-nav-btn">Active Cases</a>
+      <a href="#" class="hok-nav-btn">Retainers</a>
+      <a href="#" class="hok-nav-btn">Payments</a>
+      <a href="#" class="hok-nav-btn">Clients</a>
+      <a href="index_hok.html" class="hok-nav-btn">Logout</a>
+    </div>
+    <div class="hok-section-title">Active Cases</div>
+    <table class="hok-table">
+      <thead>
+        <tr>
+          <th>Case #</th>
+          <th>Client</th>
+          <th>Status</th>
+          <th>Assigned To</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2025-001</td>
+          <td>Jane Doe</td>
+          <td>Open</td>
+          <td>Attorney Smith</td>
+          <td>
+            <button class="hok-action-btn">View</button>
+            <button class="hok-action-btn">Close</button>
+          </td>
+        </tr>
+        <tr>
+          <td>2025-002</td>
+          <td>John Roe</td>
+          <td>Pending</td>
+          <td>Attorney Lee</td>
+          <td>
+            <button class="hok-action-btn">View</button>
+            <button class="hok-action-btn">Close</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="hok-section-title">Active Retainers</div>
+    <table class="hok-table">
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Start Date</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Jane Doe</td>
+          <td>2025-06-01</td>
+          <td>$5,000</td>
+          <td>Active</td>
+          <td>
+            <button class="hok-action-btn">View</button>
+            <button class="hok-action-btn">End</button>
+          </td>
+        </tr>
+        <tr>
+          <td>John Roe</td>
+          <td>2025-05-15</td>
+          <td>$3,000</td>
+          <td>Active</td>
+          <td>
+            <button class="hok-action-btn">View</button>
+            <button class="hok-action-btn">End</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="hok-section-title">Recent Retainer Payments</div>
+    <table class="hok-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Client</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2025-06-28</td>
+          <td>Jane Doe</td>
+          <td>$1,000</td>
+          <td>Wire</td>
+          <td><button class="hok-action-btn">View</button></td>
+        </tr>
+        <tr>
+          <td>2025-06-20</td>
+          <td>John Roe</td>
+          <td>$1,500</td>
+          <td>Check</td>
+          <td><button class="hok-action-btn">View</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
