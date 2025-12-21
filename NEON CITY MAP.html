@@ -12,6 +12,9 @@
       --bg1:#07112a;
       --ui:#608fff;    /* buildings + UI */
       --yl:#eeff5e;    /* roads + highlights */
+      /* SecuroServ base reds (matches the SecuroServ restricted outline tone) */
+      --ss: 207, 0, 0;
+      --ssHot: 255, 65, 65;
       /* UI text uses only the two palette colors (via mixing) */
       --text: color-mix(in srgb, var(--ui) 82%, var(--yl) 18%);
       --muted: color-mix(in srgb, var(--ui) 62%, transparent);
@@ -77,7 +80,8 @@
       left: 14px;
       top: calc(var(--topbar-h) + 10px);
       display:flex;
-      align-items:flex-end;
+      flex-direction: column;
+      align-items:flex-start;
       justify-content:flex-start;
       padding: 10px 12px 0;
       background: rgba(1,6,27,.70);
@@ -85,6 +89,11 @@
       box-shadow: var(--glowB);
       z-index: 35;
       user-select:none;
+    }
+    .sidemenu-row{
+      display:flex;
+      align-items:flex-end;
+      justify-content:flex-start;
     }
     .sidemenu .arrow{
       appearance:none;
@@ -113,6 +122,82 @@
       padding-bottom: 0;
       position: relative;
     }
+
+    /* Layer toggles under the district filter tabs */
+    .layerToggles{
+      position: fixed;
+      left: 14px;
+      top: calc(var(--topbar-h) + 10px + 72px);
+      z-index: 34;
+      display:flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 0 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+    .layerToggle{
+      appearance:none;
+      background: transparent;
+      border: none;
+      padding: 0;
+      margin: 0;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      color: rgba(96,143,255,.78);
+      cursor: pointer;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      font-size: 12px;
+    }
+    .layerToggle:hover{ color: rgba(96,143,255,.98); }
+    .layerToggle-icon{
+      width: 30px;
+      height: 14px;
+      position: relative;
+      flex: 0 0 auto;
+    }
+    .layerToggle-icon::before{
+      content:"";
+      position:absolute;
+      inset: 2px 0;
+      background: rgba(96,143,255,.22);
+      box-shadow: 0 0 14px rgba(96,143,255,.12);
+    }
+    .layerToggle-icon::after{
+      content:"";
+      position:absolute;
+      top: 1px;
+      left: 1px;
+      width: 12px;
+      height: 12px;
+      background: rgba(96,143,255,.75);
+      box-shadow: 0 0 12px rgba(96,143,255,.18);
+      transition: transform .14s ease, background .14s ease;
+    }
+    .layerToggle.on{ color: var(--yl); }
+    .layerToggle.on .layerToggle-icon::before{ background: rgba(238,255,94,.22); box-shadow: 0 0 14px rgba(238,255,94,.10); }
+    .layerToggle.on .layerToggle-icon::after{ transform: translate3d(16px,0,0); background: rgba(238,255,94,.92); box-shadow: 0 0 14px rgba(238,255,94,.16); }
+
+    /* In SecuroServ mode, toggles inherit the red theme */
+    body.securosserv-mode .layerToggle{ color: rgba(var(--ssHot), .78); }
+    body.securosserv-mode .layerToggle:hover{ color: rgba(var(--ssHot), .98); }
+    body.securosserv-mode .layerToggle-icon::before{ background: rgba(var(--ssHot), .14); box-shadow: 0 0 14px rgba(var(--ssHot), .10); }
+    body.securosserv-mode .layerToggle-icon::after{ background: rgba(var(--ssHot), .70); box-shadow: 0 0 14px rgba(var(--ssHot), .12); }
+    body.securosserv-mode .layerToggle.on{ color: rgba(var(--ssHot), .95); }
+
+    /* Actual visibility control */
+    #layerBuildings,
+    #layerRoads,
+    #markersLayer{
+      transition: opacity .16s ease;
+    }
+    body.hide-buildings #layerBuildings{ opacity: 0; }
+    body.hide-roads #layerRoads{ opacity: 0; }
+    body.hide-markers #markersLayer{ opacity: 0; }
     .sidemenu .tab{
       appearance:none;
       background: transparent;
@@ -244,13 +329,13 @@
 
     .termDock{
       position: fixed;
-      left: 14px;
+      right: 14px;
       bottom: 14px;
       padding: 0;
       background: transparent;
       z-index: 40;
     }
-    .termDock #panelTerm{ width: 300px; }
+    .termDock #panelTerm{ width: 270px; }
 
     /* Panels */
     .hudpanel, .hudpopup, .dockpanel{
@@ -412,6 +497,71 @@
       --restrictedTextRGB: 255, 65, 65;
     }
 
+    /* SecuroServ global UI mode: force the entire HUD palette to red shades */
+    body.securosserv-mode{
+      --ui: rgb(var(--ssHot));
+      --yl: rgb(var(--ssHot));
+      --panel: rgba(18, 4, 6, .78);
+      --line: rgba(var(--ssHot), .70);
+      --line2: rgba(var(--ssHot), .30);
+      --glowB: 0 0 16px rgba(var(--ssHot), .28), 0 0 44px rgba(var(--ss), .20);
+      --glowY: 0 0 12px rgba(var(--ssHot), .30), 0 0 30px rgba(var(--ssHot), .18);
+    }
+
+    body.securosserv-mode .hudtitle{ color: rgba(var(--ssHot), .95); }
+    body.securosserv-mode .hudfoot{ color: rgba(var(--ssHot), .78); border-top-color: rgba(var(--ssHot), .35); }
+
+    body.securosserv-mode .topnav .tabs::before,
+    body.securosserv-mode .topnav .tabs::after{
+      border-bottom-color: rgba(var(--ssHot), .24);
+    }
+    body.securosserv-mode .topnav .tab{ color: rgba(var(--ssHot), .86); }
+    body.securosserv-mode .topnav .tab span{ border-bottom-color: rgba(var(--ssHot), .36); }
+    body.securosserv-mode .topnav .tab.on span{ border-bottom-color: rgba(var(--ss), 1); }
+
+    body.securosserv-mode .sidemenu{ border-color: rgba(var(--ssHot), .26); box-shadow: var(--glowB); }
+    body.securosserv-mode .sidemenu .tab,
+    body.securosserv-mode .sidemenu .arrow{ color: rgba(var(--ssHot), .86); }
+    body.securosserv-mode .sidemenu .tab span{ border-bottom-color: rgba(var(--ssHot), .36); }
+    body.securosserv-mode .sidemenu .tab.on span{
+      border-bottom-color: rgba(var(--ss), 1);
+      filter:
+        drop-shadow(0 0 10px rgba(var(--ssHot), .22))
+        drop-shadow(0 0 18px rgba(var(--ssHot), .14));
+    }
+    body.securosserv-mode .sidemenu .tab:hover:not(.on),
+    body.securosserv-mode .sidemenu .arrow:hover{ color: rgba(var(--ssHot), .98); }
+    body.securosserv-mode .sidemenu .tab:hover:not(.on) span,
+    body.securosserv-mode .sidemenu .arrow:hover span{
+      filter:
+        drop-shadow(0 0 10px rgba(var(--ssHot), .26))
+        drop-shadow(0 0 18px rgba(var(--ssHot), .16));
+    }
+    body.securosserv-mode .sidemenu .tab:hover:not(.on) span{ border-bottom-color: rgba(var(--ssHot), .70); }
+
+    body.securosserv-mode .tip{
+      border-color: rgba(var(--ss), 1);
+      box-shadow: 0 0 12px rgba(var(--ssHot), .24), 0 0 22px rgba(var(--ssHot), .14);
+      color: rgba(var(--ssHot), .95);
+      text-shadow: 0 0 7px rgba(var(--ssHot), .40), 0 0 14px rgba(var(--ssHot), .26);
+    }
+
+    body.securosserv-mode .term,
+    body.securosserv-mode .boot-lines{
+      color: rgba(var(--ssHot), .92);
+      border-color: rgba(var(--ssHot), .28);
+    }
+    body.securosserv-mode .boot-top,
+    body.securosserv-mode .boot-foot{ border-color: rgba(var(--ssHot), .30); }
+    body.securosserv-mode .boot-title{ color: rgba(var(--ssHot), .96); }
+    body.securosserv-mode .boot-sub{ color: rgba(var(--ssHot), .72); }
+    body.securosserv-mode .boot-line.dim{ color: rgba(var(--ssHot), .62); }
+    body.securosserv-mode .boot-meta{ color: rgba(var(--ssHot), .70); }
+    body.securosserv-mode .boot-foot{ color: rgba(var(--ssHot), .66); }
+    body.securosserv-mode .boot-inner::before{ border-color: rgba(var(--ssHot), .16); }
+    body.securosserv-mode .boot-bar{ border-color: rgba(var(--ssHot), .30); }
+    body.securosserv-mode .boot-bar-fill{ background: rgba(var(--ssHot), .92); }
+
     #popupDetails.restricted{
       animation: restrictedPanelPulse 4s ease-in-out infinite;
     }
@@ -511,7 +661,7 @@
 
     /* Terminal */
     .term{
-      height: 280px;
+      height: 210px;
       overflow:auto;
       font-family: inherit;
       font-size: 12px;
@@ -742,6 +892,13 @@
       z-index: 7;
       --logoZoomScale: 1;
     }
+
+    #markersLayer{
+      position:absolute;
+      inset: 0;
+      z-index: 9;
+      pointer-events: none;
+    }
     .districtLogo{
       position:absolute;
       transform: translate(-50%, -50%) scale(calc(0.72 * var(--logoZoomScale, 1)));
@@ -831,6 +988,14 @@
     }
     .tip.on{ opacity: 1; }
 
+    /* SecuroServ hover: force tooltip to red even without selection */
+    .tip.securoserv{
+      border-color: rgba(var(--ss), 1);
+      box-shadow: 0 0 12px rgba(var(--ssHot), .22), 0 0 22px rgba(var(--ssHot), .14);
+      color: rgba(var(--ssHot), .95);
+      text-shadow: 0 0 7px rgba(var(--ssHot), .40), 0 0 14px rgba(var(--ssHot), .26);
+    }
+
     /* HARD RULE: no rounded edges anywhere */
     *, *::before, *::after{ border-radius: 0 !important; }
 
@@ -872,9 +1037,10 @@
     .hudpopup{
       position:fixed;
       left: 14px;
+      top: var(--detailsTop, calc(var(--topbar-h) + 10px + 170px));
       bottom: calc(14px + var(--dockH, 0px) + 14px);
-      width: 360px;
-      max-height: calc(100vh - var(--topbar-h) - (14px + var(--dockH, 0px) + 14px) - 14px);
+      width: 270px;
+      max-height: none;
       overflow:auto;
       z-index: 7;
       display:none;
@@ -1040,6 +1206,13 @@
         drop-shadow(0 0 22px var(--hotGlow2, rgba(96,143,255,.14)));
     }
 
+    /* RESTRICTED HOVER: thicker outline only (no glow) */
+    #svgHost .region.restricted.hot:not(.selected){
+      opacity: 1;
+      stroke-width: calc(var(--sw-region) + 3.2px) !important;
+      filter: none !important;
+    }
+
     /* RESTRICTED: thicker baseline; glow only when selected */
     #svgHost .region.restricted{
       opacity: .96;
@@ -1066,6 +1239,773 @@
     }
     .restricted-overlay.on{
       opacity: 1;
+    }
+
+    .securoserv-wall{
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      pointer-events: none;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity .6s ease;
+    }
+    .securoserv-wall.on{
+      opacity: .18;
+    }
+
+    .securoserv-chaos{
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 70;
+      opacity: 0;
+      transition: opacity .55s ease;
+    }
+    .securoserv-chaos.on{ opacity: 1; }
+
+    .screen-glitch{
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 90;
+      opacity: 0;
+      transition: opacity .45s ease;
+    }
+    .screen-glitch.on{ opacity: calc(0.18 + (var(--g, 0) * 0.82)); }
+    .screen-glitch::before{
+      content:"";
+      position:absolute;
+      inset: 0;
+      /* scanlines + slight chroma offset */
+      background:
+        repeating-linear-gradient(
+          180deg,
+          rgba(0,0,0,.00) 0px,
+          rgba(0,0,0,.00) 2px,
+          rgba(var(--ssHot), .055) 3px,
+          rgba(0,0,0,.00) 4px
+        ),
+        linear-gradient(90deg,
+          rgba(var(--ssHot), .075),
+          rgba(0,0,0,0) 35%,
+          rgba(var(--ssHot), .050) 70%,
+          rgba(0,0,0,0)
+        );
+      mix-blend-mode: screen;
+      opacity: calc(0.22 + (var(--g, 0) * 0.86));
+      filter: blur(.15px);
+      animation: securoservScanDrift calc(1.55s - (var(--g, 0) * 0.95s)) steps(2) infinite;
+    }
+    .screen-glitch::after{
+      content:"";
+      position:absolute;
+      inset: 0;
+      /* glitch bars + noise-like speckle using gradients */
+      background:
+        linear-gradient(0deg,
+          transparent 0%,
+          rgba(var(--ssHot), .00) 18%,
+          rgba(var(--ssHot), .18) 22%,
+          rgba(var(--ssHot), .00) 26%,
+          rgba(0,0,0,0) 100%
+        ),
+        repeating-linear-gradient(90deg,
+          rgba(var(--ssHot), .10) 0px,
+          rgba(var(--ssHot), .10) 1px,
+          rgba(0,0,0,0) 1px,
+          rgba(0,0,0,0) 7px
+        ),
+        radial-gradient(circle at 18% 34%, rgba(var(--ssHot), .12), transparent 40%),
+        radial-gradient(circle at 72% 68%, rgba(var(--ssHot), .08), transparent 42%);
+      mix-blend-mode: screen;
+      opacity: calc(0.12 + (var(--g, 0) * 0.80));
+      animation: securoservGlitchBars calc(1.25s - (var(--g, 0) * 0.85s)) steps(2) infinite;
+    }
+    @keyframes securoservScanDrift{
+      0%{ transform: translate3d(0,0,0); }
+      20%{ transform: translate3d(0,-1px,0) skewX(-0.3deg); }
+      45%{ transform: translate3d(0,1px,0) skewX(0.4deg); }
+      70%{ transform: translate3d(0,-2px,0) skewX(-0.6deg); }
+      100%{ transform: translate3d(0,0,0); }
+    }
+    @keyframes securoservGlitchBars{
+      0%{ transform: translate3d(0,0,0); clip-path: inset(0 0 0 0); }
+      18%{ transform: translate3d(2px,0,0); clip-path: inset(8% 0 62% 0); }
+      32%{ transform: translate3d(-3px,0,0); clip-path: inset(42% 0 38% 0); }
+      46%{ transform: translate3d(1px,0,0); clip-path: inset(64% 0 18% 0); }
+      62%{ transform: translate3d(-2px,0,0); clip-path: inset(12% 0 70% 0); }
+      78%{ transform: translate3d(3px,0,0); clip-path: inset(52% 0 26% 0); }
+      100%{ transform: translate3d(0,0,0); clip-path: inset(0 0 0 0); }
+    }
+    .securoserv-chaos .chaos-pop{
+      position: absolute;
+      min-width: 220px;
+      max-width: min(520px, 70vw);
+      background: rgba(0,0,0,.72);
+      border: 1px solid rgba(var(--ss), .82);
+      box-shadow:
+        0 0 20px rgba(var(--ssHot), .24),
+        0 0 54px rgba(var(--ss), .14);
+      padding: 10px 12px;
+      opacity: .92;
+      filter:
+        drop-shadow(0 0 12px rgba(var(--ssHot), .18))
+        drop-shadow(0 0 26px rgba(var(--ss), .12));
+      transform: translate3d(0,0,0);
+      animation: securoservPopIn .45s ease both;
+    }
+
+    /* DISTINCT STYLE “SKINS” (same red palette, different look) */
+    .securoserv-chaos .chaos-pop.style-wire{
+      background:
+        linear-gradient(180deg, rgba(var(--ssHot), .09), rgba(0,0,0,.78)),
+        repeating-linear-gradient(90deg, rgba(var(--ssHot), .06), rgba(var(--ssHot), .06) 1px, transparent 1px, transparent 14px);
+      border-color: rgba(var(--ss), .90);
+      box-shadow: 0 0 16px rgba(var(--ssHot), .20), 0 0 46px rgba(var(--ss), .12);
+    }
+    .securoserv-chaos .chaos-pop.style-solid{
+      background:
+        linear-gradient(180deg, rgba(80,0,0,.70), rgba(0,0,0,.82));
+      border-color: rgba(var(--ssHot), .40);
+      box-shadow: 0 0 24px rgba(var(--ssHot), .22), 0 0 78px rgba(var(--ss), .12);
+    }
+    .securoserv-chaos .chaos-pop.style-toast{
+      background:
+        linear-gradient(90deg, rgba(var(--ssHot), .26), rgba(0,0,0,.78) 46%, rgba(0,0,0,.78));
+      border-left-width: 4px;
+      border-left-color: rgba(var(--ss), 1);
+      padding: 10px 14px;
+    }
+    .securoserv-chaos .chaos-pop.style-dialog{
+      background:
+        radial-gradient(circle at 10% 0%, rgba(var(--ssHot), .18), transparent 40%),
+        linear-gradient(180deg, rgba(0,0,0,.78), rgba(0,0,0,.90));
+      border-width: 2px;
+    }
+    .securoserv-chaos .chaos-pop.style-terminal{
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.92), rgba(0,0,0,.78));
+      border-color: rgba(var(--ssHot), .40);
+      box-shadow: inset 0 0 0 1px rgba(var(--ssHot), .10), 0 0 28px rgba(var(--ss), .14);
+    }
+    .securoserv-chaos .chaos-pop.style-siren{
+      background:
+        linear-gradient(180deg, rgba(var(--ssHot), .18), rgba(0,0,0,.78));
+      border-color: rgba(var(--ss), .96);
+    }
+    .securoserv-chaos .chaos-pop.style-siren .chaos-h{
+      text-shadow: 0 0 14px rgba(var(--ssHot), .36);
+    }
+    .securoserv-chaos .chaos-pop.style-siren::after{
+      content:"";
+      position:absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 10px;
+      background:
+        repeating-linear-gradient(90deg, rgba(var(--ss), 1), rgba(var(--ss), 1) 14px, rgba(0,0,0,.0) 14px, rgba(0,0,0,.0) 26px);
+      opacity: .45;
+      mix-blend-mode: screen;
+    }
+
+    /* Mid-screen SecuroServ "loading" bar (appears during escalation) */
+    .securoserv-midbar{
+      position: fixed;
+      left: 50%;
+      top: 46%;
+      transform: translate(-50%, -50%);
+      z-index: 95;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .35s ease;
+    }
+    .securoserv-midbar.on{ opacity: 1; }
+    .securoserv-midbar .frame{
+      width: min(920px, 88vw);
+      background: rgba(0,0,0,.78);
+      border: 2px solid rgba(var(--ss), .95);
+      box-shadow: 0 0 26px rgba(var(--ssHot), .22), 0 0 84px rgba(var(--ss), .14);
+      padding: 14px 16px 16px;
+      position: relative;
+      clip-path: polygon(0 18px, 18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
+    }
+    .securoserv-midbar .label{
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(var(--ssHot), .95);
+      text-shadow: 0 0 12px rgba(var(--ssHot), .22);
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    .securoserv-midbar .bar{
+      height: 22px;
+      border: 1px solid rgba(var(--ssHot), .46);
+      background: rgba(0,0,0,.55);
+      position: relative;
+      overflow: hidden;
+    }
+    .securoserv-midbar .fill{
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(var(--ss), .95), rgba(var(--ssHot), .95));
+      box-shadow: 0 0 18px rgba(var(--ssHot), .22);
+      transition: width .10s linear;
+    }
+    .securoserv-midbar .bar::after{
+      content:"";
+      position:absolute;
+      inset: -30% -10%;
+      background:
+        repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 8px, rgba(var(--ssHot), .09) 8px 9px),
+        repeating-linear-gradient(90deg, rgba(var(--ssHot), .08) 0 1px, rgba(0,0,0,0) 1px 10px);
+      mix-blend-mode: screen;
+      opacity: calc(0.22 + (var(--g, 0) * 0.72));
+      animation: midbarGlitch calc(1.15s - (var(--g,0) * 0.65s)) steps(2) infinite;
+      pointer-events:none;
+    }
+    @keyframes midbarGlitch{
+      0%{ transform: translate3d(0,0,0) skewX(0deg); clip-path: inset(0 0 0 0); }
+      20%{ transform: translate3d(3px,0,0) skewX(-0.8deg); clip-path: inset(0 0 54% 0); }
+      45%{ transform: translate3d(-4px,0,0) skewX(0.9deg); clip-path: inset(42% 0 0 0); }
+      70%{ transform: translate3d(2px,0,0) skewX(-0.6deg); clip-path: inset(18% 0 28% 0); }
+      100%{ transform: translate3d(0,0,0) skewX(0deg); clip-path: inset(0 0 0 0); }
+    }
+    .securoserv-midbar .meta{
+      display:flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1.8px;
+      color: rgba(var(--ssHot), .78);
+    }
+
+    /* Counterhack success transition: freeze & fade hack UI while success overlay fades in */
+    body.counterhack-resolving #securoservMidbar,
+    body.counterhack-resolving #securoservChaos,
+    body.counterhack-resolving #screenGlitch,
+    body.counterhack-resolving #securoservWall,
+    body.counterhack-resolving .counterhack-win{
+      opacity: 0 !important;
+      transition: opacity 2.9s ease !important;
+    }
+    body.counterhack-resolving .securoserv-chaos .chaos-pop{
+      animation-play-state: paused !important;
+    }
+
+    /* Dramatic screen power-off (used when countdown ends and ESC wasn't used) */
+    .screen-off{
+      position: fixed;
+      inset: 0;
+      z-index: 12050;
+      pointer-events: none;
+      opacity: 0;
+      background: rgba(0,0,0,1);
+      transition: opacity .12s linear;
+    }
+    .screen-off.on{ opacity: 1; }
+    .screen-off.black::before{ display:none; }
+    .screen-off.fadeout{ opacity: 0; transition: opacity 2.2s ease; }
+
+    /* While the screen is powering off, force-hide HUD so nothing can leak */
+    body.powering-off .topnav,
+    body.powering-off .sidemenu,
+    body.powering-off .layerToggles,
+    body.powering-off .termDock,
+    body.powering-off .hudpopup,
+    body.powering-off .securserve-badge,
+    body.powering-off .tip{
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transition: opacity .10s linear;
+    }
+
+    /* Blocks all mouse input during SecuroServ countermeasures */
+    .input-blocker{
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      display: none;
+      pointer-events: auto;
+      background: transparent;
+    }
+    .input-blocker.on{ display:block; }
+
+    /* User counterhack window (yellow) — separate from red system midbar */
+    .counterhack-win{
+      position: fixed;
+      /* Slightly off-center + lower to feel "manual" */
+      left: 46.5%;
+      top: 65%;
+      transform: translate(-50%, -50%) rotate(-1.15deg);
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      filter: blur(.7px);
+      transition: opacity .38s ease, transform .62s cubic-bezier(.18,.92,.12,1), filter .62s cubic-bezier(.18,.92,.12,1);
+    }
+    .counterhack-win[aria-hidden="false"]{
+      opacity: 1;
+      filter: blur(0px);
+      transform: translate(-50%, -50%) rotate(-1.15deg);
+      animation: counterhackWinPop .62s cubic-bezier(.18,.92,.12,1) both;
+    }
+    @keyframes counterhackWinPop{
+      0%{ transform: translate(-50%, calc(-50% + 18px)) rotate(-1.15deg) scale(.975); opacity: 0; filter: blur(1.2px); }
+      55%{ transform: translate(-50%, calc(-50% - 2px)) rotate(-1.15deg) scale(1.01); opacity: 1; filter: blur(.2px); }
+      100%{ transform: translate(-50%, -50%) rotate(-1.15deg) scale(1); opacity: 1; filter: blur(0px); }
+    }
+    .counterhack-win .frame{
+      width: min(860px, 92vw);
+      background: rgba(0,0,0,.78);
+      border: 2px solid rgba(238,255,94,.78);
+      /* Less "pretty" than the corporate UI: softer + dirtier */
+      box-shadow: 0 0 22px rgba(238,255,94,.10), 0 0 58px rgba(238,255,94,.06);
+      padding: 14px 16px 16px;
+      position: relative;
+      clip-path: polygon(0 18px, 18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
+      filter: contrast(1.02) saturate(.92);
+    }
+    /* No animated glitches here (keeps it lightweight). */
+    .counterhack-win .frame::after{
+      /* Slightly misaligned outline = DIY/buggy overlay feel */
+      content:"";
+      position:absolute;
+      inset:-2px -3px;
+      border: 1px solid rgba(238,255,94,.24);
+      transform: translate3d(1px,-1px,0) skewX(-.6deg);
+      clip-path: polygon(0 18px, 18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
+      pointer-events:none;
+      opacity:.9;
+    }
+    .counterhack-win .label{
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(238,255,94,.92);
+      text-shadow: 0 0 14px rgba(238,255,94,.16);
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .counterhack-win .instr,
+    .counterhack-win .hint{
+      display:flex;
+      justify-content: space-between;
+      gap: 14px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.6px;
+      color: rgba(215,230,255,.62);
+    }
+    .counterhack-win .instr{ margin-bottom: 10px; }
+    .counterhack-win .hint{ margin-top: 10px; }
+    .counterhack-win .slots{
+      display:flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    .counterhack-win .slot{
+      width: 34px;
+      height: 34px;
+      display:grid;
+      place-items:center;
+      border: 1px solid rgba(238,255,94,.42);
+      background: rgba(0,0,0,.42);
+      color: rgba(238,255,94,.92);
+      font-size: 16px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 12px rgba(238,255,94,.12);
+    }
+    .counterhack-win .slot.ok{
+      border: 2px solid rgba(238,255,94,.92);
+      background: rgba(238,255,94,.08);
+      color: var(--yl);
+      font-weight: 900;
+      text-shadow: 0 0 14px rgba(238,255,94,.22);
+      box-shadow:
+        0 0 18px rgba(238,255,94,.10),
+        inset 0 0 18px rgba(238,255,94,.08);
+    }
+
+    /* Counterhack success flash */
+    .counterhack-fx{
+      position: fixed;
+      inset: 0;
+      z-index: 12040;
+      pointer-events: none;
+      display: none;
+      opacity: 0;
+      background: rgba(238,255,94,.92);
+    }
+    .counterhack-fx.on{
+      display: block;
+      /* Cap intensity: only 50% of previous opacity */
+      opacity: .5;
+      transition: opacity 2.9s ease;
+    }
+    .counterhack-fx.on.fade{
+      opacity: 0;
+      transition: opacity 2.9s ease;
+    }
+    .counterhack-fx .msg{
+      position:absolute;
+      left: 50%;
+      top: 46%;
+      transform: translate(-50%, -50%);
+      font-size: clamp(26px, 5vw, 54px);
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: rgba(6,10,22,.96);
+      text-shadow: 0 0 22px rgba(255,255,255,.16);
+      white-space: nowrap;
+      opacity: 0;
+      filter: blur(.6px);
+    }
+    .counterhack-fx.on .msg{
+      opacity: 1;
+      filter: blur(0px);
+      animation:
+        counterhackMsgIn .62s cubic-bezier(.18,.92,.12,1) both,
+        counterhackMsgGlitch 1.1s steps(2, end) infinite;
+    }
+    .counterhack-fx.on.fade .msg{
+      animation: counterhackMsgGlitch .9s steps(2, end) infinite;
+    }
+    @keyframes counterhackMsgIn{
+      0%{ opacity: 0; transform: translate3d(0,6px,0) scale(.99); letter-spacing: 12px; filter: blur(1.2px); }
+      40%{ opacity: .75; transform: translate3d(0,0,0) scale(1.004); letter-spacing: 6px; }
+      70%{ opacity: 1; transform: translate3d(0,0,0) scale(1.0); letter-spacing: 4px; }
+      100%{ opacity: 1; transform: translate3d(0,0,0) scale(1); letter-spacing: 4px; filter: blur(0px); }
+    }
+    @keyframes counterhackMsgGlitch{
+      0%{ transform: translate3d(0,0,0) skewX(0deg); clip-path: inset(0 0 0 0); }
+      18%{ transform: translate3d(2px,-1px,0) skewX(-2deg); clip-path: inset(0 0 58% 0); }
+      36%{ transform: translate3d(-3px,1px,0) skewX(2.5deg); clip-path: inset(42% 0 0 0); }
+      54%{ transform: translate3d(1px,0,0) skewX(-1.2deg); clip-path: inset(12% 0 28% 0); }
+      72%{ transform: translate3d(-1px,-1px,0) skewX(1.8deg); clip-path: inset(26% 0 10% 0); }
+      100%{ transform: translate3d(0,0,0) skewX(0deg); clip-path: inset(0 0 0 0); }
+    }
+    .screen-off::before{
+      content:"";
+      position:absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(var(--ssHot), .14), transparent 52%),
+        linear-gradient(180deg, rgba(var(--ssHot), .10), transparent 40%, rgba(var(--ssHot), .08));
+      mix-blend-mode: screen;
+      opacity: .9;
+      transform-origin: 50% 50%;
+    }
+    .screen-off.on::before{
+      animation: screenPowerOff .72s cubic-bezier(.2,.9,.1,1) forwards;
+    }
+    @keyframes screenPowerOff{
+      0%{ transform: scaleY(1) translate3d(0,0,0); filter: blur(0px); opacity: .95; }
+      60%{ transform: scaleY(.06) translate3d(0,0,0); filter: blur(.35px); opacity: 1; }
+      78%{ transform: scaleY(.012) translate3d(0,0,0); filter: blur(.55px); opacity: .95; }
+      100%{ transform: scaleY(0) translate3d(0,0,0); filter: blur(.8px); opacity: 0; }
+    }
+
+    /* SecuroServ reboot UI inside the existing boot overlay */
+    .boot-ss{
+      display: none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(var(--ssHot), .22);
+    }
+    /* SecuroServ reboot starts as "code only" then reveals logo+bar */
+    .boot.securosserv-reboot .boot-ss{
+      display: block;
+      opacity: 0;
+      transform: translate3d(0,10px,0);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .boot.securosserv-reboot.ss-showbar .boot-ss{
+      opacity: 1;
+      transform: translate3d(0,0,0);
+    }
+
+    /* Background "code" writer layer (used during SecuroServ reboot) */
+    .boot-bgcode{
+      position: absolute;
+      inset: 0;
+      padding: 18px 18px 18px;
+      font-size: 11px;
+      letter-spacing: 1.6px;
+      line-height: 1.25;
+      white-space: pre;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      color: rgba(var(--ssHot), .42);
+      text-shadow: 0 0 10px rgba(var(--ssHot), .10);
+      filter: blur(.15px);
+    }
+    .boot.securosserv-reboot .boot-bgcode{ opacity: .9; }
+
+    /* Simplify SecuroServ reboot view: only logo+bar+bg code */
+    .boot.securosserv-reboot{
+      --bootBlack: 1;
+      border: none !important;
+    }
+    .boot.securosserv-reboot .boot-inner{
+      background: transparent;
+      border-color: rgba(var(--ssHot), .22);
+      box-shadow: none;
+    }
+    .boot.securosserv-reboot .boot-top,
+    .boot.securosserv-reboot .boot-foot,
+    .boot.securosserv-reboot .boot-lines,
+    .boot.securosserv-reboot .boot-bar,
+    .boot.securosserv-reboot .boot-meta{ display: none; }
+    .boot.securosserv-reboot .boot-mid{ padding-top: 10px; }
+
+    /* Opaque blackout phase (prevents seeing anything underneath)
+       Implemented as a black overlay that can fade back to dark-blue. */
+    .boot.blackout{
+      --bootBlack: 1;
+      border: none !important;
+    }
+    .boot.blackout .boot-inner{ opacity: 0; }
+    .boot-ssLogo{
+      width: 86px;
+      height: 86px;
+      display:block;
+      margin: 4px auto 10px;
+      filter: drop-shadow(0 0 16px rgba(var(--ssHot), .22));
+      animation: bootSpin 1.58s linear infinite;
+      opacity: .92;
+    }
+    @keyframes bootSpin{ to{ transform: rotate(360deg); } }
+    .boot-ssBar{
+      height: 18px;
+      border: 1px solid rgba(var(--ssHot), .46);
+      background: rgba(0,0,0,.55);
+      position: relative;
+      overflow: hidden;
+    }
+    .boot-ssFill{
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, rgba(var(--ss), .95), rgba(var(--ssHot), .95));
+      box-shadow: 0 0 18px rgba(var(--ssHot), .22);
+      transition: width .10s linear;
+    }
+    .boot-ssBar::after{
+      content:"";
+      position:absolute;
+      inset: -40% -10%;
+      background:
+        repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 7px, rgba(var(--ssHot), .08) 7px 8px),
+        repeating-linear-gradient(90deg, rgba(var(--ssHot), .09) 0 1px, rgba(0,0,0,0) 1px 9px);
+      mix-blend-mode: screen;
+      opacity: .55;
+      animation: midbarGlitch 1.05s steps(2) infinite;
+    }
+    .boot-ssMeta{
+      margin-top: 10px;
+      display:flex;
+      justify-content: space-between;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: rgba(var(--ssHot), .70);
+    }
+
+    /* Header bar option */
+    .securoserv-chaos .chaos-bar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin: -10px -12px 10px -12px;
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(var(--ssHot), .30);
+      background: rgba(var(--ssHot), .10);
+    }
+    .securoserv-chaos .chaos-bar .tag{
+      font-weight: 900;
+      letter-spacing: 3.0px;
+      text-transform: uppercase;
+      color: rgba(var(--ssHot), .92);
+    }
+    .securoserv-chaos .chaos-bar .meta{
+      font-size: 11px;
+      letter-spacing: 2.0px;
+      color: rgba(var(--ssHot), .70);
+      text-transform: uppercase;
+      white-space: nowrap;
+      opacity: .95;
+    }
+
+    /* Dialog footer option */
+    .securoserv-chaos .chaos-foot{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(var(--ssHot), .22);
+      color: rgba(var(--ssHot), .70);
+      text-transform: uppercase;
+      letter-spacing: 2.2px;
+      font-size: 11px;
+    }
+    .securoserv-chaos .chaos-foot .btn{
+      padding: 4px 8px;
+      border: 1px solid rgba(var(--ssHot), .32);
+      background: rgba(0,0,0,.35);
+    }
+
+    /* Terminal body block option */
+    .securoserv-chaos .chaos-code{
+      margin-top: 6px;
+      padding: 8px 10px;
+      border: 1px solid rgba(var(--ssHot), .22);
+      background: rgba(0,0,0,.50);
+      color: rgba(var(--ssHot), .74);
+      white-space: pre;
+      overflow: hidden;
+      max-height: 220px;
+    }
+    .securoserv-chaos .chaos-pop.variant-small{
+      min-width: 180px;
+      max-width: min(360px, 62vw);
+      padding: 8px 10px;
+    }
+    .securoserv-chaos .chaos-pop.variant-wide{
+      min-width: 360px;
+      max-width: min(780px, 86vw);
+    }
+    .securoserv-chaos .chaos-pop.variant-tall{
+      min-height: 180px;
+    }
+    .securoserv-chaos .chaos-pop.variant-banner{
+      min-width: 60vw;
+      max-width: 92vw;
+      padding: 10px 14px;
+    }
+    .securoserv-chaos .chaos-pop.variant-modal{
+      min-width: min(560px, 84vw);
+      max-width: min(860px, 92vw);
+      padding: 14px 16px;
+      border-width: 2px;
+    }
+    .securoserv-chaos .chaos-pop.cut{
+      clip-path: polygon(
+        0 0,
+        calc(100% - 14px) 0,
+        100% 14px,
+        100% 100%,
+        14px 100%,
+        0 calc(100% - 14px)
+      );
+    }
+    .securoserv-chaos .chaos-pop.scan::after{
+      content:"";
+      position:absolute;
+      inset: 0;
+      pointer-events:none;
+      background:
+        repeating-linear-gradient(
+          180deg,
+          rgba(var(--ssHot), .00) 0px,
+          rgba(var(--ssHot), .00) 3px,
+          rgba(var(--ssHot), .07) 4px
+        );
+      mix-blend-mode: screen;
+      opacity: .6;
+    }
+    .securoserv-chaos .chaos-pop::before{
+      content:"";
+      position:absolute;
+      left:0; right:0; top:0;
+      height: 1px;
+      background: rgba(var(--ss), 1);
+      box-shadow: 0 0 18px rgba(var(--ssHot), .22);
+      opacity: .85;
+    }
+    .securoserv-chaos .chaos-h{
+      font-weight: 800;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      color: rgba(var(--ssHot), .94);
+      text-shadow: 0 0 12px rgba(var(--ssHot), .22);
+      margin-bottom: 6px;
+      line-height: 1.15;
+    }
+    .securoserv-chaos .chaos-pop.variant-modal .chaos-h{
+      letter-spacing: 3.2px;
+      font-size: 14px;
+    }
+    .securoserv-chaos .chaos-pop.variant-banner .chaos-h{
+      letter-spacing: 3.0px;
+    }
+    .securoserv-chaos .chaos-b{
+      font-size: 12px;
+      line-height: 1.3;
+      color: rgba(var(--ssHot), .78);
+      white-space: pre-wrap;
+    }
+    .securoserv-chaos .chaos-pop.variant-small .chaos-b{ font-size: 11px; }
+    .securoserv-chaos .chaos-pop.variant-modal .chaos-b{ font-size: 12px; line-height: 1.35; }
+    .securoserv-chaos .chaos-pop.glitch{
+      animation: securoservPopIn .45s ease both, securoservBoxGlitch 1.2s steps(2) infinite;
+    }
+    @keyframes securoservPopIn{
+      from{ opacity: 0; transform: translate3d(0, 10px, 0) scale(.98); }
+      to{ opacity: .92; transform: translate3d(0, 0, 0) scale(1); }
+    }
+    @keyframes securoservBoxGlitch{
+      0%{ transform: translate3d(0,0,0); }
+      12%{ transform: translate3d(1px,-1px,0); }
+      24%{ transform: translate3d(-2px,0,0); }
+      36%{ transform: translate3d(2px,1px,0); }
+      48%{ transform: translate3d(-1px,1px,0); }
+      60%{ transform: translate3d(0,-2px,0); }
+      72%{ transform: translate3d(1px,0,0); }
+      84%{ transform: translate3d(-1px,0,0); }
+      100%{ transform: translate3d(0,0,0); }
+    }
+
+    .tip.glitch{
+      animation: securoservTipGlitch .85s steps(2) infinite;
+      text-shadow:
+        0 0 10px rgba(var(--ssHot), .35),
+        2px 0 0 rgba(var(--ss), .22),
+        -2px 0 0 rgba(var(--ssHot), .18);
+    }
+    @keyframes securoservTipGlitch{
+      0%{ transform: translateX(-50%) translateY(0); opacity: 1; }
+      20%{ transform: translateX(calc(-50% + 1px)) translateY(-1px); }
+      40%{ transform: translateX(calc(-50% - 2px)) translateY(1px); }
+      60%{ transform: translateX(calc(-50% + 2px)) translateY(0); }
+      80%{ transform: translateX(calc(-50% - 1px)) translateY(-1px); }
+      100%{ transform: translateX(-50%) translateY(0); opacity: 1; }
+    }
+
+    .termline.glitch{
+      position: relative;
+      color: rgba(var(--ssHot), .86);
+      text-shadow:
+        0 0 10px rgba(var(--ssHot), .22),
+        2px 0 0 rgba(var(--ss), .18),
+        -2px 0 0 rgba(var(--ssHot), .12);
+      animation: securoservTermGlitch .9s steps(2) infinite;
+    }
+    @keyframes securoservTermGlitch{
+      0%{ transform: translate3d(0,0,0); }
+      25%{ transform: translate3d(1px,0,0); }
+      50%{ transform: translate3d(-2px,0,0); }
+      75%{ transform: translate3d(2px,0,0); }
+      100%{ transform: translate3d(0,0,0); }
     }
     .restricted-overlay::before{
       content:"";
@@ -1107,7 +2047,7 @@
     }
     .restricted-overlay .restricted-message{
       position:relative;
-      color: var(--yl);
+      color: rgba(var(--restrictedTextRGB), .95);
       font-size: clamp(20px, 3vw, 38px);
       letter-spacing: 6px;
       text-transform: uppercase;
@@ -1167,12 +2107,26 @@
       z-index: 9999;
       display: grid;
       place-items: center;
+      isolation: isolate;
+      --bootBlack: 0;
       background:
         radial-gradient(900px 600px at 30% 20%, rgba(96,143,255,.18), transparent 60%),
         radial-gradient(700px 500px at 70% 70%, rgba(238,255,94,.10), transparent 62%),
         linear-gradient(180deg, rgba(3,5,12,.95), rgba(6,10,22,.92));
       border-top: 2px solid rgba(238,255,94,.55);
       border-bottom: 2px solid rgba(96,143,255,.35);
+      opacity: 1;
+      transition: opacity .6s ease;
+    }
+    .boot::before{
+      content:"";
+      position:absolute;
+      inset: 0;
+      background: #000;
+      opacity: var(--bootBlack, 0);
+      transition: opacity .8s ease;
+      pointer-events:none;
+      z-index: 0;
     }
     .boot-inner{
       width: min(760px, calc(100vw - 40px));
@@ -1181,6 +2135,10 @@
       box-shadow: var(--glowB);
       position: relative;
       overflow: hidden;
+      z-index: 1;
+      transform: translate3d(0,0,0) scale(1);
+      filter: blur(0);
+      transition: opacity .45s ease, transform .55s ease, filter .55s ease;
     }
     .boot-inner::before{
       content:"";
@@ -1264,7 +2222,12 @@
       letter-spacing: 1.2px;
       color: rgba(215,230,255,.55);
     }
-    .boot.off{ opacity: 0; transition: opacity .35s ease; }
+    .boot.softclose .boot-inner{
+      opacity: 0;
+      transform: translate3d(0,10px,0) scale(.985);
+      filter: blur(.6px);
+    }
+    .boot.off{ opacity: 0; }
     .boot.hidden{ display:none; }
   </style>
 </head>
@@ -1279,10 +2242,6 @@
       <button class="tab" role="tab" aria-selected="false" tabindex="-1"><span>JOURNAL</span></button>
     </div>
   </header>
-
-  <div class="securserve-badge" aria-hidden="true">
-    <img src="./logos/SS.PNG" alt="Securserve" />
-  </div>
 
   <!-- MAIN STAGE -->
   <div class="stage">
@@ -1308,6 +2267,7 @@
           </div>
           <div id="svgHost"></div>
           <div id="logosLayer"></div>
+          <div id="markersLayer" aria-hidden="true"></div>
           <div id="labelsLayer"></div>
         </div>
         <div class="tip" id="tooltip"></div>
@@ -1319,26 +2279,79 @@
         </div>
       </div>
 
-      <div class="cornerReadout" aria-hidden="true">
-        <div class="hudchip" id="hintReadout">LOAD: <span id="loadState">pending</span></div>
-        <div class="hudchip">PAN: <span id="panReadout">0,0</span></div>
+      <div class="securserve-badge" id="securserveBadge" aria-hidden="true">
+        <img src="./logos/SS.png" alt="" draggable="false" />
       </div>
     </main>
     <div class="restricted-overlay" id="restrictedOverlay" aria-hidden="true">
       <div class="restricted-message">WARNING:// RESTRICTED AREA SELECTED</div>
     </div>
+
+    <svg class="securoserv-wall" id="securoservWall" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <div class="securoserv-chaos" id="securoservChaos" aria-hidden="true"></div>
+    <div class="screen-glitch" id="screenGlitch" aria-hidden="true"></div>
+
+    <div class="securoserv-midbar" id="securoservMidbar" aria-hidden="true">
+      <div class="frame">
+        <div class="label">SYNC:// SECUROSERV COUNTERMEASURES</div>
+        <div class="bar"><div class="fill" id="securoservMidbarFill"></div></div>
+        <div class="meta"><span id="securoservMidbarPct">0%</span><span>COUNTERMEASURES ACTIVE</span></div>
+      </div>
+    </div>
+    <div class="input-blocker" id="inputBlocker" aria-hidden="true"></div>
+
+    <!-- USER COUNTERHACK WINDOW (separate from red system UI) -->
+    <div class="counterhack-win" id="securoservChallenge" aria-hidden="true">
+      <div class="frame" role="status" aria-live="polite">
+        <div class="label">USER OVERRIDE:// COUNTERHACK</div>
+        <div class="instr"><span>TYPE THE SYMBOLS LEFT → RIGHT</span><span>SYMBOLS SHIFT EVERY 2S</span></div>
+        <div class="slots" aria-label="Bypass code">
+          <div class="slot" id="ssSlot0">?</div>
+          <div class="slot" id="ssSlot1">?</div>
+          <div class="slot" id="ssSlot2">?</div>
+          <div class="slot" id="ssSlot3">?</div>
+          <div class="slot" id="ssSlot4">?</div>
+          <div class="slot" id="ssSlot5">?</div>
+        </div>
+        <div class="hint"><span>COUNTERMEASURES PAUSED ON SUCCESS</span><span>ESC DISABLED</span></div>
+      </div>
+    </div>
+
+    <div class="counterhack-fx" id="counterhackFx" aria-hidden="true">
+      <div class="msg">COUNTERHACK SUCCESFULL</div>
+    </div>
+    <div class="screen-off" id="screenOff" aria-hidden="true"></div>
   </div>
 
   <!-- LEFT DISTRICT MENU (replaces the 3 HUD buttons) -->
   <nav class="sidemenu" aria-label="District filters">
-    <button class="arrow" id="menuPrev" type="button" aria-label="Previous filter"><span>‹</span></button>
-    <div class="tabs" role="tablist" aria-label="District filters">
-      <button class="tab on" id="menuShowAll" type="button" role="tab" aria-selected="true"><span>SHOW ALL</span></button>
-      <button class="tab" id="menuRestricted" type="button" role="tab" aria-selected="false"><span>RESTRICTED</span></button>
-      <button class="tab" id="menuHideAll" type="button" role="tab" aria-selected="false"><span>HIDE ALL</span></button>
+    <div class="sidemenu-row">
+      <button class="arrow" id="menuPrev" type="button" aria-label="Previous filter"><span>‹</span></button>
+      <div class="tabs" role="tablist" aria-label="District filters">
+        <button class="tab on" id="menuShowAll" type="button" role="tab" aria-selected="true"><span>SHOW ALL</span></button>
+        <button class="tab" id="menuRestricted" type="button" role="tab" aria-selected="false"><span>RESTRICTED</span></button>
+        <button class="tab" id="menuHideAll" type="button" role="tab" aria-selected="false"><span>HIDE ALL</span></button>
+      </div>
+      <button class="arrow" id="menuNext" type="button" aria-label="Next filter"><span>›</span></button>
     </div>
-    <button class="arrow" id="menuNext" type="button" aria-label="Next filter"><span>›</span></button>
+
   </nav>
+
+  <!-- LAYER TOGGLES (free-floating, beneath the left menu) -->
+  <div class="layerToggles" id="layerToggles" role="group" aria-label="Layer visibility">
+    <button class="layerToggle" id="toggleRoads" type="button" aria-pressed="false">
+      <span class="layerToggle-icon" aria-hidden="true"></span>
+      <span>HIDE ROADS</span>
+    </button>
+    <button class="layerToggle" id="toggleBuildings" type="button" aria-pressed="false">
+      <span class="layerToggle-icon" aria-hidden="true"></span>
+      <span>HIDE BUILDINGS</span>
+    </button>
+    <button class="layerToggle" id="toggleMarkers" type="button" aria-pressed="false">
+      <span class="layerToggle-icon" aria-hidden="true"></span>
+      <span>HIDE MARKERS</span>
+    </button>
+  </div>
 
   <!-- AREA DETAILS (POPUP WINDOW) -->
   <section class="hudpopup" id="popupDetails" aria-live="polite">
@@ -1392,7 +2405,8 @@
         <div class="termline">[SVG] awaiting payload…</div>
       </div>
       <div class="hudfoot">
-        <span>NET/TTY</span><span>secure</span>
+        <span>LOAD: <span id="loadState">pending</span></span>
+        <span>PAN: <span id="panReadout">0,0</span></span>
       </div>
     </section>
   </footer>
@@ -1400,6 +2414,7 @@
   <!-- BOOT OVERLAY -->
   <div class="boot" id="boot">
     <div class="boot-inner">
+      <div class="boot-bgcode" id="bootBgCode" aria-hidden="true"></div>
       <div class="boot-top">
         <div class="boot-tag">NETRUN</div>
         <div class="boot-title">INITIALIZING MAP INTERFACE</div>
@@ -1416,6 +2431,12 @@
         <div class="boot-meta">
           <span id="bootPct">0%</span>
           <span id="bootPhase">handshake</span>
+        </div>
+
+        <div class="boot-ss" id="bootSecuroserv" aria-hidden="true">
+          <img class="boot-ssLogo" id="bootSecuroLogo" src="./logos/SS2.png" alt="" draggable="false" />
+          <div class="boot-ssBar"><div class="boot-ssFill" id="bootSecuroFill"></div></div>
+          <div class="boot-ssMeta"><span id="bootSecuroPct">0%</span><span id="bootSecuroPhase">reboot</span></div>
         </div>
       </div>
 
@@ -1573,8 +2594,14 @@
 
     function bootClose(){
       if(!boot.el) return;
-      boot.el.classList.add("off");
-      setTimeout(() => boot.el.classList.add("hidden"), 420);
+      boot.el.classList.add("softclose");
+      setTimeout(() => {
+        boot.el.classList.add("off");
+      }, 120);
+      setTimeout(() => {
+        boot.el.classList.add("hidden");
+        boot.el.classList.remove("softclose");
+      }, 760);
     }
 
     function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
@@ -1609,6 +2636,31 @@
     let selectedEl = null;
     let hoveredEl = null;
 
+    let securoservChaosTimer = null;
+    let securoservTooltipTimer = null;
+    let securoservEscalationTimer = null;
+    let securoservMidbarDelayTimer = null;
+    let securoservMidbarTickTimer = null;
+    let securoservChallengeShuffleTimer = null;
+    let securoservChallengeActive = false;
+    let securoservChallengeSolved = false;
+    let securoservChallengeIndex = 0;
+    let securoservChallengeSymbols = [];
+    let securoservChallengeRevealPct = 0.35;
+    let securoservChallengeRevealed = false;
+    let securoservMidbarProgress = 0;
+    let securoservSecretStreak = 0;
+    let securoservShutdownInProgress = false;
+    let securoservRebootTriggered = false;
+    let securoservCounterhackResolving = false;
+    // After a successful counterhack, disable all SecuroServ hack effects for the rest of
+    // the session (until the page is manually refreshed).
+    let securoservBypassedThisSession = false;
+    let counterhackFxOffTimer = null;
+    let bootBgCodeTimer = null;
+
+    const SECUROSERV_CHAOS_MAX = 34;
+
     // Labels are currently disabled (names hidden).
     const SHOW_LABELS = false;
 
@@ -1616,11 +2668,14 @@
     let selectionGlowFilter = null;
     let selectionGlowAnimation = null;
 
-    function term(msg){
+    function term(msg, opts = null){
       const log = document.getElementById("termLog");
       const div = document.createElement("div");
       div.className = "termline";
       div.textContent = msg;
+
+      if(opts && opts.glitch) div.classList.add("glitch");
+
       log.appendChild(div);
       log.scrollTop = log.scrollHeight;
 
@@ -1671,6 +2726,7 @@
       PATH84: "TEMPLATE PATH84 — Replace this area intel.",
       ROCKFORD_HILLS: "TEMPLATE ROCKFORD_HILLS — Wealthy hillside estates; replace intel.",
       SOUTH_SIDE: "TEMPLATE SOUTH_SIDE — Street-level sprawl; replace intel.",
+      SECUROSERV_PORT: "TEMPLATE SECUROSERV_PORT — SecuroServ perimeter access; replace intel.",
       VESPUCCI: "TEMPLATE VESPUCCI — Beachfront strip; replace intel.",
       VINEWOOD_HILLS: "TEMPLATE VINEWOOD_HILLS — Hills + media mansions; replace intel.",
     };
@@ -1788,6 +2844,12 @@
       if(!panel) return;
       const h = Math.round(panel.getBoundingClientRect().height);
       document.documentElement.style.setProperty("--dockH", h + "px");
+
+      const toggles = document.getElementById("layerToggles");
+      if(toggles){
+        const b = Math.round(toggles.getBoundingClientRect().bottom);
+        document.documentElement.style.setProperty("--detailsTop", (b + 14) + "px");
+      }
     }
     window.addEventListener("resize", () => requestAnimationFrame(updateDockMetrics));
     requestAnimationFrame(updateDockMetrics);
@@ -1901,6 +2963,24 @@
       };
     }
 
+    function resetCameraToFitCenter(){
+      if(!camera.vb) return;
+      updateViewport();
+      const vw = camera.vw || 1;
+      const vh = camera.vh || 1;
+      const fit = clamp(Math.min(vw / camera.vb.width, vh / camera.vb.height), camera.minZoom, camera.maxZoom);
+      cameraSetInstant(camera.vb.width/2, camera.vb.height/2, fit);
+    }
+
+    function cameraFlyToFitCenter(dur=1200){
+      if(!camera.vb) return;
+      updateViewport();
+      const vw = camera.vw || 1;
+      const vh = camera.vh || 1;
+      const fit = clamp(Math.min(vw / camera.vb.width, vh / camera.vb.height), camera.minZoom, camera.maxZoom);
+      cameraFlyTo(camera.vb.width/2, camera.vb.height/2, fit, dur);
+    }
+
     function flyToElement(el, zoom=2.2, dur=520, allowAutoZoom=true){
       if(!el) return;
       try{
@@ -1956,23 +3036,57 @@
     }
 
     // Pan + zoom controls
-    let isDragging = false;
+    let isPointerDown = false;
+    let isDragging = false; // true only after exceeding threshold
     let last = { x: 0, y: 0 };
+    let dragStart = null;
+    let dragMoved = false;
+    let dragStartedOnRegion = false;
+    let suppressRegionClickOnce = false;
+    const DRAG_CLICK_THRESHOLD_PX = 12;
 
     mapwrap.addEventListener("mousedown", (e) => {
-      isDragging = true;
+      if(e.button !== 0) return; // left button only
+      isPointerDown = true;
+      isDragging = false;
       last.x = e.clientX;
       last.y = e.clientY;
-      mapStack.classList.add("grabbing");
+      dragStart = { x: e.clientX, y: e.clientY };
+      dragMoved = false;
+      dragStartedOnRegion = Boolean(e.target?.closest?.('.region'));
     });
 
     window.addEventListener("mouseup", () => {
-      isDragging = false;
+      if(!isPointerDown) return;
+      isPointerDown = false;
       mapStack.classList.remove("grabbing");
+
+      // If we panned starting on a district, do not treat mouseup as a click.
+      if(isDragging && dragStartedOnRegion){
+        suppressRegionClickOnce = true;
+      }
+
+      isDragging = false;
+      dragStart = null;
+      dragMoved = false;
+      dragStartedOnRegion = false;
     });
 
     window.addEventListener("mousemove", (e) => {
+      if(!isPointerDown) return;
+
+      if(dragStart && !dragMoved){
+        const dx0 = e.clientX - dragStart.x;
+        const dy0 = e.clientY - dragStart.y;
+        if(Math.hypot(dx0, dy0) >= DRAG_CLICK_THRESHOLD_PX){
+          dragMoved = true;
+          isDragging = true;
+          mapStack.classList.add("grabbing");
+        }
+      }
+
       if(!isDragging) return;
+
       const dx = e.clientX - last.x;
       const dy = e.clientY - last.y;
       last.x = e.clientX;
@@ -2053,9 +3167,8 @@
 
       // User-specified district palette
       if(k === "NEON_CITY_PRISON" || k === "APEX" || k === "APEX_HQ" || k.startsWith("APEX_")){
-        const patternId = ensureRestrictedMatrixPatternBlue();
-        const fill = patternId ? `url(#${patternId})` : hexToRgba("0b1f52", 0.42);
-        return { stroke: "#608fff", fill };
+        // Fill is handled by selection (text-wall hidden until clicked)
+        return { stroke: "#608fff" };
       }
 
       if(k === "SOUTH_SIDE"){
@@ -2078,6 +3191,10 @@
         return { stroke: "#48afff", fill: hexToRgba("00213b", 0.6) };
       }
 
+      if(k === "NEON_CITY_NATIONAL_AIRPORT"){
+        return { stroke: "#c9cfcf", fill: "#1c222a" };
+      }
+
       if(k === "MERRYWEATHER_BASE"){
         return { stroke: "#d9b026" };
       }
@@ -2087,12 +3204,63 @@
       }
 
       if(k === "SECUROSERV_PORT" || k === "SECUROSERVE_PORT"){
-        const patternId = ensureRestrictedMatrixPatternSecuroserv();
-        const fill = patternId ? `url(#${patternId})` : "#000000";
-        return { stroke: "#cf0000", fill };
+        // Fill is handled by selection (text-wall hidden until clicked)
+        return { stroke: "#cf0000" };
       }
 
       return null;
+    }
+
+    function getRestrictedWallPatternIdForRegion(el){
+      const normKey = normalizeRegionKey(el?.id || el?.getAttribute?.("data-name") || "");
+      if(normKey === "SECUROSERV_PORT" || normKey === "SECUROSERVE_PORT" || normKey.startsWith("SECUROSERV_")){
+        return ensureRestrictedMatrixPatternSecuroserv();
+      }
+      return ensureRestrictedMatrixPattern();
+    }
+
+    function clearSelectionVisualsImmediatelyForSecuroservSuccess(){
+      // The success overlay fades in while hack UI fades out; clear selection + text-wall
+      // immediately so they don't appear "stuck" underneath the overlay.
+      try{
+        if(selectedEl){
+          if(selectedEl.classList?.contains?.('restricted')){
+            setRestrictedWallVisibleForRegion(selectedEl, false);
+            setStripeThicknessForRegion(selectedEl, "base");
+          }
+          selectedEl.classList?.remove?.('selected');
+          try{ setDistrictLogoStateFor(selectedEl, selectedEl === hoveredEl ? "hover" : "base"); }catch{}
+        }
+      }catch{}
+
+      try{
+        if(hoveredEl){
+          hoveredEl.classList?.remove?.('hot');
+          clearHotStyle(hoveredEl);
+          try{ setDistrictLogoStateFor(hoveredEl, "base"); }catch{}
+        }
+      }catch{}
+
+      try{ updateSelectionGlowColor(null); }catch{}
+      try{ updateSelectionDimming(); }catch{}
+
+      hoveredEl = null;
+      try{ selectedEl = null; }catch{}
+
+      try{ refreshHoverTab(); }catch{}
+    }
+
+    function setRestrictedWallVisibleForRegion(el, visible){
+      if(!el || !el.classList?.contains?.('restricted') || el.classList.contains('wall')) return;
+      if(visible){
+        const pat = getRestrictedWallPatternIdForRegion(el);
+        if(pat) el.style.fill = `url(#${pat})`;
+        else el.style.fill = "rgba(0,0,0,0.001)";
+      }else{
+        // Only the blur layer should be visible until clicked.
+        // IMPORTANT: keep an (almost) invisible fill so the whole region remains clickable/hoverable.
+        el.style.fill = "rgba(0,0,0,0.001)";
+      }
     }
 
     function ensureStripePattern(svg, id, color){
@@ -2201,11 +3369,8 @@
         if(effective?.fill){
           r.style.fill = effective.fill;
         }else if(restricted){
-          const pat = (normKey === "SECUROSERV_PORT")
-            ? ensureRestrictedMatrixPatternSecuroserv()
-            : ensureRestrictedMatrixPattern();
-          if(pat) r.style.fill = `url(#${pat})`;
-          else r.style.fill = "rgba(0,0,0,.18)";
+          // Hide the text-wall until this region is selected.
+          setRestrictedWallVisibleForRegion(r, r === selectedEl);
         }else{
           r.style.removeProperty("fill");
         }
@@ -2298,6 +3463,20 @@
       if(!layer || !svgEl) return;
       layer.innerHTML = "";
 
+      function getDistrictLogoOffset(el){
+        const key = normalizeRegionKey(el?.id || el?.getAttribute?.("data-name") || "");
+        if(key === "NEON_CITY_PORTS"){
+          try{
+            const b = el.getBBox?.();
+            const dx = -Math.max(50, (Number(b?.width) || 0) * 0.16);
+            return { dx, dy: 0 };
+          }catch{
+            return { dx: -70, dy: 0 };
+          }
+        }
+        return { dx: 0, dy: 0 };
+      }
+
       const mapRect = mapwrap.getBoundingClientRect();
 
       svgEl.querySelectorAll(".region:not(.wall)").forEach(r => {
@@ -2308,12 +3487,18 @@
 
         const c = regionCenterInWorld(r, mapRect);
         if(!c) return;
-        const x = c.x;
-        const y = c.y;
+        const off = getDistrictLogoOffset(r);
+        const x = c.x + (off.dx || 0);
+        const y = c.y + (off.dy || 0);
 
         const key = normalizeRegionKey(r.id || r.getAttribute("data-name") || "");
         if(!key || key.startsWith("PATH")) return;
         if(!key) return;
+
+        const isSecuroserv = isSecuroservKey(key);
+
+        // Hide SecuroServ logo until the user successfully counter-hacks it.
+        if(isSecuroserv && !securoservBypassedThisSession) return;
 
         const wrap = document.createElement("div");
         wrap.className = "districtLogo";
@@ -2325,7 +3510,7 @@
         img.alt = "";
         img.draggable = false;
         img.loading = "lazy";
-        img.src = `./logos/${key}.png`;
+        img.src = isSecuroserv ? `./logos/securoserv_port.png` : `./logos/${key}.png`;
         img.addEventListener("load", () => {
           wrap.classList.add("ready");
         });
@@ -2333,7 +3518,8 @@
           wrap.remove();
           if(!missingDistrictLogos.has(key)){
             missingDistrictLogos.add(key);
-            term(`[LOGO] missing: ./logos/${key}.png`);
+            const p = isSecuroserv ? "./logos/securoserv_port.png" : `./logos/${key}.png`;
+            term(`[LOGO] missing: ${p}`);
           }
         });
 
@@ -2495,9 +3681,9 @@
 
     function ensureRestrictedMatrixPatternBlue(){
       return ensureRestrictedMatrixPatternCustom("restricted-matrix-pattern-blue", {
-        color: "#608fff",
+        color: "#d6e8ff",
         rotate: 0,
-        opacity: 0.32,
+        opacity: 0.78,
         fullMap: true,
         fontSize: 10,
         letterSpacing: 0.28,
@@ -2509,8 +3695,8 @@
 
     function ensureRestrictedMatrixPatternSecuroserv(){
       return ensureRestrictedMatrixPatternCustom("restricted-matrix-pattern-securoserv", {
-        color: "#cf0000",
-        opacity: 0.30,
+        color: "#ff5a5a",
+        opacity: 0.52,
         rotate: 0,
         fullMap: true,
         fontSize: 10,
@@ -2519,6 +3705,184 @@
         pad: 0,
         charset: "01ACCESSRESTRICTED$#%*+_",
       });
+    }
+
+    function ensureRestrictedMatrixPatternCustomOnSvg(targetSvg, patternId, opts){
+      if(!targetSvg) return null;
+      const safeId = String(patternId || "").trim();
+      if(!safeId) return null;
+
+      let defs = targetSvg.querySelector("defs");
+      if(!defs){
+        defs = document.createElementNS(SVG_NS, "defs");
+        targetSvg.insertBefore(defs, targetSvg.firstChild);
+      }
+      const existing = targetSvg.querySelector(`#${CSS.escape(safeId)}`);
+      if(existing){
+        const isWall = existing.getAttribute("data-wall") === "1";
+        const wantW = Math.ceil(targetSvg.viewBox?.baseVal?.width || 0);
+        const wantH = Math.ceil(targetSvg.viewBox?.baseVal?.height || 0);
+        const curW = Number(existing.getAttribute("width")) || 0;
+        const curH = Number(existing.getAttribute("height")) || 0;
+        if(isWall && wantW > 0 && wantH > 0 && curW === wantW && curH === wantH){
+          return safeId;
+        }
+        existing.remove();
+      }
+
+      const {
+        color = "#ffee98",
+        opacity = 0.34,
+        rotate = 0,
+        fullMap = true,
+        width = 220,
+        height = 220,
+        fontSize = 10,
+        letterSpacing = 0.25,
+        lineHeight = 11,
+        pad = 0,
+        charset = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ$#%*+_",
+      } = opts || {};
+
+      const rand = makeRng(safeId);
+
+      const worldW = Math.ceil(targetSvg.viewBox?.baseVal?.width || width);
+      const worldH = Math.ceil(targetSvg.viewBox?.baseVal?.height || height);
+      const baseW = (fullMap && worldW > 0) ? worldW : width;
+      const baseH = (fullMap && worldH > 0) ? worldH : height;
+
+      const charW = Math.max(5.0, (fontSize * 0.62) + letterSpacing);
+      // Fullscreen overlay: make the tile larger than the viewport and translate it.
+      // This guarantees the wall "starts" off-screen and also extends past the edges.
+      const overscanX = Math.max(260, Math.round(baseW * 0.25));
+      const overscanY = Math.max(140, Math.round(baseH * 0.20));
+      const tileW = Math.max(1, Math.round(baseW + overscanX * 2));
+      const tileH = Math.max(1, Math.round(baseH + overscanY * 2));
+      const cols = Math.max(128, Math.ceil((tileW - pad * 2) / charW) + 48);
+      const rows = Math.max(42, Math.ceil((tileH - pad * 2) / lineHeight) + 10);
+      const startX = 0;
+      const startY = 0;
+
+      const pattern = document.createElementNS(SVG_NS, "pattern");
+      pattern.setAttribute("id", safeId);
+      pattern.setAttribute("data-wall", "1");
+      pattern.setAttribute("patternUnits", "userSpaceOnUse");
+      pattern.setAttribute("width", String(tileW));
+      pattern.setAttribute("height", String(tileH));
+      pattern.setAttribute("patternTransform", `translate(${-overscanX} ${-overscanY}) rotate(${rotate})`);
+
+      const g = document.createElementNS(SVG_NS, "g");
+      g.setAttribute("opacity", String(opacity));
+
+      const textEl = document.createElementNS(SVG_NS, "text");
+      textEl.setAttribute("x", String(startX));
+      textEl.setAttribute("y", String(startY));
+      textEl.setAttribute("fill", color);
+      textEl.setAttribute("font-family", "Rajdhani, sans-serif");
+      textEl.setAttribute("font-size", String(fontSize));
+      textEl.setAttribute("letter-spacing", String(letterSpacing));
+      textEl.setAttribute("font-weight", "800");
+      textEl.setAttribute("dominant-baseline", "text-before-edge");
+
+      const pick = () => charset[Math.floor(rand() * charset.length)] || "0";
+      for(let r=0;r<rows;r++){
+        let line = "";
+        for(let c=0;c<cols;c++) line += pick();
+        const sp = document.createElementNS(SVG_NS, "tspan");
+        sp.setAttribute("x", String(startX));
+        sp.setAttribute("dy", r === 0 ? "0" : String(lineHeight));
+        sp.textContent = line;
+        textEl.appendChild(sp);
+      }
+
+      g.appendChild(textEl);
+      pattern.appendChild(g);
+      defs.appendChild(pattern);
+      return safeId;
+    }
+
+    function ensureSecuroservFullscreenWall(){
+      const wallSvg = document.getElementById("securoservWall");
+      if(!wallSvg) return;
+
+      const w = Math.max(1, Math.floor(window.innerWidth || wallSvg.clientWidth || 1));
+      const h = Math.max(1, Math.floor(window.innerHeight || wallSvg.clientHeight || 1));
+      wallSvg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+      wallSvg.setAttribute("width", String(w));
+      wallSvg.setAttribute("height", String(h));
+
+      // PERFORMANCE: the old fullscreen pattern generated a massive number of tspans.
+      // Use a small repeating tile with prebuilt random-looking text instead.
+      const pid = (function ensureSecuroservWallLitePattern(){
+        const safeId = "securoserv-wall-lite-pattern";
+        if(wallSvg.querySelector(`#${CSS.escape(safeId)}`)) return safeId;
+
+        let defs = wallSvg.querySelector("defs");
+        if(!defs){
+          defs = document.createElementNS(SVG_NS, "defs");
+          wallSvg.insertBefore(defs, wallSvg.firstChild);
+        }
+
+        const tileW = 240;
+        const tileH = 240;
+        const fontSize = 10;
+        const letterSpacing = 0.42;
+        const lineHeight = 11;
+        const charset = "01ACCESSRESTRICTED$#%*+_";
+
+        const rand = makeRng(safeId);
+        const charW = Math.max(5.0, (fontSize * 0.62) + letterSpacing);
+        const cols = Math.max(12, Math.floor(tileW / charW));
+        const rows = Math.max(10, Math.floor(tileH / lineHeight));
+
+        const pattern = document.createElementNS(SVG_NS, "pattern");
+        pattern.setAttribute("id", safeId);
+        pattern.setAttribute("patternUnits", "userSpaceOnUse");
+        pattern.setAttribute("width", String(tileW));
+        pattern.setAttribute("height", String(tileH));
+
+        const g = document.createElementNS(SVG_NS, "g");
+        g.setAttribute("opacity", "0.52");
+
+        const textEl = document.createElementNS(SVG_NS, "text");
+        textEl.setAttribute("x", "0");
+        textEl.setAttribute("y", "0");
+        textEl.setAttribute("fill", "#ff5a5a");
+        textEl.setAttribute("font-family", "Rajdhani, sans-serif");
+        textEl.setAttribute("font-size", String(fontSize));
+        textEl.setAttribute("letter-spacing", String(letterSpacing));
+        textEl.setAttribute("font-weight", "800");
+        textEl.setAttribute("dominant-baseline", "text-before-edge");
+
+        const pick = () => charset[Math.floor(rand() * charset.length)] || "0";
+        for(let r=0;r<rows;r++){
+          let line = "";
+          for(let c=0;c<cols;c++) line += pick();
+          const sp = document.createElementNS(SVG_NS, "tspan");
+          sp.setAttribute("x", "0");
+          sp.setAttribute("dy", r === 0 ? "0" : String(lineHeight));
+          sp.textContent = line;
+          textEl.appendChild(sp);
+        }
+
+        g.appendChild(textEl);
+        pattern.appendChild(g);
+        defs.appendChild(pattern);
+        return safeId;
+      })();
+
+      if(!pid) return;
+      let rect = wallSvg.querySelector('rect[data-securoserv-wall="1"]');
+      if(!rect){
+        rect = document.createElementNS(SVG_NS, "rect");
+        rect.setAttribute("data-securoserv-wall", "1");
+        wallSvg.appendChild(rect);
+      }
+      rect.setAttribute("x", "0");
+      rect.setAttribute("y", "0");
+      rect.setAttribute("width", String(w));
+      rect.setAttribute("height", String(h));
+      rect.setAttribute("fill", `url(#${pid})`);
     }
 
     function ensureRestrictedTextPatternCustom(patternId, opts){
@@ -2825,15 +4189,6 @@
           });
         }
 
-        function resetCameraToFitCenter(){
-          if(!camera.vb) return;
-          updateViewport();
-          const vw = camera.vw || 1;
-          const vh = camera.vh || 1;
-          const fit = clamp(Math.min(vw / camera.vb.width, vh / camera.vb.height), camera.minZoom, camera.maxZoom);
-          cameraSetInstant(camera.vb.width/2, camera.vb.height/2, fit);
-        }
-
         ensureSelectionGlowFilter();
         ensureRestrictedMatrixPattern();
         ensureRestrictedMatrixPatternSecuroserv();
@@ -2854,6 +4209,11 @@
           r.addEventListener("mouseleave", onRegionLeave);
           r.addEventListener("click", (e) => {
             e.stopPropagation();
+            if(suppressRegionClickOnce){
+              suppressRegionClickOnce = false;
+              e.preventDefault();
+              return;
+            }
             selectRegion(r);
           });
         });
@@ -2926,11 +4286,1027 @@
       const el = hoveredEl || selectedEl;
       if(!el){
         tooltip.classList.remove("on");
+        tooltip.classList.remove("glitch");
+        tooltip.classList.remove("securoserv");
+        if(securoservTooltipTimer){
+          clearInterval(securoservTooltipTimer);
+          securoservTooltipTimer = null;
+        }
         return;
       }
       const { name } = regionLabel(el);
-      tooltip.textContent = name;
+
+      const key = normalizeRegionKey(el.id || el.getAttribute("data-name") || "");
+      const isSecuroserv = (key === "SECUROSERV_PORT" || key === "SECUROSERVE_PORT" || key.startsWith("SECUROSERV_"))
+        && !securoservBypassedThisSession;
+
+      tooltip.classList.toggle("securoserv", isSecuroserv);
+
+      if(isSecuroserv){
+        tooltip.classList.add("glitch");
+        tooltip.dataset.base = name;
+        if(!securoservTooltipTimer){
+          securoservTooltipTimer = setInterval(() => {
+            if(!tooltip.classList.contains("on")) return;
+            const base = tooltip.dataset.base || "";
+            tooltip.textContent = glitchifyText(base, 0.62);
+          }, 85);
+        }
+        tooltip.textContent = glitchifyText(name, 0.62);
+      }else{
+        tooltip.classList.remove("glitch");
+        if(securoservTooltipTimer){
+          clearInterval(securoservTooltipTimer);
+          securoservTooltipTimer = null;
+        }
+        tooltip.textContent = name;
+      }
       tooltip.classList.add("on");
+    }
+
+    function isSecuroservKey(key){
+      key = normalizeRegionKey(key || "");
+      return (key === "SECUROSERV_PORT" || key === "SECUROSERVE_PORT" || key.startsWith("SECUROSERV_"));
+    }
+
+    function glitchifyText(text, intensity = 0.55){
+      const s = String(text || "");
+      const charset = "01#%$@!+*?/_\\=<>[]{}|";
+      let out = "";
+      for(let i=0;i<s.length;i++){
+        const ch = s[i];
+        if(ch === " " || ch === "-" || ch === "/" || ch === ":"){
+          out += (Math.random() < intensity * 0.25) ? " " : ch;
+          continue;
+        }
+        if(Math.random() < intensity){
+          out += charset[Math.floor(Math.random() * charset.length)];
+        }else{
+          out += ch;
+        }
+      }
+      // Add a little trailing noise sometimes.
+      if(Math.random() < intensity * 0.35) out += " " + charset[Math.floor(Math.random() * charset.length)];
+      return out;
+    }
+
+    function startSecuroservChaos(){
+      const layer = document.getElementById("securoservChaos");
+      if(!layer) return;
+      layer.replaceChildren();
+
+      const heads = [
+        "SECURITY VIOLATION",
+        "ACCESS DENIED",
+        "TRACE ACTIVE",
+        "INTRUSION DETECTED",
+        "PROTOCOL LOCKDOWN",
+        "FIREWALL BREACH",
+        "AUTH FAILURE",
+        "SIGNAL JAM",
+        "SYS/ERROR",
+        "MEM/FAULT",
+        "KEY MISMATCH",
+        "SESSION HIJACK",
+        "ICE DEPLOYED",
+      ];
+
+      const modules = ["GATEKEEP", "BLACKICE", "SENTRY", "KERNEL", "AUTH", "UPLINK", "TRACE", "VAULT", "NODES", "GRID", "WATCHDOG"]; 
+      const codes = ["0xC0FFEE", "0xDEAD", "0xBEEF", "0xFACADE", "0xBADF00D", "0x0D15EA5E", "0xFEED", "0xE1E7"]; 
+
+      const randHex = (n=8) => {
+        const hexd = "0123456789ABCDEF";
+        let out = "";
+        for(let i=0;i<n;i++) out += hexd[Math.floor(Math.random()*hexd.length)];
+        return out;
+      };
+      const randInt = (a,b) => Math.floor(a + Math.random() * (b-a+1));
+      const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
+
+      const makeBody = (kind) => {
+        const mod = pick(modules);
+        const code = pick(codes);
+        const sid = "S-" + randHex(6);
+        const t = randHex(12);
+        if(kind === "stack"){
+          return [
+            `ERR_CODE: ${code}`,
+            `MODULE: ${mod}`,
+            `SESSION: ${sid}`,
+            `TRACE: ACTIVE/${randInt(3,9)}`,
+            `STACK:`,
+            `  at gate.${mod.toLowerCase()}(${randHex(4)}:${randInt(10,99)})`,
+            `  at sec.grid(${randHex(4)}:${randInt(10,99)})`,
+            `  at kernel.dispatch(${randHex(4)}:${randInt(10,99)})`,
+            `TOKEN: ${t}`,
+          ].join("\n");
+        }
+        if(kind === "modal"){
+          return [
+            `INTRUSION VECTOR: ${pick(["PHYSICAL", "REMOTE", "SPOOF", "RELAY", "UNKNOWN"])}`,
+            `AUTH: FAILED/${randInt(2,7)}`,
+            `RESPONSE: ${pick(["QUARANTINE", "LOCKDOWN", "ERASE", "PURGE", "COUNTERTRACE"])}`,
+            `SESSION: ${sid}`,
+            `TOKEN: ${t}`,
+          ].join("\n");
+        }
+        // default
+        return [
+          `WARN: integrity mismatch`,
+          `MODULE: ${mod}`,
+          `ERR_CODE: ${code}`,
+          `SESSION: ${sid}`,
+          `ACTION: ${pick(["REVOKE", "LOCK", "JAM", "TRACE", "FLAG"])}`,
+        ].join("\n");
+      };
+
+      const max = SECUROSERV_CHAOS_MAX;
+      const addOne = () => {
+        if(!document.body.classList.contains("securosserv-mode")) return;
+        if(layer.childElementCount >= max) return;
+
+        const pop = document.createElement("div");
+        const variantRoll = Math.random();
+        const variant = variantRoll < 0.22 ? "variant-small" : variantRoll < 0.48 ? "variant-wide" : variantRoll < 0.72 ? "variant-tall" : variantRoll < 0.86 ? "variant-banner" : "variant-modal";
+
+        const styleRoll = Math.random();
+        const style = styleRoll < 0.18 ? "style-toast" : styleRoll < 0.38 ? "style-wire" : styleRoll < 0.58 ? "style-terminal" : styleRoll < 0.76 ? "style-dialog" : styleRoll < 0.90 ? "style-siren" : "style-solid";
+
+        const cut = Math.random() < 0.62;
+        const scan = Math.random() < 0.58;
+        const glitch = Math.random() < 0.55;
+        pop.className = `chaos-pop ${variant} ${style}` + (cut ? " cut" : "") + (scan ? " scan" : "") + (glitch ? " glitch" : "");
+
+        const titlePrefix = Math.random() < 0.45 ? "!! " : Math.random() < 0.25 ? "// " : "";
+        const title = titlePrefix + heads[Math.floor(Math.random() * heads.length)];
+        const bodyKind = (variant === "variant-tall") ? "stack" : (variant === "variant-modal") ? "modal" : "default";
+        const bodyText = makeBody(bodyKind);
+
+        // Template differences by style
+        const wantsBar = (style === "style-dialog" || style === "style-terminal" || style === "style-wire") && Math.random() < 0.85;
+        const wantsFooter = (style === "style-dialog" || style === "style-toast") && Math.random() < 0.75;
+        const wantsCodeBlock = (style === "style-terminal") || (variant === "variant-tall" && Math.random() < 0.65);
+
+        if(wantsBar){
+          const bar = document.createElement("div");
+          bar.className = "chaos-bar";
+          const tag = document.createElement("div");
+          tag.className = "tag";
+          tag.textContent = "SECUROSERV";
+          const meta = document.createElement("div");
+          meta.className = "meta";
+          meta.textContent = `ERR ${pick(codes)} • ${pick(modules)}`;
+          bar.appendChild(tag);
+          bar.appendChild(meta);
+          pop.appendChild(bar);
+        }
+
+        const h = document.createElement("div");
+        h.className = "chaos-h";
+        h.textContent = title;
+        pop.appendChild(h);
+
+        if(wantsCodeBlock){
+          const code = document.createElement("div");
+          code.className = "chaos-code";
+          code.textContent = bodyText;
+          pop.appendChild(code);
+        }else{
+          const b = document.createElement("div");
+          b.className = "chaos-b";
+          // Use only the first couple of lines for toast-like styles
+          if(style === "style-toast"){
+            b.textContent = bodyText.split("\n").slice(0, 2).join(" • ");
+          }else if(style === "style-siren"){
+            b.textContent = bodyText.split("\n").slice(0, 3).join("\n");
+          }else{
+            b.textContent = bodyText;
+          }
+          pop.appendChild(b);
+        }
+
+        if(wantsFooter){
+          const foot = document.createElement("div");
+          foot.className = "chaos-foot";
+          const b1 = document.createElement("span");
+          b1.className = "btn";
+          b1.textContent = "ACK";
+          const b2 = document.createElement("span");
+          b2.className = "btn";
+          b2.textContent = (Math.random() < 0.5) ? "DISMISS" : "LOCK";
+          foot.appendChild(b1);
+          foot.appendChild(b2);
+          pop.appendChild(foot);
+        }
+
+        const vw = window.innerWidth || 1;
+        const vh = window.innerHeight || 1;
+
+        // Position rules per variant
+        let x = 0, y = 0;
+        if(variant === "variant-banner"){
+          x = Math.floor((vw * 0.04) + Math.random() * (vw * 0.06));
+          y = Math.floor((vh * 0.08) + Math.random() * (vh * 0.12));
+        }else if(variant === "variant-modal"){
+          x = Math.floor(vw * (0.18 + Math.random() * 0.10));
+          y = Math.floor(vh * (0.18 + Math.random() * 0.18));
+        }else{
+          x = Math.floor(Math.random() * Math.max(1, vw - 260));
+          y = Math.floor(Math.random() * Math.max(1, vh - 120));
+        }
+
+        pop.style.left = x + "px";
+        pop.style.top = y + "px";
+        const rot = (Math.random() * 3 - 1.5);
+        const scale = 0.92 + Math.random() * 0.16;
+        pop.style.transform = `translate3d(0,0,0) rotate(${rot.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+        pop.style.opacity = String(0.58 + Math.random() * 0.38);
+
+        layer.appendChild(pop);
+      };
+
+      // Seed a few quickly, then ramp.
+      for(let i=0;i<4;i++) addOne();
+      if(securoservChaosTimer) clearInterval(securoservChaosTimer);
+      securoservChaosTimer = setInterval(addOne, 330);
+    }
+
+    function stopSecuroservChaos(){
+      if(securoservChaosTimer){
+        clearInterval(securoservChaosTimer);
+        securoservChaosTimer = null;
+      }
+      const layer = document.getElementById("securoservChaos");
+      if(layer) layer.replaceChildren();
+    }
+
+    function setSecuroservGlitchIntensity(v){
+      const g = Math.max(0, Math.min(1, Number(v) || 0));
+      const screenGlitch = document.getElementById("screenGlitch");
+      if(screenGlitch) screenGlitch.style.setProperty("--g", String(g));
+
+      // Also feed the midbar so its glitch strength ramps with the same intensity.
+      const mid = document.getElementById("securoservMidbar");
+      if(mid) mid.style.setProperty("--g", String(g));
+    }
+
+    function stopSecuroservMidbarCountdown(){
+      if(securoservMidbarDelayTimer){
+        clearTimeout(securoservMidbarDelayTimer);
+        securoservMidbarDelayTimer = null;
+      }
+      if(securoservMidbarTickTimer){
+        clearInterval(securoservMidbarTickTimer);
+        securoservMidbarTickTimer = null;
+      }
+
+      securoservChallengeRevealed = false;
+      securoservMidbarProgress = 0;
+      securoservSecretStreak = 0;
+
+      const mid = document.getElementById("securoservMidbar");
+      if(mid) mid.classList.remove("on");
+      const fill = document.getElementById("securoservMidbarFill");
+      if(fill) fill.style.width = "0%";
+      const pct = document.getElementById("securoservMidbarPct");
+      if(pct) pct.textContent = "0%";
+
+      stopSecuroservChallenge(false);
+
+      window.removeEventListener("keydown", handleSecuroservSecretKeydown, true);
+    }
+
+    function freezeSecuroservMidbar(){
+      if(securoservMidbarDelayTimer){
+        clearTimeout(securoservMidbarDelayTimer);
+        securoservMidbarDelayTimer = null;
+      }
+      if(securoservMidbarTickTimer){
+        clearInterval(securoservMidbarTickTimer);
+        securoservMidbarTickTimer = null;
+      }
+      // Keep the current UI state (pct/fill) visible.
+    }
+
+    function handleSecuroservSecretKeydown(e){
+      // Secret bypass: typing 666 before the counterhack window is revealed.
+      if(securoservBypassedThisSession) return;
+      if(securoservCounterhackResolving) return;
+      if(securoservShutdownInProgress) return;
+      if(!document.body.classList.contains("securosserv-mode")) return;
+      if(securoservChallengeRevealed) return;
+      if(!(securoservMidbarProgress < securoservChallengeRevealPct)) return;
+
+      // Only accept the digit 6 as a single keystroke.
+      if(!e.key || e.key.length !== 1) return;
+      if(e.key !== "6"){
+        securoservSecretStreak = 0;
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      securoservSecretStreak++;
+      if(securoservSecretStreak >= 3){
+        securoservSecretStreak = 0;
+        securoservChallengeSolved = true;
+        resolveSecuroservCounterhackSuccess();
+      }
+    }
+
+    function freezeSecuroservChaos(){
+      if(securoservChaosTimer){
+        clearInterval(securoservChaosTimer);
+        securoservChaosTimer = null;
+      }
+      // Keep existing popups on screen (no replaceChildren).
+    }
+
+    function freezeSecuroservEscalation(){
+      if(securoservEscalationTimer){
+        clearInterval(securoservEscalationTimer);
+        securoservEscalationTimer = null;
+      }
+      // Keep current glitch intensity (no reset).
+    }
+
+    function ssRandomSymbol(){
+      // Letters + numbers + symbols (kept typeable across common keyboards)
+      const charset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*+=?/-_";
+      return charset[Math.floor(Math.random() * charset.length)];
+    }
+
+    function ssSlotEl(i){
+      return document.getElementById(`ssSlot${i}`);
+    }
+
+    function renderSecuroservChallenge(){
+      for(let i=0;i<6;i++){
+        const el = ssSlotEl(i);
+        if(!el) continue;
+        el.textContent = securoservChallengeSymbols[i] || "?";
+        el.classList.toggle("ok", i < securoservChallengeIndex);
+      }
+    }
+
+    function setSecuroservMouseBlock(on){
+      const blocker = document.getElementById("inputBlocker");
+      if(!blocker) return;
+      blocker.classList.toggle("on", Boolean(on));
+    }
+
+    function handleSecuroservChallengeKeydown(e){
+      if(!securoservChallengeActive) return;
+      if(securoservChallengeSolved) return;
+
+      // Never allow ESC to abort the hack.
+      if(e.key === "Escape"){
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
+      // Only accept single printable characters.
+      if(!e.key || e.key.length !== 1) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const expected = securoservChallengeSymbols[securoservChallengeIndex] || "";
+      const typed = e.key;
+      if(!expected) return;
+
+      const isLetter = (c) => {
+        const up = c.toUpperCase();
+        const lo = c.toLowerCase();
+        return up !== lo;
+      };
+
+      const ok = isLetter(expected)
+        ? (typed.toUpperCase() === expected.toUpperCase())
+        : (typed === expected);
+
+      if(!ok) return;
+
+      const lockEl = ssSlotEl(securoservChallengeIndex);
+      if(lockEl){
+        lockEl.classList.add("ok");
+        lockEl.textContent = expected;
+      }
+
+      securoservChallengeIndex++;
+      if(securoservChallengeIndex >= 6){
+        securoservChallengeSolved = true;
+        resolveSecuroservCounterhackSuccess();
+      }
+    }
+
+    function startSecuroservChallenge(){
+      const mid = document.getElementById("securoservMidbar");
+      const challenge = document.getElementById("securoservChallenge");
+
+      // Never (re)show the counterhack window during success resolution or after bypass.
+      if(securoservCounterhackResolving) return;
+      if(securoservShutdownInProgress) return;
+      if(securoservBypassedThisSession) return;
+      if(document.body?.classList?.contains?.("counterhack-resolving")) return;
+      if(!document.body.classList.contains("securosserv-mode")) return;
+
+      if(challenge) challenge.setAttribute("aria-hidden", "false");
+
+      securoservChallengeSolved = false;
+      securoservChallengeActive = true;
+      securoservChallengeIndex = 0;
+      securoservChallengeSymbols = Array.from({length:6}, () => ssRandomSymbol());
+      renderSecuroservChallenge();
+
+      if(securoservChallengeShuffleTimer){
+        clearInterval(securoservChallengeShuffleTimer);
+        securoservChallengeShuffleTimer = null;
+      }
+      securoservChallengeShuffleTimer = setInterval(() => {
+        if(!securoservChallengeActive) return;
+        if(!document.body.classList.contains("securosserv-mode")) return;
+        for(let i=securoservChallengeIndex;i<6;i++){
+          securoservChallengeSymbols[i] = ssRandomSymbol();
+        }
+        renderSecuroservChallenge();
+        // Also bump glitch a bit while the user is under pressure.
+        if(mid) setSecuroservGlitchIntensity(Math.max(0.35, Number(mid.style.getPropertyValue("--g")) || 0));
+      }, 2000);
+
+      window.addEventListener("keydown", handleSecuroservChallengeKeydown, true);
+    }
+
+    function stopSecuroservChallenge(){
+      const challenge = document.getElementById("securoservChallenge");
+      if(challenge) challenge.setAttribute("aria-hidden", "true");
+
+      securoservChallengeActive = false;
+
+      if(securoservChallengeShuffleTimer){
+        clearInterval(securoservChallengeShuffleTimer);
+        securoservChallengeShuffleTimer = null;
+      }
+      window.removeEventListener("keydown", handleSecuroservChallengeKeydown, true);
+    }
+
+    function freezeSecuroservChallenge(){
+      // Stop input + symbol shuffling, but keep the UI visible in its final state.
+      securoservChallengeActive = false;
+      if(securoservChallengeShuffleTimer){
+        clearInterval(securoservChallengeShuffleTimer);
+        securoservChallengeShuffleTimer = null;
+      }
+      window.removeEventListener("keydown", handleSecuroservChallengeKeydown, true);
+    }
+
+    function counterhackFxShow(){
+      const fx = document.getElementById("counterhackFx");
+      if(!fx) return;
+      if(counterhackFxOffTimer){
+        clearTimeout(counterhackFxOffTimer);
+        counterhackFxOffTimer = null;
+      }
+      fx.classList.remove("fade");
+      fx.classList.remove("on");
+      void fx.offsetWidth;
+      fx.classList.add("on");
+    }
+
+    function counterhackFxFadeOutAndHide(ms = 2900){
+      const fx = document.getElementById("counterhackFx");
+      if(!fx) return;
+      fx.classList.add("fade");
+      if(counterhackFxOffTimer){
+        clearTimeout(counterhackFxOffTimer);
+        counterhackFxOffTimer = null;
+      }
+      counterhackFxOffTimer = setTimeout(() => {
+        fx.classList.remove("on");
+        fx.classList.remove("fade");
+        counterhackFxOffTimer = null;
+      }, Math.max(0, ms + 120));
+    }
+
+    function cleanupSecuroservToDefault(opts = {}){
+      // Stop all SecuroServ systems and restore clean default UI.
+      securoservShutdownInProgress = false;
+      securoservRebootTriggered = false;
+
+      stopSecuroservMidbarCountdown();
+      stopSecuroservChaos();
+      stopSecuroservEscalation();
+      setSecuroservGlitchIntensity(0);
+
+      const tooltip = document.getElementById("tooltip");
+      if(tooltip){
+        tooltip.classList.remove("on", "glitch", "securoserv");
+        tooltip.textContent = "";
+        delete tooltip.dataset.base;
+      }
+      if(securoservTooltipTimer){
+        clearInterval(securoservTooltipTimer);
+        securoservTooltipTimer = null;
+      }
+
+      if(hoveredEl){
+        try{
+          hoveredEl.classList.remove('hot');
+          clearHotStyle(hoveredEl);
+          // Always reset logo highlight when exiting SecuroServ flow.
+          setDistrictLogoStateFor(hoveredEl, "base");
+        }catch{}
+      }
+      if(selectedEl){
+        try{
+          setDistrictLogoStateFor(selectedEl, "base");
+        }catch{}
+      }
+      hoveredEl = null;
+      try{ selectedEl = null; }catch{}
+      try{ refreshHoverTab(); }catch{}
+
+      document.body?.classList?.remove?.("securosserv-mode");
+
+      if(!opts.skipClearSelection){
+        try{ clearSelection(); }catch{}
+      }
+      try{ showAllDistricts(); }catch{}
+      try{ setMenuOn("menuShowAll"); }catch{}
+      // Smoothly glide back to the default centered view.
+      try{ cameraFlyToFitCenter(2600); }catch{}
+
+      setSecuroservMouseBlock(false);
+    }
+
+    function hardResetAfterSecuroservSuccess(){
+      // Extra safety net: if the user managed to hover/click during the success overlay,
+      // force-clear any stuck "hot" logo state and any lingering SecuroServ wall overlays.
+      try{
+        svgEl?.querySelectorAll?.('.region.hot')?.forEach?.(r => {
+          r.classList.remove('hot');
+          clearHotStyle(r);
+        });
+      }catch{}
+      try{ svgEl?.querySelectorAll?.('.region.selected')?.forEach?.(r => r.classList.remove('selected')); }catch{}
+      try{ svgEl?.querySelectorAll?.('.region.restricted:not(.wall)')?.forEach?.(r => setRestrictedWallVisibleForRegion(r, false)); }catch{}
+
+      hoveredEl = null;
+      try{ selectedEl = null; }catch{}
+
+      try{ document.querySelectorAll('#logosLayer .districtLogo.hot').forEach(n => n.classList.remove('hot')); }catch{}
+
+      document.body?.classList?.remove?.('securosserv-mode');
+
+      try{ document.getElementById('securoservWall')?.classList?.remove?.('on'); }catch{}
+      try{ document.getElementById('securoservChaos')?.classList?.remove?.('on'); }catch{}
+      try{ document.getElementById('securoservChaos')?.replaceChildren?.(); }catch{}
+      try{ document.getElementById('screenGlitch')?.classList?.remove?.('on'); }catch{}
+      try{ document.getElementById('securoservMidbar')?.classList?.remove?.('on'); }catch{}
+
+      try{
+        if(cursorLogo){
+          cursorLogo.classList.remove('on');
+          cursorLogo.dataset.key = "";
+        }
+      }catch{}
+
+      try{ refreshHoverTab(); }catch{}
+      try{ updateSelectionGlowColor(null); }catch{}
+      try{ updateSelectionDimming(); }catch{}
+      try{ updateRestrictedOverlayState(); }catch{}
+    }
+
+    async function resolveSecuroservCounterhackSuccess(){
+      if(securoservCounterhackResolving) return;
+      securoservCounterhackResolving = true;
+
+      // Lock the system in "success resolution" so nothing else can trigger.
+      securoservShutdownInProgress = true;
+      securoservRebootTriggered = false;
+
+      // Freeze the hack visuals exactly as they are.
+      freezeSecuroservMidbar();
+      freezeSecuroservChaos();
+      freezeSecuroservEscalation();
+      freezeSecuroservChallenge();
+
+      document.body?.classList?.add?.("counterhack-resolving");
+      counterhackFxShow();
+
+      // Clear selection/wall instantly at the moment of success.
+      clearSelectionVisualsImmediatelyForSecuroservSuccess();
+
+      // Crossfade: hack UI disappears as the success overlay fades in.
+      await sleep(3000);
+
+      // Ensure the counterhack window cannot flash back on under the success overlay.
+      stopSecuroservChallenge();
+
+      // From now until refresh: SecuroServ behaves like a normal restricted area.
+      // Set this BEFORE we restore input to guarantee no hack overlays can re-arm.
+      securoservBypassedThisSession = true;
+
+      // Restore clean UI + centered map under the success overlay.
+      cleanupSecuroservToDefault({ skipClearSelection: true });
+
+      // Keep mouse blocked while the success overlay is still visible. This prevents
+      // any accidental hover/click from re-enabling wall/logo states under the fade.
+      setSecuroservMouseBlock(true);
+      try{ buildDistrictLogos(); }catch{}
+
+      // Force-clear any stuck logo highlight state (can happen if hover was reacquired
+      // during the crossfade and the logo layer got rebuilt).
+      try{
+        document.querySelectorAll('#logosLayer .districtLogo.hot').forEach(n => n.classList.remove('hot'));
+      }catch{}
+
+      // Force-clear any stuck SecuroServ overlay state so it cannot reappear once
+      // body.counterhack-resolving is removed.
+      try{ document.getElementById('securoservWall')?.classList?.remove?.('on'); }catch{}
+      try{ document.getElementById('securoservChaos')?.classList?.remove?.('on'); }catch{}
+      try{ document.getElementById('securoservChaos')?.replaceChildren?.(); }catch{}
+      try{ document.getElementById('screenGlitch')?.classList?.remove?.('on'); }catch{}
+      try{ document.getElementById('securoservMidbar')?.classList?.remove?.('on'); }catch{}
+      try{ document.getElementById('inputBlocker')?.classList?.remove?.('on'); }catch{}
+
+      try{
+        if(cursorLogo){
+          cursorLogo.classList.remove('on');
+          cursorLogo.dataset.key = "";
+        }
+      }catch{}
+
+      // Then let the success overlay fade away to reveal the clean state.
+      counterhackFxFadeOutAndHide(2900);
+      await sleep(3050);
+
+      // Now that the overlay is gone, release the resolving lock.
+      document.body?.classList?.remove?.("counterhack-resolving");
+
+      // Final hard reset (covers the case where the user interacted during the overlay).
+      hardResetAfterSecuroservSuccess();
+      setSecuroservMouseBlock(false);
+
+      securoservCounterhackResolving = false;
+    }
+
+    function showCounterhackSuccessFx(){
+      // Back-compat wrapper (old behavior). Prefer resolveSecuroservCounterhackSuccess().
+      counterhackFxShow();
+      setTimeout(() => counterhackFxFadeOutAndHide(2900), 1200);
+    }
+
+    function cancelSecuroservCountermeasures(){
+      // Abort the countdown and revert to normal without reboot.
+      securoservShutdownInProgress = false;
+      securoservRebootTriggered = false;
+
+      showCounterhackSuccessFx();
+
+      stopSecuroservMidbarCountdown();
+      stopSecuroservChaos();
+      stopSecuroservEscalation();
+      setSecuroservGlitchIntensity(0);
+
+      // Force-hide the bottom tooltip immediately (mouse may not have moved yet).
+      const tooltip = document.getElementById("tooltip");
+      if(tooltip){
+        tooltip.classList.remove("on", "glitch", "securoserv");
+        tooltip.textContent = "";
+        delete tooltip.dataset.base;
+      }
+      if(securoservTooltipTimer){
+        clearInterval(securoservTooltipTimer);
+        securoservTooltipTimer = null;
+      }
+
+      // Clear hover/tooltip glitch if it was stuck.
+      if(hoveredEl){
+        try{
+          hoveredEl.classList.remove('hot');
+          clearHotStyle(hoveredEl);
+          setDistrictLogoStateFor(hoveredEl, hoveredEl === selectedEl ? "selected" : "base");
+        }catch{}
+      }
+      hoveredEl = null;
+      try{ selectedEl = null; }catch{}
+      try{ refreshHoverTab(); }catch{}
+
+      document.body?.classList?.remove?.("securosserv-mode");
+      try{ clearSelection(); }catch{}
+      try{ showAllDistricts(); }catch{}
+      try{ setMenuOn("menuShowAll"); }catch{}
+      try{ resetCameraToFitCenter(); requestAnimationFrame(resetCameraToFitCenter); }catch{}
+
+      // Ensure mouse input is restored immediately.
+      setSecuroservMouseBlock(false);
+    }
+
+    function startSecuroservMidbarCountdown(){
+      if(securoservMidbarDelayTimer || securoservMidbarTickTimer) return;
+      const mid = document.getElementById("securoservMidbar");
+      const fill = document.getElementById("securoservMidbarFill");
+      const pct = document.getElementById("securoservMidbarPct");
+      if(!mid || !fill || !pct) return;
+
+      // "after few seconds"
+      securoservMidbarDelayTimer = setTimeout(() => {
+        securoservMidbarDelayTimer = null;
+        if(!document.body.classList.contains("securosserv-mode")) return;
+        if(securoservShutdownInProgress) return;
+
+        mid.classList.add("on");
+
+        // Secret bypass listener (only relevant before the counterhack window reveals).
+        securoservSecretStreak = 0;
+        window.removeEventListener("keydown", handleSecuroservSecretKeydown, true);
+        window.addEventListener("keydown", handleSecuroservSecretKeydown, true);
+
+        // Reveal the user counterhack window at a fixed point of the red bar.
+        securoservChallengeRevealed = false;
+        securoservChallengeRevealPct = 0.35;
+
+        // Extend total duration by the same amount of time it takes to reach that point.
+        // This is satisfied by: dur = base / (1 - pct), because (dur - base) == (dur * pct).
+        const baseDur = 20000;
+        const dur = Math.round(baseDur / (1 - securoservChallengeRevealPct));
+        const t0 = performance.now();
+
+        securoservMidbarTickTimer = setInterval(() => {
+          if(!document.body.classList.contains("securosserv-mode")){
+            stopSecuroservMidbarCountdown();
+            return;
+          }
+          const t = (performance.now() - t0) / dur;
+          const k = Math.max(0, Math.min(1, t));
+          securoservMidbarProgress = k;
+          const p = Math.round(k * 100);
+          fill.style.width = p + "%";
+          pct.textContent = p + "%";
+
+          if(!securoservChallengeRevealed && k >= securoservChallengeRevealPct){
+            securoservChallengeRevealed = true;
+            startSecuroservChallenge();
+          }
+
+          if(k >= 1){
+            stopSecuroservMidbarCountdown();
+            // If user didn't solve the code (still in SecuroServ), trigger shutdown.
+            if(document.body.classList.contains("securosserv-mode") && !securoservChallengeSolved){
+              runSecuroservShutdownAndReboot();
+            }
+          }
+        }, 50);
+      }, 2800);
+    }
+
+    async function runSecuroservShutdownAndReboot(){
+      if(securoservRebootTriggered || securoservShutdownInProgress) return;
+      securoservRebootTriggered = true;
+      securoservShutdownInProgress = true;
+
+      // Freeze any new countdown triggers.
+      stopSecuroservMidbarCountdown();
+
+      // Stop high-frequency UI spam before reboot overlay.
+      stopSecuroservChaos();
+      if(securoservEscalationTimer){
+        clearInterval(securoservEscalationTimer);
+        securoservEscalationTimer = null;
+      }
+      if(securoservTooltipTimer){
+        clearInterval(securoservTooltipTimer);
+        securoservTooltipTimer = null;
+      }
+
+      // Screen turning off effect (after the initial SecuroServ loading completes).
+      const screenOff = document.getElementById("screenOff");
+      if(screenOff){
+        screenOff.classList.remove("fadeout");
+        screenOff.classList.remove("black");
+        screenOff.classList.remove("on");
+        screenOff.classList.add("on");
+      }
+      document.body.classList.add("powering-off");
+
+      // Let the power-off animation play over the map.
+      await sleep(760);
+
+      // Hold on a dark screen a bit longer after the "turn off".
+      if(screenOff){
+        screenOff.classList.add("black");
+      }
+      await sleep(720);
+
+      // Show boot overlay again in SecuroServ reboot mode (simple: logo + bar + bg code).
+      if(boot.el){
+        boot.el.classList.remove("hidden");
+        boot.el.classList.remove("off");
+        boot.el.classList.remove("softclose");
+        boot.el.classList.remove("blackout");
+        boot.el.classList.remove("ss-showbar");
+        boot.el.classList.add("securosserv-reboot");
+      }
+
+      // Fade out the screen-off layer once the reboot overlay is up.
+      if(screenOff){
+        screenOff.classList.add("fadeout");
+        setTimeout(() => {
+          screenOff.classList.remove("on");
+          screenOff.classList.remove("fadeout");
+          screenOff.classList.remove("black");
+          document.body.classList.remove("powering-off");
+        }, 2300);
+      }
+
+      // Punch the glitch up during reboot.
+      setSecuroservGlitchIntensity(1);
+
+      // Keep the red palette during SecuroServ reboot.
+      document.body?.classList?.add?.("securosserv-mode");
+
+      const ssFill = document.getElementById("bootSecuroFill");
+      const ssPct = document.getElementById("bootSecuroPct");
+      const ssPhase = document.getElementById("bootSecuroPhase");
+      if(ssFill) ssFill.style.width = "0%";
+      if(ssPct) ssPct.textContent = "0%";
+      if(ssPhase) ssPhase.textContent = "reboot";
+
+      // Background code writer (behind the bar)
+      const bg = document.getElementById("bootBgCode");
+      if(bg) bg.textContent = "";
+      if(bootBgCodeTimer){
+        clearInterval(bootBgCodeTimer);
+        bootBgCodeTimer = null;
+      }
+      const codeWords = [
+        "PROC", "KERNEL", "AUTH", "ICE", "TRACE", "UPLINK", "VAULT", "GRID", "SENTRY", "LOCK", "SHIM", "NODE", "MUX", "PACKET", "SIG", "HASH"
+      ];
+      const hex = () => {
+        const h = "0123456789ABCDEF";
+        let out = "";
+        for(let i=0;i<8;i++) out += h[Math.floor(Math.random()*h.length)];
+        return out;
+      };
+      const line = () => {
+        const w = codeWords[Math.floor(Math.random()*codeWords.length)];
+        const w2 = codeWords[Math.floor(Math.random()*codeWords.length)];
+        const n = Math.floor(10 + Math.random()*90);
+        return `${w}.${w2}(${n}) :: 0x${hex()} 0x${hex()}  [${Math.floor(Math.random()*9)}:${Math.floor(Math.random()*9)}]`;
+      };
+      bootBgCodeTimer = setInterval(() => {
+        if(!bg) return;
+        bg.textContent += line() + "\n";
+        // Keep it from growing forever
+        const maxChars = 24000;
+        if(bg.textContent.length > maxChars){
+          bg.textContent = bg.textContent.slice(bg.textContent.length - maxChars);
+        }
+      }, 55);
+
+      // Start with only code flying; reveal logo+bar after a beat.
+      await sleep(1050);
+      if(boot.el) boot.el.classList.add("ss-showbar");
+
+      // Simple SecuroServ reboot bar with spinning logo.
+      const ssDur = 6200;
+      const ssT0 = performance.now();
+      while(true){
+        const t = (performance.now() - ssT0) / ssDur;
+        const k = Math.max(0, Math.min(1, t));
+        const p = Math.round(k * 100);
+        if(ssFill) ssFill.style.width = p + "%";
+        if(ssPct) ssPct.textContent = p + "%";
+        if(k >= 1) break;
+        await sleep(70);
+      }
+
+      // Stop background writer.
+      if(bootBgCodeTimer){
+        clearInterval(bootBgCodeTimer);
+        bootBgCodeTimer = null;
+      }
+
+      // Go full black (opaque) using the boot overlay itself.
+      if(boot.el) boot.el.classList.add("blackout");
+      await sleep(820);
+
+      // Reset map state while the blue/yellow boot comes back.
+      setSecuroservGlitchIntensity(0);
+      document.body?.classList?.remove?.("securosserv-mode");
+      try{ clearSelection(); }catch{}
+      try{ showAllDistricts(); }catch{}
+      try{ setMenuOn("menuShowAll"); }catch{}
+      try{ resetCameraToFitCenter(); requestAnimationFrame(resetCameraToFitCenter); }catch{}
+
+      // Clear hover/tooltip so the bottom tab doesn't stay on SecuroServ.
+      try{
+        if(hoveredEl){
+          hoveredEl.classList.remove('hot');
+          clearHotStyle(hoveredEl);
+          setDistrictLogoStateFor(hoveredEl, "base");
+        }
+        hoveredEl = null;
+        refreshHoverTab();
+        if(cursorLogo) cursorLogo.classList.remove('on');
+      }catch{}
+
+      // Bring back the normal blue/yellow boot UI gradually.
+      if(boot.el){
+        boot.el.classList.remove("securosserv-reboot");
+        boot.el.classList.remove("ss-showbar");
+      }
+
+      const top = boot.el?.querySelector?.(".boot-top");
+      const mid = boot.el?.querySelector?.(".boot-mid");
+      const foot = boot.el?.querySelector?.(".boot-foot");
+      const resetPart = (el) => {
+        if(!el) return;
+        el.style.opacity = "0";
+        el.style.transform = "translate3d(0,10px,0)";
+        el.style.transition = "opacity .9s ease, transform .9s ease";
+      };
+      resetPart(top);
+      resetPart(mid);
+      resetPart(foot);
+      await sleep(120);
+
+      // Fade from full black into the boot dark-blue background.
+      if(boot.el) boot.el.classList.remove("blackout");
+      await sleep(140);
+
+      const showPart = (el) => {
+        if(!el) return;
+        el.style.opacity = "1";
+        el.style.transform = "translate3d(0,0,0)";
+      };
+      showPart(top);
+      await sleep(520);
+      showPart(mid);
+      await sleep(620);
+      showPart(foot);
+      await sleep(820);
+
+      // Blue/yellow boot pass (single) — no real page restart.
+      if(boot.linesEl) boot.linesEl.innerHTML = "";
+      bootSet(0, "handshake");
+      bootLine("[BOOT] initializing runtime…");
+      await sleep(220);
+      bootSet(18, "handshake");
+      bootLine("[NET] link stable • encryption ok");
+      await sleep(240);
+      bootSet(40, "mount");
+      bootLine("[FS] mounting local asset…");
+      await sleep(240);
+      bootSet(62, "restore");
+      bootLine("[MAP] restoring baseline camera • clearing volatile state");
+      await sleep(260);
+      bootSet(86, "ready");
+      bootLine("[OK] map online");
+      await sleep(280);
+      bootSet(100, "ready");
+
+      bootClose();
+      await sleep(520);
+
+      securoservShutdownInProgress = false;
+      securoservRebootTriggered = false;
+    }
+
+    function startSecuroservEscalation(){
+      if(securoservEscalationTimer) return;
+      securoservRebootTriggered = false;
+      securoservShutdownInProgress = false;
+      const t0 = performance.now();
+      securoservEscalationTimer = setInterval(() => {
+        if(!document.body.classList.contains("securosserv-mode")){
+          setSecuroservGlitchIntensity(0);
+          return;
+        }
+
+        const chaos = document.getElementById("securoservChaos");
+        const count = Number(chaos?.childElementCount || 0);
+        const fill = Math.max(0, Math.min(1, count / SECUROSERV_CHAOS_MAX));
+        const timeRamp = Math.max(0, Math.min(1, (performance.now() - t0) / 10000));
+
+        // Make the ramp visibly increase (not "stuck" at low values).
+        const timeCurve = Math.pow(timeRamp, 0.70);
+        const fillCurve = Math.pow(fill, 0.65);
+        const intensity = Math.max(0.12, Math.min(1, (timeCurve * 0.82) + (fillCurve * 0.55)));
+
+        setSecuroservGlitchIntensity(intensity);
+      }, 120);
+    }
+
+    function stopSecuroservEscalation(){
+      if(securoservEscalationTimer){
+        clearInterval(securoservEscalationTimer);
+        securoservEscalationTimer = null;
+      }
+      setSecuroservGlitchIntensity(0);
     }
 
     function setCursorLogoFor(el){
@@ -2945,6 +5321,28 @@
       const key = normalizeRegionKey(el.id || el.getAttribute("data-name") || "");
       if(!key){
         cursorLogo.classList.remove("on");
+        return;
+      }
+
+      // Show SecuroServ logo only after bypass.
+      if(key === "SECUROSERV_PORT" || key === "SECUROSERVE_PORT" || key.startsWith("SECUROSERV_")){
+        if(!securoservBypassedThisSession){
+          cursorLogo.classList.remove("on");
+          cursorLogo.dataset.key = "";
+          return;
+        }
+
+        const ssKey = "SECUROSERV_LOGO";
+        const shouldReload = (cursorLogo.dataset.key !== ssKey) || (cursorLogo.dataset.failed === "1");
+        cursorLogo.dataset.key = ssKey;
+
+        if(shouldReload){
+          cursorLogo.classList.remove("on");
+          const bust = (cursorLogo.dataset.failed === "1") ? `?v=${Date.now()}` : "";
+          cursorLogo.src = `./logos/securoserv_port.png${bust}`;
+        }else{
+          cursorLogo.classList.add("on");
+        }
         return;
       }
 
@@ -2976,6 +5374,21 @@
         detailLogo.classList.remove("on");
         detailLogo.dataset.key = "";
         detailLogo.removeAttribute("src");
+        return;
+      }
+
+      // Show SecuroServ logo only after bypass.
+      if(key === "SECUROSERV_PORT" || key === "SECUROSERVE_PORT" || key.startsWith("SECUROSERV_")){
+        if(!securoservBypassedThisSession){
+          detailLogo.classList.remove("on");
+          detailLogo.dataset.key = "";
+          detailLogo.removeAttribute("src");
+          return;
+        }
+
+        detailLogo.dataset.key = "SECUROSERV_LOGO";
+        detailLogo.classList.remove("on");
+        detailLogo.src = `./logos/securoserv_port.png`;
         return;
       }
 
@@ -3193,6 +5606,7 @@
       globalHoverBound = true;
 
       mapwrap.addEventListener('pointermove', (e) => {
+        if(document.body?.classList?.contains?.('counterhack-resolving')) return;
         if(!svgEl) return;
         const r = regionFromClientPoint(e.clientX, e.clientY);
 
@@ -3282,14 +5696,26 @@
     }
 
     function selectRegion(el){
+      if(document.body?.classList?.contains?.('counterhack-resolving')) return;
       if(selectedEl === el) return;
       bringRegionToFront(el);
       const prev = selectedEl;
       if(prev) {
         prev.classList.remove("selected");
       }
+
+      // Hide wall-of-text for the previous restricted selection.
+      if(prev && prev.classList.contains('restricted')){
+        setRestrictedWallVisibleForRegion(prev, false);
+      }
+
       selectedEl = el;
       if(selectedEl) selectedEl.classList.add("selected");
+
+      // Show wall-of-text only when a restricted zone is selected.
+      if(selectedEl && selectedEl.classList.contains('restricted')){
+        setRestrictedWallVisibleForRegion(selectedEl, true);
+      }
 
       // Ensure selection stays top even if the click happened during hover.
       keepSelectedOnTop();
@@ -3343,6 +5769,16 @@
       updateSelectionDimming();
       updateRestrictedOverlayState();
 
+      const selectedNormKey = selectedEl
+        ? normalizeRegionKey(selectedEl.id || selectedEl.getAttribute("data-name") || "")
+        : "";
+      const isSecuroservSelection = Boolean(
+        selectedEl &&
+        selectedEl.classList.contains("restricted") &&
+        (selectedNormKey === "SECUROSERV_PORT" || selectedNormKey === "SECUROSERVE_PORT" || selectedNormKey.startsWith("SECUROSERV_")) &&
+        !securoservBypassedThisSession
+      );
+
       // Show district logo in details panel (only when selected)
       setDetailLogoFor(selectedEl);
 
@@ -3350,7 +5786,14 @@
       setAreaNotesFor(selectedEl);
 
       // Pop the window when a district is selected
-      document.getElementById("popupDetails")?.classList.add("on");
+      const detailPanel = document.getElementById("popupDetails");
+      if(detailPanel){
+        if(isSecuroservSelection){
+          detailPanel.classList.remove("on");
+        }else{
+          detailPanel.classList.add("on");
+        }
+      }
 
       const { name, id, zone } = regionLabel(el);
       const type = el.getAttribute("data-type") || "unknown";
@@ -3371,7 +5814,12 @@
         flyToElement(el, 2.2, 520, true);
       }
 
-      term(`[SELECT] ${name} (${id})`);
+      const selectLine = `[SELECT] ${name} (${id})`;
+      if(isSecuroservSelection){
+        term(glitchifyText(selectLine, 0.70), { glitch: true });
+      }else{
+        term(selectLine);
+      }
     }
 
     function updateSelectionDimming(){
@@ -3382,21 +5830,63 @@
 
     function updateRestrictedOverlayState(){
       const activeRestricted = Boolean(selectedEl && selectedEl.classList.contains("restricted"));
+
+      const normKey = activeRestricted
+        ? normalizeRegionKey(selectedEl?.id || selectedEl?.getAttribute?.("data-name") || "")
+        : "";
+
+      const isSecuroservRestricted = activeRestricted && isSecuroservKey(normKey);
+      const isSecuroservHackActive = isSecuroservRestricted && !securoservBypassedThisSession;
+
+      const restrictedTheme = activeRestricted ? (function(){
+        if(normKey === "MERRYWEATHER_BASE") return "yellow";
+        if(normKey === "NEON_CITY_PRISON" || normKey === "APEX" || normKey === "APEX_HQ" || normKey.startsWith("APEX_")) return "blue";
+        if(normKey === "SECUROSERV_PORT" || normKey === "SECUROSERVE_PORT" || normKey.startsWith("SECUROSERV_")) return "red";
+        return "yellow";
+      })() : "yellow";
+
+      // SecuroServ hack mode is only allowed before bypass. After bypass, keep UI red,
+      // but do not enable any hack overlays or input blocking.
+      document.body?.classList?.toggle?.("securosserv-mode", isSecuroservHackActive);
+      setSecuroservMouseBlock(isSecuroservHackActive);
+
+      const screenGlitch = document.getElementById("screenGlitch");
+      if(screenGlitch){
+        const on = isSecuroservHackActive;
+        screenGlitch.classList.toggle("on", on);
+        if(on) startSecuroservEscalation();
+        else stopSecuroservEscalation();
+      }
+
+      const chaos = document.getElementById("securoservChaos");
+      if(chaos){
+        const on = isSecuroservHackActive;
+        chaos.classList.toggle("on", on);
+        if(on){
+          if(!securoservChaosTimer) startSecuroservChaos();
+          startSecuroservMidbarCountdown();
+        }
+        else{
+          stopSecuroservChaos();
+          stopSecuroservMidbarCountdown();
+        }
+      }
+
+      const wall = document.getElementById("securoservWall");
+      if(wall){
+        const on = isSecuroservHackActive;
+        wall.classList.toggle("on", on);
+        if(on) ensureSecuroservFullscreenWall();
+      }
+
       const overlay = document.getElementById("restrictedOverlay");
       if(overlay){
         overlay.classList.toggle("on", activeRestricted);
 
         overlay.classList.remove("theme-blue", "theme-red");
         if(activeRestricted){
-          const normKey = normalizeRegionKey(selectedEl?.id || selectedEl?.getAttribute?.("data-name") || "");
-          const themed = (function(){
-            if(normKey === "MERRYWEATHER_BASE") return "yellow";
-            if(normKey === "NEON_CITY_PRISON" || normKey === "APEX" || normKey === "APEX_HQ" || normKey.startsWith("APEX_")) return "blue";
-            if(normKey === "SECUROSERV_PORT" || normKey === "SECUROSERVE_PORT" || normKey.startsWith("SECUROSERV_")) return "red";
-            return "yellow";
-          })();
-          if(themed === "blue") overlay.classList.add("theme-blue");
-          if(themed === "red") overlay.classList.add("theme-red");
+          if(restrictedTheme === "blue") overlay.classList.add("theme-blue");
+          if(restrictedTheme === "red") overlay.classList.add("theme-red");
         }
       }
       const detailPanel = document.getElementById("popupDetails");
@@ -3405,25 +5895,42 @@
 
         detailPanel.classList.remove("theme-blue", "theme-red");
         if(activeRestricted){
-          const normKey = normalizeRegionKey(selectedEl?.id || selectedEl?.getAttribute?.("data-name") || "");
-          if(normKey === "NEON_CITY_PRISON" || normKey === "APEX" || normKey === "APEX_HQ" || normKey.startsWith("APEX_")){
+          if(restrictedTheme === "blue"){
             detailPanel.classList.add("theme-blue");
-          }else if(normKey === "SECUROSERV_PORT" || normKey === "SECUROSERVE_PORT" || normKey.startsWith("SECUROSERV_")){
+          }else if(restrictedTheme === "red"){
             detailPanel.classList.add("theme-red");
           }
         }
       }
     }
 
+    window.addEventListener("resize", () => {
+      const wall = document.getElementById("securoservWall");
+      if(wall && wall.classList.contains("on")) ensureSecuroservFullscreenWall();
+    });
+
     function clearSelection(){
       const prev = selectedEl;
       if(prev) {
         prev.classList.remove("selected");
       }
+
+      if(prev && prev.classList.contains('restricted')){
+        setRestrictedWallVisibleForRegion(prev, false);
+      }
+
       selectedEl = null;
       updateSelectionGlowColor(null);
       updateSelectionDimming();
       updateRestrictedOverlayState();
+
+      // Stop any SecuroServ-only glitch timers.
+      if(securoservTooltipTimer){
+        clearInterval(securoservTooltipTimer);
+        securoservTooltipTimer = null;
+      }
+      stopSecuroservMidbarCountdown();
+      stopSecuroservEscalation();
 
       // Reset district logo visual state (selected -> base/hover)
       if(prev) setDistrictLogoStateFor(prev, prev === hoveredEl ? "hover" : "base");
@@ -3459,10 +5966,26 @@
     // ESC closes the details popup (same as clicking X)
     window.addEventListener("keydown", (e) => {
       if(e.key !== "Escape") return;
+
+      // During SecuroServ countermeasures, ESC must do nothing.
+      const inSecuroserv = Boolean(document.body && document.body.classList.contains("securosserv-mode"));
+      const challengeActive = (typeof securoservChallengeActive !== "undefined") && Boolean(securoservChallengeActive);
+      const shutdownActive = (typeof securoservShutdownInProgress !== "undefined") && Boolean(securoservShutdownInProgress);
+      if(inSecuroserv || challengeActive || shutdownActive){
+        e.preventDefault();
+        return;
+      }
+
+      const tag = String(e.target?.tagName || "").toUpperCase();
+      if(tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || e.target?.isContentEditable) return;
+
       const popup = document.getElementById("popupDetails");
-      if(!popup || !popup.classList.contains("on")) return;
+      const popupOpen = Boolean(popup && popup.classList.contains("on"));
+      const hasSelection = Boolean(selectedEl);
+      if(!popupOpen && !hasSelection) return;
       e.preventDefault();
-      closeDetailsPopup();
+      if(popupOpen) closeDetailsPopup();
+      else clearSelection();
     });
 
     // DISTRICT CONTROLS
@@ -3490,6 +6013,17 @@
     function hideAllDistricts(){
       if(!svgEl) return;
       svgEl.querySelectorAll('.region').forEach(r => r.classList.add('hidden'));
+
+      // Exception: keep SecuroServ visible even in HIDE ALL, but ONLY before bypass.
+      if(!securoservBypassedThisSession){
+        const securoservZones = Array.from(svgEl.querySelectorAll('.region.restricted:not(.wall)'));
+        for(const r of securoservZones){
+          const normKey = normalizeRegionKey(r.id || r.getAttribute('data-name') || "");
+          const isSecuroserv = (normKey === "SECUROSERV_PORT" || normKey === "SECUROSERVE_PORT" || normKey.startsWith("SECUROSERV_"));
+          if(isSecuroserv) r.classList.remove('hidden');
+        }
+      }
+
       const layer = document.getElementById('labelsLayer');
       if(layer) layer.innerHTML = '';
       const logos = document.getElementById('logosLayer');
@@ -3523,6 +6057,29 @@
     document.getElementById('menuShowAll')?.addEventListener('click', () => activateMenu('menuShowAll'));
     document.getElementById('menuRestricted')?.addEventListener('click', () => activateMenu('menuRestricted'));
     document.getElementById('menuHideAll')?.addEventListener('click', () => activateMenu('menuHideAll'));
+
+    function bindLayerToggle(btnId, bodyClass){
+      const btn = document.getElementById(btnId);
+      if(!btn) return;
+
+      const sync = () => {
+        const hidden = document.body.classList.contains(bodyClass);
+        btn.classList.toggle('on', hidden);
+        btn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+      };
+
+      btn.addEventListener('click', () => {
+        const next = !document.body.classList.contains(bodyClass);
+        document.body.classList.toggle(bodyClass, next);
+        sync();
+      });
+
+      sync();
+    }
+
+    bindLayerToggle('toggleRoads', 'hide-roads');
+    bindLayerToggle('toggleBuildings', 'hide-buildings');
+    bindLayerToggle('toggleMarkers', 'hide-markers');
 
     function getActiveMenuId(){
       const ids = ['menuShowAll','menuRestricted','menuHideAll'];
