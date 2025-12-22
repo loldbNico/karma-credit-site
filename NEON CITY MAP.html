@@ -90,6 +90,27 @@
       z-index: 35;
       user-select:none;
     }
+    /* Small title tab for the filter group (does not change layout height). */
+    .sidemenu::before{
+      content: "FILTER";
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 20px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      background: rgba(1,6,27,.70);
+      border: 1px solid rgba(96,143,255,.18);
+      box-shadow: var(--glowB);
+      color: rgba(96,143,255,.78);
+      font-size: 12px;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      pointer-events: none;
+      white-space: nowrap;
+    }
     .sidemenu-row{
       display:flex;
       align-items:flex-end;
@@ -195,6 +216,8 @@
     #markersLayer{
       transition: opacity .16s ease;
     }
+    #layerBuildings{ opacity: .75; }
+    #layerRoads{ opacity: .50; }
     body.hide-buildings #layerBuildings{ opacity: 0; }
     body.hide-roads #layerRoads{ opacity: 0; }
     body.hide-markers #markersLayer{ opacity: 0; }
@@ -337,17 +360,46 @@
     }
     .termDock #panelTerm{ width: 270px; }
 
+    /* Prevent accidental text highlighting/selection while dragging/panning.
+       Keep Terminal + Area Details selectable (copy/paste). */
+    body,
+    .stage,
+    .mapstage,
+    .mapwrap,
+    #mapStack,
+    #svgHost,
+    #logosLayer,
+    #markersLayer,
+    #labelsLayer,
+    .topnav,
+    .sidemenu,
+    .layerToggles{
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    #panelTerm,
+    #panelTerm *,
+    #popupDetails,
+    #popupDetails *{
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
     /* Panels */
     .hudpanel, .hudpopup, .dockpanel{
-      background: var(--panel);
-      border: 1px solid var(--line2);
-      box-shadow: var(--glowB);
+      background:
+        radial-gradient(120% 120% at 30% 18%, rgba(96,143,255,.08), transparent 55%),
+        linear-gradient(180deg, rgba(6,10,22,.86), rgba(2,6,18,.74));
+      border: 1px solid rgba(96,143,255,.38);
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,.55) inset,
+        0 0 22px rgba(96,143,255,.10);
       position: relative;
     }
     .hudpanel::before, .hudpopup::before, .dockpanel::before{
       content:"";
       position:absolute; inset:-1px;
-      border: 1px solid rgba(96,143,255,.12);
+      border: 1px solid rgba(96,143,255,.16);
       pointer-events:none;
     }
     .hudpanel::after, .hudpopup::after, .dockpanel::after{
@@ -386,9 +438,13 @@
       content:"";
       position:absolute;
       inset: 0;
-      background: var(--panel);
-      border: 1px solid var(--line2);
-      box-shadow: var(--glowB);
+      background:
+        radial-gradient(140% 120% at 28% 16%, rgba(96,143,255,.10), transparent 52%),
+        linear-gradient(180deg, rgba(6,10,22,.88), rgba(2,6,18,.76));
+      /* Use inset strokes so the outline follows the cut corners (no clipped border). */
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,.62) inset,
+        0 0 0 1px rgba(96,143,255,.45) inset;
       clip-path: polygon(
         var(--cut) 0,
         calc(100% - var(--cut)) 0,
@@ -458,19 +514,20 @@
       align-items:center;
       justify-content:space-between;
       padding: 10px 12px;
-      border-bottom: 1px solid var(--line2);
-      background: rgba(6,10,22,.55);
+      border-bottom: 1px solid rgba(96,143,255,.32);
+      background:
+        linear-gradient(90deg, rgba(96,143,255,.28), rgba(6,10,22,.55) 58%);
       text-transform: uppercase;
       letter-spacing: 1.2px;
       font-size: 12px;
     }
-    .hudtitle{ color: rgba(96,143,255,.95); }
-    .hudmeta{ color: var(--yl); }
+    .hudtitle{ color: rgba(96,143,255,.96); text-shadow: 0 0 10px rgba(96,143,255,.12); }
+    .hudmeta{ color: var(--yl); text-shadow: 0 0 10px rgba(238,255,94,.10); }
     .hudbody{ padding: 12px; }
     .hudfoot{
       display:flex; justify-content:space-between;
       padding: 8px 12px;
-      border-top: 1px solid var(--line2);
+      border-top: 1px solid rgba(96,143,255,.22);
       color: rgba(215,230,255,.52);
       font-size: 11px;
       text-transform: uppercase;
@@ -520,6 +577,7 @@
     body.securosserv-mode .topnav .tab.on span{ border-bottom-color: rgba(var(--ss), 1); }
 
     body.securosserv-mode .sidemenu{ border-color: rgba(var(--ssHot), .26); box-shadow: var(--glowB); }
+    body.securosserv-mode .sidemenu::before{ border-color: rgba(var(--ssHot), .26); color: rgba(var(--ssHot), .78); }
     body.securosserv-mode .sidemenu .tab,
     body.securosserv-mode .sidemenu .arrow{ color: rgba(var(--ssHot), .86); }
     body.securosserv-mode .sidemenu .tab span{ border-bottom-color: rgba(var(--ssHot), .36); }
@@ -567,8 +625,8 @@
     }
     #popupDetails.restricted::before{
       background: rgba(0,0,0,.95);
-      border: 4px solid rgba(0,0,0,1);
       box-shadow:
+        0 0 0 4px rgba(0,0,0,1) inset,
         0 0 32px rgba(var(--restrictedRGB), .85),
         inset 0 0 26px rgba(0,0,0,.65);
     }
@@ -667,8 +725,10 @@
       font-size: 12px;
       line-height: 1.35;
       color: rgba(238,255,94,.85);
-      background: rgba(4,7,16,.45);
-      border: 1px solid rgba(238,255,94,.18);
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.22)),
+        repeating-linear-gradient(0deg, rgba(96,143,255,.05), rgba(96,143,255,.05) 1px, transparent 1px, transparent 18px);
+      border: 1px solid rgba(96,143,255,.24);
     }
     .termline{ padding: 3px 0; opacity:.92; }
 
@@ -1049,8 +1109,8 @@
 
     .hudhead-actions{ display:flex; gap: 8px; align-items:center; }
     .hudbtn{
-      background: rgba(6,10,22,.45);
-      border: 1px solid var(--line2);
+      background: rgba(0,0,0,.32);
+      border: 1px solid rgba(96,143,255,.28);
       color: var(--text);
       padding: 6px 10px;
       font-size: 10px;
@@ -1059,7 +1119,7 @@
       cursor:pointer;
     }
     .hudbtn:hover{
-      border-color: rgba(238,255,94,.35);
+      border-color: rgba(238,255,94,.45);
       color: var(--yl);
       box-shadow: var(--glowY);
     }
@@ -1224,6 +1284,8 @@
       stroke-width: calc(var(--sw-region) + 3.4px) !important;
       filter: url(#selectionGlowInner);
     }
+
+
 
     .restricted-overlay{
       position: fixed;
@@ -1488,13 +1550,13 @@
     /* Counterhack success transition: freeze & fade hack UI while success overlay fades in */
     body.counterhack-resolving #securoservMidbar,
     body.counterhack-resolving #securoservChaos,
-    body.counterhack-resolving #screenGlitch,
-    body.counterhack-resolving #securoservWall,
-    body.counterhack-resolving .counterhack-win{
+    body.counterhack_resolving #screenGlitch,
+    body.counterhack_resolving #securoservWall,
+    body.counterhack_resolving .counterhack-win{
       opacity: 0 !important;
       transition: opacity 2.9s ease !important;
     }
-    body.counterhack-resolving .securoserv-chaos .chaos-pop{
+    body.counterhack_resolving .securoserv-chaos .chaos-pop{
       animation-play-state: paused !important;
     }
 
@@ -1802,8 +1864,8 @@
       position:absolute;
       inset: -40% -10%;
       background:
-        repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 7px, rgba(var(--ssHot), .08) 7px 8px),
-        repeating-linear-gradient(90deg, rgba(var(--ssHot), .09) 0 1px, rgba(0,0,0,0) 1px 9px);
+        repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 7px, rgba(var(--ssHot), .09) 7px 8px),
+        repeating-linear-gradient(90deg, rgba(var(--ssHot), .08) 0 1px, rgba(0,0,0,0) 1px 9px);
       mix-blend-mode: screen;
       opacity: .55;
       animation: midbarGlitch 1.05s steps(2) infinite;
@@ -2089,10 +2151,81 @@
       stroke-linecap: square !important;
       stroke-linejoin: miter !important;
       opacity: .95 !important;
+      pointer-events: none !important;
 
       /* subtle barrier glow */
       filter:
         drop-shadow(0 0 8px rgba(96,143,255,.14)) !important;
+    }
+
+    /* Wasteline labels layer */
+    #svgHost #wastelineLabelsLayer{
+      pointer-events: none !important;
+      opacity: 1 !important;
+      filter: none !important;
+    }
+
+    /* THE WASTELINE: thick solid transparent yellow line */
+    #svgHost #THE_WASTELINE, #svgHost #THE_WASTELINE *{
+      fill: none !important;
+      stroke: var(--yl) !important;
+      stroke-width: 6px !important;
+      stroke-opacity: 1 !important;
+      vector-effect: non-scaling-stroke !important;
+      stroke-linecap: square !important;
+      stroke-linejoin: miter !important;
+      opacity: 1 !important;
+      pointer-events: none !important;
+      filter:
+        drop-shadow(0 0 6px rgba(0,0,0,.9))
+        drop-shadow(0 0 16px rgba(238,255,94,.35)) !important;
+    }
+
+    /* Wasteline labels at ends */
+    .wastelineEndLabel{
+      font-family: "Rajdhani", sans-serif;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      pointer-events: none;
+      filter:
+        drop-shadow(0 0 6px rgba(0,0,0,.9));
+    }
+    .wastelineEndLabel.title{
+      font-size: 28px;
+      fill: var(--yl);
+      filter:
+        drop-shadow(0 0 6px rgba(0,0,0,.9))
+        drop-shadow(0 0 16px rgba(238,255,94,.35));
+    }
+    .wastelineEndLabel.sub{
+      font-size: 26px;
+      fill: var(--ui);
+      opacity: 0.55;
+      filter:
+        drop-shadow(0 0 6px rgba(0,0,0,.9))
+        drop-shadow(0 0 14px rgba(96,143,255,.22));
+    }
+
+    /* Wasteline marquee (textPath along the line) */
+    #svgHost #wastelineMarqueeLayer .wastelineMarqueeText{
+      font-weight: 900;
+      letter-spacing: 10px;
+      font-size: 32px;
+      fill: var(--yl) !important;
+      stroke: none !important;
+      stroke-width: 0 !important;
+      opacity: 1;
+      filter:
+        drop-shadow(0 0 3px rgba(0,0,0,.95))
+        drop-shadow(0 0 26px rgba(0,0,0,.85))
+        drop-shadow(0 0 18px rgba(238,255,94,.12)) !important;
+    }
+    /* Ensure no stroke and correct fill on marquee descendants (wall rules can override) */
+    #svgHost #wastelineMarqueeLayer .wastelineMarqueeText, #svgHost #wastelineMarqueeLayer .wastelineMarqueeText *{
+      fill: var(--yl) !important;
+      stroke: none !important;
+      stroke-width: 0 !important;
     }
 
     /* PERFORMANCE OPTIMIZATIONS */
@@ -2328,9 +2461,9 @@
     <div class="sidemenu-row">
       <button class="arrow" id="menuPrev" type="button" aria-label="Previous filter"><span>‹</span></button>
       <div class="tabs" role="tablist" aria-label="District filters">
-        <button class="tab on" id="menuShowAll" type="button" role="tab" aria-selected="true"><span>SHOW ALL</span></button>
-        <button class="tab" id="menuRestricted" type="button" role="tab" aria-selected="false"><span>RESTRICTED</span></button>
-        <button class="tab" id="menuHideAll" type="button" role="tab" aria-selected="false"><span>HIDE ALL</span></button>
+        <button class="tab on" id="menuShowAll" type="button" role="tab" aria-selected="true" title="Show all zones" aria-label="Show all zones"><span>SHOW ALL</span></button>
+        <button class="tab" id="menuRestricted" type="button" role="tab" aria-selected="false" title="Only restricted zones" aria-label="Only restricted zones"><span>RESTRICTED</span></button>
+        <button class="tab" id="menuHideAll" type="button" role="tab" aria-selected="false" title="Hide all zones" aria-label="Hide all zones"><span>HIDE ALL</span></button>
       </div>
       <button class="arrow" id="menuNext" type="button" aria-label="Next filter"><span>›</span></button>
     </div>
@@ -2459,6 +2592,29 @@
       buildings: "./FINAL BUILDINGS.webp",
       roads: "./FINAL ROADS.webp",
     };
+
+    // Ensure SecuroServ overlays are not trapped under other fixed UI stacking contexts.
+    // Hoisting them to <body> makes their z-index consistently cover the left menu/toggles
+    // and allows the input blocker to actually intercept clicks.
+    function hoistToBody(id){
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(el.parentElement === document.body) return;
+      try{ document.body.appendChild(el); }catch{}
+    }
+    function hoistSecuroservOverlays(){
+      [
+        "securoservWall",
+        "securoservChaos",
+        "screenGlitch",
+        "securoservMidbar",
+        "inputBlocker",
+        "securoservChallenge",
+        "counterhackFx",
+        "screenOff",
+      ].forEach(hoistToBody);
+    }
+    hoistSecuroservOverlays();
     // Load raster layers
     document.getElementById("layerOcean").src = LAYERS.ocean;
     document.getElementById("layerLand").src = LAYERS.land;
@@ -2646,13 +2802,14 @@
     let securoservChallengeSolved = false;
     let securoservChallengeIndex = 0;
     let securoservChallengeSymbols = [];
-    let securoservChallengeRevealPct = 0.35;
+    let securoservChallengeRevealPct = 0.20;
     let securoservChallengeRevealed = false;
     let securoservMidbarProgress = 0;
     let securoservSecretStreak = 0;
     let securoservShutdownInProgress = false;
     let securoservRebootTriggered = false;
     let securoservCounterhackResolving = false;
+    let securoservSuccessDelayTimer = null;
     // After a successful counterhack, disable all SecuroServ hack effects for the rest of
     // the session (until the page is manually refreshed).
     let securoservBypassedThisSession = false;
@@ -2965,14 +3122,26 @@
 
     // Animation loop (smooth inertial pan/zoom + transitions)
     let rafId = null;
+    let wastelineMarquee = null;
     function startTick(){
       if(rafId) return; // already running
       const loop = () => {
         rafId = requestAnimationFrame(loop);
 
+        const now = performance.now();
+
+        // Wasteline marquee (seamless textPath scroll)
+        if(wastelineMarquee && wastelineMarquee.a && wastelineMarquee.length > 0){
+          const dt = Math.max(0, (now - wastelineMarquee.last) / 1000);
+          wastelineMarquee.last = now;
+          const referenceLength = wastelineMarquee.textLength || wastelineMarquee.length;
+          if(!referenceLength) return;
+          wastelineMarquee.offset = (wastelineMarquee.offset + (wastelineMarquee.speed * dt)) % referenceLength;
+          try{ wastelineMarquee.a.setAttribute("startOffset", String(wastelineMarquee.offset)); }catch{}
+        }
+
         // run scripted animation if any
         if(camera.anim){
-          const now = performance.now();
           const t = (now - camera.anim.t0) / camera.anim.dur;
           const k = easeOutCubic(clamp(t, 0, 1));
           camera.targetX = lerp(camera.anim.from.x, camera.anim.to.x, k);
@@ -3223,6 +3392,11 @@
         return { stroke: "#ff0000", fill: hexToRgba("360000", 0.68) };
       }
 
+      if(k === "LITTLE_SOEUL"){
+        // Keep the original district outline color, while matching SOUTH_SIDE fill.
+        return { stroke: "#f2c25c", fill: hexToRgba("360000", 0.68) };
+      }
+
       if(k === "NEON_CORE"){
         return { stroke: "#7dc5bd", fill: hexToRgba("2c063c", 0.72) };
       }
@@ -3235,12 +3409,28 @@
         return { stroke: "#eb55d8", fill: hexToRgba("260240", 0.72) };
       }
 
+      if(k === "PACIFIC_BLUFFS"){
+        return { stroke: "#8f2a1a", fill: hexToRgba("39110a", 0.62) };
+      }
+
       if(k === "HUMANE_LABS"){
         return { stroke: "#48afff", fill: hexToRgba("00213b", 0.6) };
       }
 
       if(k === "NEON_CITY_NATIONAL_AIRPORT"){
         return { stroke: "#c9cfcf", fill: "#1c222a" };
+      }
+
+      if(k === "NEON_CITY_PORTS"){
+        return { stroke: "#4c5a76", fill: "#051025" };
+      }
+
+      if(k === "PALAMINO_LANDS"){
+        return { stroke: "#71050d", fill: hexToRgba("360000", 0.68) };
+      }
+
+      if(k === "MIRROR_HILLS"){
+        return { stroke: "#9bbac3", fill: "#0b242f" };
       }
 
       if(k === "MERRYWEATHER_BASE"){
@@ -3368,6 +3558,7 @@
     function colorizeRegions(){
       if(!svgEl) return;
       const regions = svgEl.querySelectorAll(".region");
+      const INVISIBLE_FILL = "rgba(0,0,0,0.001)";
 
       regions.forEach((r, i) => {
         if(r.classList.contains("wall")){
@@ -3389,11 +3580,19 @@
         r.classList.toggle("restricted", restricted);
 
         const override = getRegionColorOverride(normKey);
-        const fallback = (!override && !restricted) ? {
-          // Unset districts (non-restricted only): intentionally obnoxious neon green
-          stroke: "#39ff14",
-          fill: "rgba(57, 255, 20, 0.38)",
-        } : null;
+        let fallback = null;
+        if(!override && !restricted){
+          if(normKey === "VINEWOOD_HILLS" || normKey === "ROCKFORD_HILLS"){
+            // Match the existing random district-label color style (stable per region)
+            fallback = {
+              stroke: `hsl(${hue}, 85%, 68%)`,
+              fill: `hsla(${hue}, 70%, 18%, 0.62)`,
+            };
+          }else{
+            // Unset districts (non-restricted only): intentionally obnoxious neon green
+            fallback = { stroke: "#39ff14" };
+          }
+        }
         const effective = override || fallback;
 
         // Stroke color:
@@ -3410,17 +3609,17 @@
         }
 
         // Fill:
-        // - Overrides always win (even if restricted)
-        // - Restricted default: dense scrolling "RESTRICTED" wall-of-text
-        // - Non-restricted: apply overrides/fallback
+        // - Default: invisible (keep a tiny fill so regions remain easy to click)
+        // - Only show district fill when selected
+        // - Restricted default: dense scrolling "RESTRICTED" wall-of-text (only when selected)
         r.removeAttribute("data-stripe-pat");
-        if(effective?.fill){
-          r.style.fill = effective.fill;
-        }else if(restricted){
+        if(restricted){
           // Hide the text-wall until this region is selected.
           setRestrictedWallVisibleForRegion(r, r === selectedEl);
+        }else if(r === selectedEl && effective?.fill){
+          r.style.fill = effective.fill;
         }else{
-          r.style.removeProperty("fill");
+          r.style.fill = INVISIBLE_FILL;
         }
       });
 
@@ -3521,6 +3720,12 @@
           }catch{
             return { dx: -70, dy: 0 };
           }
+        }
+        if(key === "LITTLE_SOEUL"){
+          return { dx: 14, dy: -10 };
+        }
+        if(key === "SOUTH_SIDE"){
+          return { dx: 0, dy: -30 };
         }
         return { dx: 0, dy: 0 };
       }
@@ -3821,25 +4026,25 @@
       pattern.setAttribute("patternTransform", `translate(${-overscanX} ${-overscanY}) rotate(${rotate})`);
 
       const g = document.createElementNS(SVG_NS, "g");
-      g.setAttribute("opacity", String(opacity));
+      g.setAttribute("opacity", "0.52");
 
       const textEl = document.createElementNS(SVG_NS, "text");
-      textEl.setAttribute("x", String(startX));
-      textEl.setAttribute("y", String(startY));
-      textEl.setAttribute("fill", color);
+      textEl.setAttribute("x", "0");
+      textEl.setAttribute("y", "0");
+      textEl.setAttribute("fill", "#ff5a5a");
       textEl.setAttribute("font-family", "Rajdhani, sans-serif");
-      textEl.setAttribute("font-size", String(fontSize));
-      textEl.setAttribute("letter-spacing", String(letterSpacing));
+      textEl.setAttribute("font-size", String(10));
+      textEl.setAttribute("letter-spacing", String(0.42));
       textEl.setAttribute("font-weight", "800");
       textEl.setAttribute("dominant-baseline", "text-before-edge");
 
-      const pick = () => charset[Math.floor(rand() * charset.length)] || "0";
+      const pick = () => "01ACCESSRESTRICTED$#%*+_"[Math.floor(Math.random() * 24)];
       for(let r=0;r<rows;r++){
         let line = "";
         for(let c=0;c<cols;c++) line += pick();
         const sp = document.createElementNS(SVG_NS, "tspan");
-        sp.setAttribute("x", String(startX));
-        sp.setAttribute("dy", r === 0 ? "0" : String(lineHeight));
+        sp.setAttribute("x", "0");
+        sp.setAttribute("dy", r === 0 ? "0" : String(11));
         sp.textContent = line;
         textEl.appendChild(sp);
       }
@@ -3886,6 +4091,7 @@
 
         const pattern = document.createElementNS(SVG_NS, "pattern");
         pattern.setAttribute("id", safeId);
+        pattern.setAttribute("patternUnits", "userSpaceOnUse");
         pattern.setAttribute("patternUnits", "userSpaceOnUse");
         pattern.setAttribute("width", String(tileW));
         pattern.setAttribute("height", String(tileH));
@@ -3969,13 +4175,14 @@
         dur = "1.25s",
       } = opts || {};
 
-      const scrollDy = (animDy == null) ? height : animDy;
+      const safeHeight = Math.max(32, Number(height) || 32);
+      const scrollDy = (animDy == null) ? safeHeight : animDy;
 
       const pattern = document.createElementNS(SVG_NS, "pattern");
       pattern.setAttribute("id", safeId);
       pattern.setAttribute("patternUnits", "userSpaceOnUse");
       pattern.setAttribute("width", String(width));
-      pattern.setAttribute("height", String(height));
+      pattern.setAttribute("height", String(safeHeight * 2));
       pattern.setAttribute("patternTransform", `rotate(${rotate})`);
 
       if(bg && String(bg).toLowerCase() !== "transparent"){
@@ -3986,9 +4193,18 @@
         pattern.appendChild(rect);
       }
 
-      const n = Math.max(2, Math.min(24, Number(textRepeat) || 7));
-      const core = String(label || "RESTRICTED ACCESS").trim();
-      const repeated = `- ${Array.from({length:n}, () => core).join(" - ")} -`;
+      const safeRepeat = Math.max(3, Number(textRepeat) || 7);
+      const numWidth = Math.max(1, Number(width) || 180);
+      const numFontSize = Math.max(1, Number(fontSize) || 10);
+      const lineLength = Math.max(120, Math.round((numWidth / numFontSize) * safeRepeat * 2.5));
+      const charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()-=+<>?";
+      const createRandomLine = () => {
+        const chars = [];
+        for(let c = 0; c < lineLength; c++){
+          chars.push(charset[Math.floor(Math.random() * charset.length)]);
+        }
+        return chars.join("");
+      };
 
       const createText = (y, x = 0) => {
         const t = document.createElementNS(SVG_NS, "text");
@@ -4005,15 +4221,25 @@
         t.setAttribute("font-size", String(fontSize));
         t.setAttribute("letter-spacing", String(letterSpacing));
         t.setAttribute("font-weight", String(fontWeight));
-        t.textContent = repeated;
+        t.textContent = createRandomLine();
         return t;
       };
 
-      // Staggered rows to reduce visible gaps and clipping
-      pattern.appendChild(createText(y1, 0));
-      pattern.appendChild(createText(y2, -width * 0.52));
-      if(typeof y3 === "number") pattern.appendChild(createText(y3, -width * 0.18));
-      if(typeof y4 === "number") pattern.appendChild(createText(y4, -width * 0.78));
+      const baseYs = [y1, y2, y3, y4].filter((val) => typeof val === "number");
+      const fallbackYs = [safeHeight * 0.1, safeHeight * 0.35, safeHeight * 0.6, safeHeight * 0.85];
+      const combinedYs = baseYs.concat(fallbackYs).slice(0, 4);
+      const totalYs = [];
+      combinedYs.forEach((yVal) => {
+        const y = Number.isFinite(yVal) ? yVal : safeHeight * 0.15;
+        totalYs.push(y % (safeHeight * 2));
+        totalYs.push((y + safeHeight * 0.5) % (safeHeight * 2));
+      });
+      const offsets = Array.from({ length: safeRepeat + 2 }, (_, idx) => -width * (0.2 + idx * 0.4));
+      totalYs.forEach((rowY) => {
+        offsets.forEach((off) => {
+          pattern.appendChild(createText(rowY, off));
+        });
+      });
 
       const anim = document.createElementNS(SVG_NS, "animateTransform");
       anim.setAttribute("attributeName", "patternTransform");
@@ -4163,6 +4389,102 @@
       selectionGlowAnimation.setAttribute("values", `0.32;${peak};0.32`);
     }
 
+    function ensureWastelineMarquee(){
+      if(!svgEl) return;
+      const NS = "http://www.w3.org/2000/svg";
+
+      const path = svgEl.querySelector("#THE_WASTELINE");
+      if(!path) return;
+      path.classList.add("wall");
+
+      const parent = path.parentNode;
+      if(!parent) return;
+
+      // Remove old layers if any
+      svgEl.querySelector("#wastelineMarqueeLayer")?.remove();
+      svgEl.querySelector("#wastelineLabelsLayer")?.remove();
+
+      // Get start and end points of the path in screen coordinates
+      let L = 0;
+      try{ L = path.getTotalLength(); }catch{ L = 0; }
+      if(!L || !isFinite(L)) return;
+
+      // Sample points near the ends to calculate angle for rotation
+      const sampleDist = Math.min(50, L * 0.05);
+      let startPt, startPt2, endPt, endPt2;
+      try{
+        startPt = path.getPointAtLength(0);
+        startPt2 = path.getPointAtLength(sampleDist);
+        endPt = path.getPointAtLength(L);
+        endPt2 = path.getPointAtLength(L - sampleDist);
+      }catch{ return; }
+
+      // Calculate angles at each end
+      const startAngle = Math.atan2(startPt2.y - startPt.y, startPt2.x - startPt.x) * (180 / Math.PI);
+      const endAngle = Math.atan2(endPt.y - endPt2.y, endPt.x - endPt2.x) * (180 / Math.PI);
+
+      // Create labels layer - put it directly after the path
+      const layer = document.createElementNS(NS, "g");
+      layer.setAttribute("id", "wastelineLabelsLayer");
+
+      // Copy the path's transform to the labels layer so coordinates match
+      const pathTransform = path.getAttribute("transform");
+      if(pathTransform) layer.setAttribute("transform", pathTransform);
+
+      // Helper to create a label group at a position (horizontal text)
+      // Keep all three lines centered to each other, then shift the whole stack
+      // to the outside of the endpoint.
+      const createLabelGroup = (x, y, anchorEnd) => {
+        const g = document.createElementNS(NS, "g");
+        // Position at the point (no rotation; keep text horizontal)
+        const groupOffsetX = anchorEnd ? -140 : 140;
+        g.setAttribute("transform", `translate(${x}, ${y}) translate(${groupOffsetX}, 0)`);
+
+        // Center each line to THE WASTELINE
+        const xOffset = 0;
+        const anchor = "middle";
+
+        // WASTELANDS (above the line = negative Y in rotated space)
+        const top = document.createElementNS(NS, "text");
+        top.classList.add("wastelineEndLabel", "sub");
+        top.setAttribute("x", String(xOffset));
+        top.setAttribute("y", "-30");
+        top.setAttribute("text-anchor", anchor);
+        top.textContent = "OUTLANDS";
+        g.appendChild(top);
+
+        // THE WASTELINE (center)
+        const mid = document.createElementNS(NS, "text");
+        mid.classList.add("wastelineEndLabel", "title");
+        mid.setAttribute("x", String(xOffset));
+        mid.setAttribute("y", "5");
+        mid.setAttribute("text-anchor", anchor);
+        mid.textContent = "THE OUTLINE";
+        g.appendChild(mid);
+
+        // NEON CITY (below the line = positive Y in rotated space)
+        const bot = document.createElementNS(NS, "text");
+        bot.classList.add("wastelineEndLabel", "sub");
+        bot.setAttribute("x", String(xOffset));
+        bot.setAttribute("y", "35");
+        bot.setAttribute("text-anchor", anchor);
+        bot.textContent = "NEON CITY";
+        g.appendChild(bot);
+
+        return g;
+      };
+
+      // Add labels at start and end (horizontal)
+      layer.appendChild(createLabelGroup(startPt.x, startPt.y, false));
+      layer.appendChild(createLabelGroup(endPt.x, endPt.y, true));
+
+      // Insert after path
+      try{ parent.insertBefore(layer, path.nextSibling); }catch{ try{ parent.appendChild(layer); }catch{} }
+
+      // No animation needed anymore
+      wastelineMarquee = null;
+    }
+
     async function loadSvg(){
       try{
         bootSet(55, "download");
@@ -4281,6 +4603,7 @@
         });
 
         colorizeRegions();
+        ensureWastelineMarquee();
         buildDistrictLogos();
 
         // Clicking empty map should do nothing (selection/popup stays)
@@ -4660,8 +4983,29 @@
       if(securoservSecretStreak >= 3){
         securoservSecretStreak = 0;
         securoservChallengeSolved = true;
-        resolveSecuroservCounterhackSuccess();
+        // Pause on success for a beat before launching the success sequence.
+        queueSecuroservCounterhackSuccess();
       }
+    }
+
+    function queueSecuroservCounterhackSuccess(){
+      if(securoservCounterhackResolving) return;
+      if(securoservSuccessDelayTimer){
+        clearTimeout(securoservSuccessDelayTimer);
+        securoservSuccessDelayTimer = null;
+      }
+
+      // Freeze the countermeasures exactly as they are and hold for a moment.
+      // (Digits stay visible; midbar stops advancing.)
+      freezeSecuroservMidbar();
+      freezeSecuroservChaos();
+      freezeSecuroservEscalation();
+      freezeSecuroservChallenge();
+
+      securoservSuccessDelayTimer = setTimeout(() => {
+        securoservSuccessDelayTimer = null;
+        resolveSecuroservCounterhackSuccess();
+      }, 1000);
     }
 
     function freezeSecuroservChaos(){
@@ -4747,7 +5091,10 @@
       securoservChallengeIndex++;
       if(securoservChallengeIndex >= 6){
         securoservChallengeSolved = true;
-        resolveSecuroservCounterhackSuccess();
+        // Ensure all digits show as correct, then pause briefly before success overlay.
+        securoservChallengeIndex = 6;
+        try{ renderSecuroservChallenge(); }catch{}
+        queueSecuroservCounterhackSuccess();
       }
     }
 
@@ -5043,15 +5390,9 @@
       hoveredEl = null;
       try{ selectedEl = null; }catch{}
       try{ refreshHoverTab(); }catch{}
-
-      document.body?.classList?.remove?.("securosserv-mode");
-      try{ clearSelection(); }catch{}
-      try{ showAllDistricts(); }catch{}
-      try{ setMenuOn("menuShowAll"); }catch{}
-      try{ resetCameraToFitCenter(); requestAnimationFrame(resetCameraToFitCenter); }catch{}
-
-      // Ensure mouse input is restored immediately.
-      setSecuroservMouseBlock(false);
+      try{ updateSelectionGlowColor(null); }catch{}
+      try{ updateSelectionDimming(); }catch{}
+      try{ updateRestrictedOverlayState(); }catch{}
     }
 
     function startSecuroservMidbarCountdown(){
@@ -5076,12 +5417,18 @@
 
         // Reveal the user counterhack window at a fixed point of the red bar.
         securoservChallengeRevealed = false;
-        securoservChallengeRevealPct = 0.35;
+        securoservChallengeRevealPct = 0.20;
+
+        // End the countermeasures early so the post-reveal time window stays the same.
+        // Old behavior: reveal at 35% and end at 100%.
+        // New behavior: reveal at 20% and end at 85% (15% shorter), keeping the same
+        // amount of time between reveal and the end of countermeasures.
+        const endPct = 0.85;
 
         // Extend total duration by the same amount of time it takes to reach that point.
         // This is satisfied by: dur = base / (1 - pct), because (dur - base) == (dur * pct).
         const baseDur = 20000;
-        const dur = Math.round(baseDur / (1 - securoservChallengeRevealPct));
+        const dur = Math.round(baseDur * endPct / (endPct - securoservChallengeRevealPct));
         const t0 = performance.now();
 
         securoservMidbarTickTimer = setInterval(() => {
@@ -5090,7 +5437,7 @@
             return;
           }
           const t = (performance.now() - t0) / dur;
-          const k = Math.max(0, Math.min(1, t));
+          const k = Math.max(0, Math.min(endPct, t * endPct));
           securoservMidbarProgress = k;
           const p = Math.round(k * 100);
           fill.style.width = p + "%";
@@ -5101,7 +5448,7 @@
             startSecuroservChallenge();
           }
 
-          if(k >= 1){
+          if(t >= 1){
             stopSecuroservMidbarCountdown();
             // If user didn't solve the code (still in SecuroServ), trigger shutdown.
             if(document.body.classList.contains("securosserv-mode") && !securoservChallengeSolved){
@@ -5302,7 +5649,7 @@
       // Blue/yellow boot pass (single) — no real page restart.
       if(boot.linesEl) boot.linesEl.innerHTML = "";
       bootSet(0, "handshake");
-      bootLine("[BOOT] initializing runtime…");
+      bootLine("[BOOT] initializing map interface…");
       await sleep(220);
       bootSet(18, "handshake");
       bootLine("[NET] link stable • encryption ok");
@@ -5469,14 +5816,14 @@
     function restackRegionLayers(){
       if(!svgEl) return;
 
-      const regions = Array.from(svgEl.querySelectorAll('.region'));
-      const parents = Array.from(new Set(regions.map(r => r.parentNode).filter(Boolean)));
+      const layered = Array.from(svgEl.querySelectorAll('.region, .wall'));
+      const parents = Array.from(new Set(layered.map(r => r.parentNode).filter(Boolean)));
       parents.forEach((p) => {
-        const direct = Array.from(p.children).filter(n => n?.classList?.contains('region'));
+        const direct = Array.from(p.children).filter(n => n?.classList && (n.classList.contains('region') || n.classList.contains('wall')));
         if(direct.length < 2) return;
 
-        const normals = direct.filter(n => !n.classList.contains('wall') && !n.classList.contains('restricted'));
-        const restricted = direct.filter(n => !n.classList.contains('wall') && n.classList.contains('restricted'));
+        const normals = direct.filter(n => n.classList.contains('region') && !n.classList.contains('wall') && !n.classList.contains('restricted'));
+        const restricted = direct.filter(n => n.classList.contains('region') && !n.classList.contains('wall') && n.classList.contains('restricted'));
         const walls = direct.filter(n => n.classList.contains('wall'));
 
         normals.forEach(n => p.appendChild(n));
@@ -5494,7 +5841,7 @@
       // SVG paint order follows DOM order: later siblings render on top.
       // Layering rule: normal < restricted < walls (restricted always above normal).
       const p = el.parentNode;
-      const kids = Array.from(p.children).filter(n => n?.classList?.contains?.('region'));
+      const kids = Array.from(p.children).filter(n => n?.classList && (n.classList.contains('region') || n.classList.contains('wall')));
 
       const firstWall = kids.find(n => n.classList.contains('wall')) || null;
       const firstRestricted = kids.find(n => n.classList.contains('restricted') && !n.classList.contains('wall')) || null;
@@ -5754,6 +6101,16 @@
       if(document.body?.classList?.contains?.('counterhack-resolving')) return;
       if(selectedEl === el) return;
       bringRegionToFront(el);
+
+      // If the user clicks while hovering, clear the temporary hover-brightened stroke
+      // so selection uses the true base stroke.
+      try{
+        if(el?.classList?.contains?.('hot')){
+          el.classList.remove('hot');
+          clearHotStyle(el);
+        }
+      }catch{}
+
       const prev = selectedEl;
       if(prev) {
         prev.classList.remove("selected");
@@ -5775,6 +6132,9 @@
       // Ensure selection stays top even if the click happened during hover.
       keepSelectedOnTop();
 
+      // Re-apply fill visibility rules now that selection changed.
+      try{ colorizeRegions(); }catch{}
+
       // Update district logo states
       if(prev) setDistrictLogoStateFor(prev, prev === hoveredEl ? "hover" : "base");
       if(selectedEl) setDistrictLogoStateFor(selectedEl, "selected");
@@ -5787,12 +6147,8 @@
         // - APEX + PRISON: blue
         // - SecuroServ: red
         if(k === "MERRYWEATHER_BASE") return { theme: "yellow", glow: { r: 255, g: 238, b: 152 } };
-        if(k === "NEON_CITY_PRISON" || k === "APEX" || k === "APEX_HQ" || k.startsWith("APEX_")){
-          return { theme: "blue", glow: { r: 96, g: 143, b: 255 } };
-        }
-        if(k === "SECUROSERV_PORT" || k === "SECUROSERVE_PORT" || k.startsWith("SECUROSERV_")){
-          return { theme: "red", glow: { r: 255, g: 65, b: 65 } };
-        }
+        if(k === "NEON_CITY_PRISON" || k === "APEX" || k === "APEX_HQ" || k.startsWith("APEX_")) return { theme: "blue", glow: { r: 96, g: 143, b: 255 } };
+        if(k === "SECUROSERV_PORT" || k === "SECUROSERVE_PORT" || k.startsWith("SECUROSERV_")) return { theme: "red", glow: { r: 255, g: 65, b: 65 } };
 
         // Default restricted theme (keeps existing look)
         return { theme: "yellow", glow: { r: 255, g: 238, b: 152 } };
