@@ -11,7 +11,9 @@
       --bg0:#01061b;
       --bg1:#07112a;
       --ui:#608fff;    /* buildings + UI */
-      --yl:#eeff5e;    /* roads + highlights */
+      /* Global yellow accent (aligned to Merryweather WARNING:// text) */
+      --ylRGB: 255, 238, 152;
+      --yl: rgb(var(--ylRGB));
       /* SecuroServ base reds (matches the SecuroServ restricted outline tone) */
       --ss: 207, 0, 0;
       --ssHot: 255, 65, 65;
@@ -24,7 +26,7 @@
       --line2: rgba(96,143,255,.25);
 
       --glowB: 0 0 14px rgba(96,143,255,.20), 0 0 32px rgba(96,143,255,.10);
-      --glowY: 0 0 10px rgba(238,255,94,.22), 0 0 26px rgba(238,255,94,.10);
+      --glowY: 0 0 10px rgba(var(--ylRGB), .22), 0 0 26px rgba(var(--ylRGB), .10);
 
       --sw-region: 0.1px;
       --sw-road: 0.15px;
@@ -200,8 +202,8 @@
       transition: transform .14s ease, background .14s ease;
     }
     .layerToggle.on{ color: var(--yl); }
-    .layerToggle.on .layerToggle-icon::before{ background: rgba(238,255,94,.22); box-shadow: 0 0 14px rgba(238,255,94,.10); }
-    .layerToggle.on .layerToggle-icon::after{ transform: translate3d(16px,0,0); background: rgba(238,255,94,.92); box-shadow: 0 0 14px rgba(238,255,94,.16); }
+    .layerToggle.on .layerToggle-icon::before{ background: rgba(var(--ylRGB), .22); box-shadow: 0 0 14px rgba(var(--ylRGB), .10); }
+    .layerToggle.on .layerToggle-icon::after{ transform: translate3d(16px,0,0); background: rgba(var(--ylRGB), .92); box-shadow: 0 0 14px rgba(var(--ylRGB), .16); }
 
     /* In SecuroServ mode, toggles inherit the red theme */
     body.securosserv-mode .layerToggle{ color: rgba(var(--ssHot), .78); }
@@ -242,10 +244,10 @@
       border-bottom: 2px solid rgba(96,143,255,.28);
     }
     .sidemenu .tab.on span{
-      border-bottom: 2px solid rgba(238,255,94,.85);
+      border-bottom: 2px solid rgba(var(--ylRGB), .85);
       filter:
-        drop-shadow(0 0 10px rgba(238,255,94,.16))
-        drop-shadow(0 0 18px rgba(238,255,94,.10));
+        drop-shadow(0 0 10px rgba(var(--ylRGB), .16))
+        drop-shadow(0 0 18px rgba(var(--ylRGB), .10));
     }
 
     /* Interactivity: blue glow on hover; yellow only when selected */
@@ -332,7 +334,7 @@
       border-bottom: 2px solid rgba(96,143,255,.28);
     }
     .topnav .tab.on span{
-      border-bottom: 2px solid rgba(238,255,94,.85);
+      border-bottom: 2px solid rgba(var(--ylRGB), .85);
     }
     .topnav .tab.on{ font-weight: 700; }
 
@@ -350,18 +352,10 @@
     /* Old HUD filter buttons are deprecated (replaced by left-side menu) */
     #hudFilters{ display:none !important; }
 
-    .termDock{
-      position: fixed;
-      right: 14px;
-      bottom: 14px;
-      padding: 0;
-      background: transparent;
-      z-index: 40;
-    }
-    .termDock #panelTerm{ width: 270px; }
+    .termDock{ display:none !important; }
 
-    /* Prevent accidental text highlighting/selection while dragging/panning.
-       Keep Terminal + Area Details selectable (copy/paste). */
+     /* Prevent accidental text highlighting/selection while dragging/panning.
+       Keep Area Details selectable (copy/paste). */
     body,
     .stage,
     .mapstage,
@@ -377,8 +371,6 @@
       user-select: none;
       -webkit-user-select: none;
     }
-    #panelTerm,
-    #panelTerm *,
     #popupDetails,
     #popupDetails *{
       user-select: text;
@@ -416,10 +408,15 @@
     /* =========================
        CUT-CORNER PANELS (ONLY)
        ========================= */
-    #panelTerm,
     #popupDetails{
       --cut: 16px;
-      background: transparent;
+      --pdStroke: 96, 143, 255;
+      --pdStrokeHot: 96, 143, 255;
+      /* Override `.hudpopup` full-height behavior: keep Area Details compact when
+         MAP/INTEL is empty, but still cap it to the viewport when content is long. */
+      bottom: auto;
+      max-height: calc(100vh - var(--detailsTop, calc(var(--topbar-h) + 10px + 170px)) - 14px);
+      background: rgba(6,10,22,.88);
       border: none;
       box-shadow: none;
       clip-path: polygon(
@@ -433,51 +430,42 @@
       );
     }
 
-    #panelTerm::before,
-    #popupDetails::before{
-      content:"";
-      position:absolute;
+    #popupDetails .pdSvg{
+      position: absolute;
       inset: 0;
-      background:
-        radial-gradient(140% 120% at 28% 16%, rgba(96,143,255,.10), transparent 52%),
-        linear-gradient(180deg, rgba(6,10,22,.88), rgba(2,6,18,.76));
-      /* Use inset strokes so the outline follows the cut corners (no clipped border). */
-      box-shadow:
-        0 0 0 1px rgba(0,0,0,.62) inset,
-        0 0 0 1px rgba(96,143,255,.45) inset;
-      clip-path: polygon(
-        var(--cut) 0,
-        calc(100% - var(--cut)) 0,
-        100% var(--cut),
-        100% calc(100% - var(--cut)),
-        calc(100% - var(--cut)) 100%,
-        0 100%,
-        0 var(--cut)
-      );
-      pointer-events:none;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
       z-index: 0;
     }
+    #popupDetails .pdOutline{
+      fill: none;
+      stroke: rgba(var(--pdStroke), .92);
+      stroke-width: 3;
+      filter: drop-shadow(0 0 10px rgba(var(--pdStroke), .12));
+    }
+    #popupDetails .pdFill{ fill: rgba(6,10,22,.88); }
+    #popupDetails .pdScan{ fill: rgba(255,255,255,.22); }
+    #popupDetails .pdLines{ fill: url(#pdScanlines); opacity: .07; }
 
-    /* Disable the global corner mark on these two */
-    #panelTerm::after,
+    #popupDetails::before{
+      display:none;
+    }
+
+    /* Disable the global corner mark on this one */
     #popupDetails::after{ display:none; }
 
-    #panelTerm > .hudhead,
-    #panelTerm > .hudbody,
-    #panelTerm > .hudfoot,
     #popupDetails > .hudhead,
     #popupDetails > .hudbody,
     #popupDetails > .hudfoot{
       position: relative;
-      z-index: 1;
+      z-index: 2;
     }
 
     /* Small side tab protrusion */
-    #panelTerm .hudhead,
     #popupDetails .hudhead{
       position: relative;
     }
-    #panelTerm .hudhead::before,
     #popupDetails .hudhead::before{
       content:"";
       position:absolute;
@@ -493,7 +481,6 @@
     }
 
     /* Little top tab */
-    #panelTerm .hudhead::after,
     #popupDetails .hudhead::after{
       content:"";
       position:absolute;
@@ -522,7 +509,7 @@
       font-size: 12px;
     }
     .hudtitle{ color: rgba(96,143,255,.96); text-shadow: 0 0 10px rgba(96,143,255,.12); }
-    .hudmeta{ color: var(--yl); text-shadow: 0 0 10px rgba(238,255,94,.10); }
+    .hudmeta{ color: var(--yl); text-shadow: 0 0 10px rgba(var(--ylRGB), .10); }
     .hudbody{ padding: 12px; }
     .hudfoot{
       display:flex; justify-content:space-between;
@@ -534,12 +521,303 @@
       letter-spacing: 1px;
     }
 
+    /* MAP/INTEL footer content */
+    #popupDetails .hudfoot{
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    #popupDetails .hudfoot > :first-child{
+      padding-top: 0;
+      color: rgba(96,143,255,.95);
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    /* When the details panel is restricted-themed, MAP/INTEL should follow that palette */
+    #popupDetails.restricted .hudfoot > :first-child{
+      color: rgba(var(--restrictedTextRGB), .95);
+      text-shadow: 0 0 10px rgba(var(--restrictedRGBHot), .22);
+    }
+    #popupDetails #detailFoot{
+      width: 100%;
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+      text-transform: none;
+      letter-spacing: .4px;
+      font-size: 12px;
+      color: rgba(215,230,255,.72);
+    }
+    #popupDetails .intelLabel{
+      font-size: 12px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: rgba(96,143,255,.48);
+      font-weight: 700;
+    }
+    #popupDetails.restricted .intelLabel{
+      color: rgba(var(--restrictedTextRGB), .52);
+      text-shadow: 0 0 10px rgba(var(--restrictedRGBHot), .16);
+    }
+    #popupDetails .intelList{ display:flex; flex-direction:column; gap: 6px; }
+    #popupDetails .intelRow{ display:flex; align-items:center; gap: 10px; }
+    #popupDetails .intelLogo{
+      width: 65px; height: 65px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px rgba(0,0,0,.55));
+      opacity: .92;
+    }
+    #popupDetails .intelName{
+      color: rgba(var(--ylRGB), .86);
+      text-shadow: 0 0 12px rgba(var(--ylRGB), .10);
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-size: 15px;
+    }
+    #popupDetails.restricted .intelName{
+      color: rgba(var(--restrictedTextRGB), .95);
+      text-shadow: 0 0 12px rgba(var(--restrictedRGBHot), .22);
+    }
+    #popupDetails .intelDim{ color: rgba(215,230,255,.40); }
+
+    /* Restricted MAP/INTEL warning */
+    #popupDetails .intelWarning{
+      position: relative;
+      width: 100%;
+      padding: 10px 10px;
+      border: 1px solid rgba(96,143,255,.24);
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.52), rgba(0,0,0,.22)),
+        repeating-linear-gradient(0deg, rgba(96,143,255,.06), rgba(96,143,255,.06) 1px, transparent 1px, transparent 14px);
+      overflow: hidden;
+    }
+    #popupDetails.restricted .intelWarning{
+      border-color: rgba(var(--restrictedRGB), .55);
+      box-shadow: 0 0 18px rgba(var(--restrictedRGBHot), .10);
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.62), rgba(0,0,0,.26)),
+        repeating-linear-gradient(0deg, rgba(var(--restrictedRGB), .10), rgba(var(--restrictedRGB), .10) 1px, transparent 1px, transparent 14px);
+    }
+    #popupDetails .intelWarning::after{
+      content:"";
+      position:absolute;
+      inset: -2px;
+      pointer-events:none;
+      background:
+        linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent),
+        linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 6px);
+      mix-blend-mode: screen;
+      opacity: .22;
+      animation: intelGlitch 1.25s steps(2, start) infinite;
+    }
+    #popupDetails .intelWarnTitle{
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-size: 12px;
+      color: rgba(96,143,255,.92);
+    }
+    #popupDetails.restricted .intelWarnTitle{
+      color: rgba(var(--restrictedTextRGB), .96);
+      text-shadow: 0 0 12px rgba(var(--restrictedRGBHot), .24);
+    }
+    #popupDetails .intelWarnBody{
+      margin-top: 6px;
+      font-size: 12px;
+      line-height: 1.25;
+      color: rgba(215,230,255,.64);
+    }
+    #popupDetails.restricted .intelWarnBody{
+      color: rgba(var(--restrictedTextRGB), .80);
+    }
+    #popupDetails .intelWarnBody .hard{
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(var(--ylRGB), .86);
+    }
+    #popupDetails.restricted .intelWarnBody .hard{
+      color: rgba(var(--restrictedTextRGB), .95);
+    }
+    #popupDetails .intelWarnBody .stamp{
+      display:inline-block;
+      padding: 2px 6px;
+      margin-top: 8px;
+      border: 1px solid rgba(96,143,255,.34);
+      color: rgba(96,143,255,.72);
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+    #popupDetails.restricted .intelWarnBody .stamp{
+      border-color: rgba(var(--restrictedRGB), .55);
+      color: rgba(var(--restrictedTextRGB), .80);
+    }
+    @keyframes intelGlitch{
+      0%{ transform: translate(0,0); opacity:.22; }
+      20%{ transform: translate(-2px, 1px); opacity:.30; }
+      40%{ transform: translate(2px, -1px); opacity:.26; }
+      60%{ transform: translate(-1px, 0); opacity:.34; }
+      80%{ transform: translate(1px, -1px); opacity:.28; }
+      100%{ transform: translate(0,0); opacity:.22; }
+    }
+
+    /* Restricted hack prompt ("BREACH PROTOCOL" button next to Area Details)
+       Implemented as an SVG polygon so the outline stroke follows diagonals perfectly. */
+    .hackPrompt{
+      position: fixed;
+      z-index: 65;
+      display: none;
+      pointer-events: auto;
+      transform: translate3d(0,0,0);
+    }
+    .hackPrompt.on{ display: block; }
+
+    .hackPrompt .btn{
+      --bpStroke: 96, 143, 255;
+      --bpStrokeHot: var(--ylRGB);
+      --bpFillA: 6, 10, 22;
+      --bpContentShift: 12px;
+      --bpPress: 0px;
+      appearance: none;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      position: relative;
+      width: 320px;
+      height: 78px;
+      text-transform: uppercase;
+    }
+    .hackPrompt.on .btn{ animation: breachPop .55s cubic-bezier(.18,.92,.12,1) both; }
+    @keyframes breachPop{
+      0%{ opacity: 0; transform: translate3d(-6px, 10px, 0) scale(.985); filter: blur(1.1px); }
+      55%{ opacity: 1; transform: translate3d(2px, -2px, 0) scale(1.01); filter: blur(.25px); }
+      100%{ opacity: 1; transform: translate3d(0,0,0) scale(1); filter: blur(0px); }
+    }
+
+    .hackPrompt .btn .bpSvg{
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      transform: translateY(var(--bpPress));
+      transition: transform 70ms linear, filter 70ms linear;
+    }
+    .hackPrompt .btn .bpOutline{
+      fill: none;
+      stroke: rgba(var(--bpStroke), .92);
+      stroke-width: 3;
+      filter: drop-shadow(0 0 6px rgba(var(--bpStroke), .40));
+    }
+    .hackPrompt .btn .bpFill{ fill: rgba(var(--bpFillA), .86); }
+    .hackPrompt .btn .bpTab{ fill: rgba(var(--bpStroke), .78); }
+    .hackPrompt .btn .bpTabSep{
+      fill: none;
+      stroke: rgba(0,0,0,.55);
+      stroke-width: 2;
+      opacity: .55;
+    }
+    .hackPrompt .btn .bpTagText{
+      font-family: "Rajdhani", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      font-weight: 900;
+      font-size: 28px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      fill: rgba(0,0,0,.86);
+    }
+    .hackPrompt .btn .bpScan{ fill: rgba(255,255,255,.22); }
+    .hackPrompt .btn .bpLines{
+      fill: url(#bpScanlines);
+      opacity: .10;
+    }
+
+    .hackPrompt .btn .bpContent{
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      gap: 12px;
+      /* Center content in the main bar area (the left tab raises the overall box) */
+      transform: translateY(calc(var(--bpContentShift) + var(--bpPress)));
+      transition: transform 70ms linear;
+    }
+
+    /* Click/press feedback ("boop" like a physical button) */
+    .hackPrompt .btn:active{ --bpPress: 2px; }
+    .hackPrompt .btn:active .bpOutline{ filter: drop-shadow(0 0 14px rgba(var(--bpStrokeHot), .58)); }
+    .hackPrompt .btn:active .bpFill{ filter: brightness(.92); }
+    .hackPrompt .btn:active .bpStatus{ transform: translateY(1px); }
+    .hackPrompt .btn .bpTitle{
+      font-weight: 900;
+      letter-spacing: 2.4px;
+      font-size: 14px;
+      line-height: 1;
+      color: rgba(var(--bpStroke), .94);
+      text-shadow: 0 0 12px rgba(var(--bpStroke), .14);
+      white-space: nowrap;
+      /* Push title toward the center of the long bar */
+      margin-left: 34px;
+    }
+    .hackPrompt .btn .bpStatus{
+      display: inline-flex;
+      align-items: center;
+      font-weight: 800;
+      letter-spacing: 1.8px;
+      font-size: 11px;
+      padding: 4px 10px;
+      border: 2px solid rgba(var(--bpStroke), .70);
+      color: rgba(var(--bpStroke), .92);
+      background: rgba(0,0,0,.22);
+      white-space: nowrap;
+    }
+
+    .hackPrompt .btn:hover .bpOutline{
+      stroke: rgba(var(--bpStrokeHot), .98);
+      filter: drop-shadow(0 0 10px rgba(var(--bpStrokeHot), .48));
+    }
+    .hackPrompt .btn:hover .bpTab{ fill: rgba(var(--bpStrokeHot), .92); }
+    .hackPrompt .btn:hover .bpTitle{
+      color: rgba(var(--bpStrokeHot), .92);
+      text-shadow: 0 0 12px rgba(var(--bpStrokeHot), .16);
+    }
+
+    .hackPrompt .btn:hover .bpStatus{
+      border-color: rgba(var(--bpStrokeHot), .92);
+      color: rgba(0,0,0,.92);
+      background: rgba(var(--bpStrokeHot), .92);
+      text-shadow: none;
+    }
+
+    /* Keep BREACH PROTOCOL blue; just darken the fill slightly when the Area Details panel is restricted. */
+    #popupDetails.restricted + .hackPrompt .btn{ --bpFillA: 0, 0, 0; }
+    #popupDetails.restricted + .hackPrompt .btn .bpFill{ fill: rgba(0,0,0,.70); }
+
+    /* Generic hack timer line inside the existing counterhack window */
+    body.restricted-hack-active .counterhack-win .instr span:last-child{
+      color: rgba(var(--ylRGB), .88);
+      font-weight: 800;
+      letter-spacing: 1.4px;
+    }
+    body.restricted-hack-active .counterhack-win .label{ letter-spacing: 2px; }
+
     /* Restricted theming (defaults to Merryweather-style yellow) */
     .restricted-overlay,
     #popupDetails.restricted{
       --restrictedRGB: 255, 238, 152;
       --restrictedRGBHot: 255, 196, 44;
       --restrictedTextRGB: 255, 238, 152;
+    }
+    #popupDetails.restricted{
+      --pdStroke: var(--restrictedRGB);
+      --pdStrokeHot: var(--restrictedRGBHot);
     }
     .restricted-overlay.theme-blue,
     #popupDetails.restricted.theme-blue{
@@ -724,13 +1002,45 @@
       font-family: inherit;
       font-size: 12px;
       line-height: 1.35;
-      color: rgba(238,255,94,.85);
+      color: rgba(var(--ylRGB), .85);
       background:
         linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.22)),
         repeating-linear-gradient(0deg, rgba(96,143,255,.05), rgba(96,143,255,.05) 1px, transparent 1px, transparent 18px);
       border: 1px solid rgba(96,143,255,.24);
     }
     .termline{ padding: 3px 0; opacity:.92; }
+
+    /* Bottom-left command feed (text-only) */
+    .cmdFeed{
+      position: fixed;
+      left: 14px;
+      bottom: 14px;
+      z-index: 60;
+      width: min(520px, calc(100vw - 28px));
+      max-height: 44vh;
+      overflow: hidden;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: inherit;
+      font-size: 12px;
+      line-height: 1.35;
+      color: rgba(var(--ylRGB), .86);
+      text-shadow: 0 0 12px rgba(var(--ylRGB), .10);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .cmdline{
+      opacity: .95;
+      transform: translateY(6px);
+      filter: drop-shadow(0 0 10px rgba(0,0,0,.55));
+      transition: opacity .55s ease, transform .55s ease;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .cmdline.on{ opacity: .95; transform: translateY(0); }
+    .cmdline.off{ opacity: 0; transform: translateY(-6px); }
 
     /* Fake body scan */
     .scanbox{
@@ -761,7 +1071,7 @@
       position:absolute; left:-10%;
       top: 24px;
       width: 120%; height: 2px;
-      background: rgba(238,255,94,.55);
+      background: rgba(var(--ylRGB), .55);
       box-shadow: var(--glowY);
       animation: scan 2.6s linear infinite;
       opacity:.55;
@@ -786,7 +1096,7 @@
     .wave::after{
       content:"";
       position:absolute; inset:0;
-      background: linear-gradient(90deg, transparent, rgba(238,255,94,.10), transparent);
+      background: linear-gradient(90deg, transparent, rgba(var(--ylRGB), .10), transparent);
       animation: sweep 2.2s linear infinite;
     }
     @keyframes sweep{ 0%{ transform: translateX(-60%);} 100%{ transform: translateX(60%);} }
@@ -802,7 +1112,7 @@
     .gridbox::after{
       content:"";
       position:absolute; inset: 22px;
-      background: radial-gradient(circle at 50% 50%, rgba(238,255,94,.75) 1px, transparent 1.2px);
+      background: radial-gradient(circle at 50% 50%, rgba(var(--ylRGB), .75) 1px, transparent 1.2px);
       background-size: 22px 22px;
       opacity:.35;
     }
@@ -849,14 +1159,14 @@
       box-shadow: var(--glowB);
     }
     .hudf:hover{
-      border-color: rgba(238,255,94,.35);
+      border-color: rgba(var(--ylRGB), .35);
       color: var(--yl);
       box-shadow: var(--glowY);
     }
     .hudf.on{
       background: var(--yl);
       color:#0a1024;
-      border-color: rgba(238,255,94,.65);
+      border-color: rgba(var(--ylRGB), .65);
       box-shadow: var(--glowY);
     }
 
@@ -981,7 +1291,7 @@
       transform: translate(-50%, -50%) scale(calc(1.05 * var(--logoZoomScale, 1)));
       filter:
         drop-shadow(0 0 12px rgba(96,143,255,.18))
-        drop-shadow(0 0 18px rgba(238,255,94,.10));
+        drop-shadow(0 0 18px rgba(var(--ylRGB), .10));
     }
     .districtLabel{
       position:absolute;
@@ -990,7 +1300,7 @@
       text-transform: uppercase;
       letter-spacing: 1.2px;
       color: var(--yl);
-      text-shadow: 0 0 6px rgba(238,255,94,.35), 0 0 12px rgba(238,255,94,.25);
+      text-shadow: 0 0 6px rgba(var(--ylRGB), .35), 0 0 12px rgba(var(--ylRGB), .25);
       white-space: nowrap;
     }
     #svgHost{
@@ -1042,7 +1352,7 @@
       text-transform: uppercase;
       font-size: 12px;
       letter-spacing: 1.15px;
-      text-shadow: 0 0 6px rgba(238,255,94,.35), 0 0 12px rgba(238,255,94,.22); /* subtle yellow glow */
+      text-shadow: 0 0 6px rgba(var(--ylRGB), .35), 0 0 12px rgba(var(--ylRGB), .22); /* subtle yellow glow */
       border-bottom: none;
       border-radius: 0;
     }
@@ -1119,7 +1429,7 @@
       cursor:pointer;
     }
     .hudbtn:hover{
-      border-color: rgba(238,255,94,.45);
+      border-color: rgba(var(--ylRGB), .45);
       color: var(--yl);
       box-shadow: var(--glowY);
     }
@@ -1144,7 +1454,7 @@
       outline:none;
     }
     .field input:focus{
-      border-color: rgba(238,255,94,.40);
+      border-color: rgba(var(--ylRGB), .40);
       box-shadow: var(--glowY);
     }
 
@@ -1163,7 +1473,7 @@
     .pill.on{
       background: var(--yl);
       color:#0a1024;
-      border-color: rgba(238,255,94,.65);
+      border-color: rgba(var(--ylRGB), .65);
       box-shadow: var(--glowY);
     }
 
@@ -1246,43 +1556,41 @@
        SVG LAYERS (THIN STROKES)
        ========================= */
 
-    #svgHost .region{
-      transition: filter .12s ease, opacity .12s ease, stroke .12s ease, fill .12s ease;
-      /* default (normal areas): match restricted baseline thickness */
-      stroke-width: calc(var(--sw-region) + 1.0px) !important;
+    #svgHost .region:not(.wall){
+      transition: stroke-opacity .12s ease, stroke-width .12s ease, stroke .12s ease, fill .12s ease;
+      /* Outline-only: slightly thicker, but very transparent by default */
+      stroke-width: calc(var(--sw-region) + 1.8px) !important;
       vector-effect: non-scaling-stroke !important;
-      opacity: .92;
-      --selectionGlowColorR: 96;
-      --selectionGlowColorG: 143;
-      --selectionGlowColorB: 255;
+      opacity: 1;
+      stroke-opacity: .16 !important;
+      filter: none !important;
+      /* Never show region fills; keep a tiny invisible fill for hit-testing */
+      fill: rgba(0,0,0,0.001) !important;
     }
 
-    /* HOVERED: use region's own border color (brighter) + glow (non-restricted only) */
-    #svgHost .region.hot:not(.selected):not(.restricted){
-      opacity: 1;
-      stroke-width: calc(var(--sw-region) + 2.0px) !important;
-      filter:
-        drop-shadow(0 0 12px var(--hotGlow1, rgba(96,143,255,.22)))
-        drop-shadow(0 0 22px var(--hotGlow2, rgba(96,143,255,.14)));
+    /* Restricted zones: always more visible than normal (idle/hover/selected). */
+    #svgHost .region.restricted:not(.wall):not(.hot):not(.selected){
+      stroke-opacity: .30 !important;
+    }
+    #svgHost .region.restricted.hot:not(.selected):not(.wall){
+      stroke-opacity: .50 !important;
+    }
+    #svgHost .region.restricted.selected:not(.wall){
+      stroke-opacity: .50 !important;
     }
 
-    /* RESTRICTED HOVER: thicker outline only (no glow) */
-    #svgHost .region.restricted.hot:not(.selected){
-      opacity: 1;
-      stroke-width: calc(var(--sw-region) + 3.2px) !important;
+    /* Hovered: less transparent */
+    #svgHost .region.hot:not(.selected):not(.wall){
+      stroke-opacity: .30 !important;
+      stroke-width: calc(var(--sw-region) + 2.4px) !important;
       filter: none !important;
     }
 
-    /* RESTRICTED: thicker baseline; glow only when selected */
-    #svgHost .region.restricted{
-      opacity: .96;
-      stroke-width: calc(var(--sw-region) + 2.6px) !important;
-    }
-    /* SELECTED (clicked): thicker so it's not only color change */
-    #svgHost .region.selected{
-      opacity: 1;
-      stroke-width: calc(var(--sw-region) + 3.4px) !important;
-      filter: url(#selectionGlowInner);
+    /* Selected: even less transparent */
+    #svgHost .region.selected:not(.wall){
+      stroke-opacity: .45 !important;
+      stroke-width: calc(var(--sw-region) + 3.0px) !important;
+      filter: none !important;
     }
 
 
@@ -1600,6 +1908,7 @@
 
     /* User counterhack window (yellow) — separate from red system midbar */
     .counterhack-win{
+      --hackRGB: var(--ylRGB);
       position: fixed;
       /* Slightly off-center + lower to feel "manual" */
       left: 46.5%;
@@ -1610,6 +1919,137 @@
       opacity: 0;
       filter: blur(.7px);
       transition: opacity .38s ease, transform .62s cubic-bezier(.18,.92,.12,1), filter .62s cubic-bezier(.18,.92,.12,1);
+    }
+
+    /* SecuroServ (and SecuroServ-themed BREACH) uses red "correct" symbols. */
+    body.securosserv-mode .counterhack-win,
+    body.simplehack-securosserv .counterhack-win{
+      --hackRGB: var(--ssHot);
+    }
+
+    /* Hard glitch-in for hacking UI (one-shot, on open) */
+    .counterhack-win.glitch-in::before,
+    .counterhack-win.glitch-in::after{
+      content:"";
+      position:absolute;
+      inset:-18px -22px;
+      pointer-events:none;
+      opacity: 0;
+    }
+    .counterhack-win.glitch-in::before{
+      /* scan split + bars */
+      background:
+        repeating-linear-gradient(180deg,
+          rgba(var(--hackRGB), 0) 0px,
+          rgba(var(--hackRGB), 0) 6px,
+          rgba(var(--hackRGB), .16) 7px,
+          rgba(var(--hackRGB), 0) 10px
+        ),
+        linear-gradient(90deg,
+          rgba(var(--hackRGB), .16),
+          rgba(0,0,0,0) 35%,
+          rgba(var(--hackRGB), .12) 70%,
+          rgba(0,0,0,0)
+        );
+      mix-blend-mode: screen;
+      animation: challengeHardBars .62s steps(2) both;
+    }
+    .counterhack-win.glitch-in::after{
+      /* chroma split pass */
+      background:
+        linear-gradient(0deg,
+          rgba(0,0,0,0) 0%,
+          rgba(255,255,255,.06) 18%,
+          rgba(255,255,255,0) 28%,
+          rgba(255,255,255,.08) 52%,
+          rgba(255,255,255,0) 60%,
+          rgba(0,0,0,0) 100%
+        );
+      mix-blend-mode: screen;
+      filter: drop-shadow(3px 0 0 rgba(255,0,0,.10)) drop-shadow(-3px 0 0 rgba(0,220,255,.10));
+      animation: challengeHardSplit .62s steps(2) both;
+    }
+    .counterhack-win.glitch-in .frame{
+      animation: challengeHardFrame .62s steps(2) both;
+    }
+    .counterhack-win.glitch-in .label,
+    .counterhack-win.glitch-in .instr,
+    .counterhack-win.glitch-in .hint{
+      text-shadow:
+        0 0 14px rgba(var(--hackRGB), .22),
+        2px 0 0 rgba(255,0,0,.12),
+        -2px 0 0 rgba(0,220,255,.10);
+    }
+
+    .counterhack-win.glitch-in .frame::before{
+      content:"";
+      position:absolute;
+      inset: -6px;
+      pointer-events:none;
+      background:
+        linear-gradient(0deg, rgba(255,255,255,.06), rgba(255,255,255,0) 55%),
+        repeating-linear-gradient(90deg,
+          rgba(var(--hackRGB), .18) 0px,
+          rgba(var(--hackRGB), .18) 1px,
+          rgba(0,0,0,0) 1px,
+          rgba(0,0,0,0) 9px
+        );
+      mix-blend-mode: screen;
+      opacity: 0;
+      clip-path: inset(0 0 0 0);
+      animation: challengeHardSlices .62s steps(2) both;
+    }
+    .counterhack-win.glitch-in .frame::after{
+      animation: challengeHardOutline .62s steps(2) both;
+    }
+    @keyframes challengeHardBars{
+      0%{ opacity: 0; transform: translate3d(0,0,0); clip-path: inset(0 0 0 0); }
+      14%{ opacity: 1; transform: translate3d(6px,-2px,0); clip-path: inset(0 0 70% 0); }
+      36%{ opacity: .85; transform: translate3d(-8px,2px,0); clip-path: inset(44% 0 0 0); }
+      58%{ opacity: .72; transform: translate3d(5px,0,0); clip-path: inset(12% 0 48% 0); }
+      78%{ opacity: .62; transform: translate3d(-4px,1px,0); clip-path: inset(62% 0 10% 0); }
+      100%{ opacity: 0; transform: translate3d(0,0,0); clip-path: inset(0 0 0 0); }
+    }
+    @keyframes challengeHardSplit{
+      0%{ opacity: 0; transform: translate3d(0,0,0); }
+      18%{ opacity: 1; transform: translate3d(4px,0,0) skewX(-2.4deg); }
+      44%{ opacity: .75; transform: translate3d(-6px,0,0) skewX(3.0deg); }
+      72%{ opacity: .50; transform: translate3d(3px,0,0) skewX(-1.8deg); }
+      90%{ opacity: .30; transform: translate3d(-2px,0,0) skewX(1.2deg); }
+      100%{ opacity: 0; transform: translate3d(0,0,0); }
+    }
+    @keyframes challengeHardFrame{
+      0%{ transform: translate3d(0,10px,0) skewX(-1.4deg); filter: blur(1.8px) contrast(1.22) saturate(1.10); }
+      24%{ transform: translate3d(6px,-4px,0) skewX(3.0deg); filter: blur(1.2px) contrast(1.24) saturate(1.10); }
+      52%{ transform: translate3d(-8px,2px,0) skewX(-2.8deg); filter: blur(.7px) contrast(1.16) saturate(1.06); }
+      78%{ transform: translate3d(4px,-1px,0) skewX(1.6deg); filter: blur(.35px) contrast(1.10) saturate(1.02); }
+      100%{ transform: translate3d(0,0,0) skewX(0deg); filter: blur(0px) contrast(1.02) saturate(.92); }
+    }
+
+    @keyframes challengeHardSlices{
+      0%{ opacity: 0; transform: translate3d(0,0,0); clip-path: inset(0 0 0 0); }
+      16%{ opacity: .95; transform: translate3d(8px,0,0); clip-path: inset(0 0 62% 0); }
+      38%{ opacity: .70; transform: translate3d(-10px,0,0); clip-path: inset(34% 0 0 0); }
+      62%{ opacity: .55; transform: translate3d(6px,0,0); clip-path: inset(12% 0 40% 0); }
+      82%{ opacity: .40; transform: translate3d(-4px,0,0); clip-path: inset(56% 0 10% 0); }
+      100%{ opacity: 0; transform: translate3d(0,0,0); clip-path: inset(0 0 0 0); }
+    }
+    @keyframes challengeHardOutline{
+      0%{ transform: translate3d(6px,-4px,0) skewX(-2deg); opacity: 0; }
+      26%{ transform: translate3d(-7px,3px,0) skewX(2.6deg); opacity: .95; }
+      62%{ transform: translate3d(4px,-2px,0) skewX(-2.0deg); opacity: .70; }
+      100%{ transform: translate3d(1px,-1px,0) skewX(-.6deg); opacity: .9; }
+    }
+
+    body.securosserv-mode .counterhack-win .slot.ok,
+    body.simplehack-securosserv .counterhack-win .slot.ok{
+      animation: securoOkFlash .42s steps(2) both;
+    }
+    @keyframes securoOkFlash{
+      0%{ transform: translate3d(0,0,0) scale(1); filter: brightness(1.15); }
+      35%{ transform: translate3d(1px,-1px,0) scale(1.06); filter: brightness(1.22); }
+      70%{ transform: translate3d(-1px,1px,0) scale(1.02); filter: brightness(1.08); }
+      100%{ transform: translate3d(0,0,0) scale(1); filter: brightness(1); }
     }
     .counterhack-win[aria-hidden="false"]{
       opacity: 1;
@@ -1625,9 +2065,9 @@
     .counterhack-win .frame{
       width: min(860px, 92vw);
       background: rgba(0,0,0,.78);
-      border: 2px solid rgba(238,255,94,.78);
+      border: 2px solid rgba(var(--hackRGB), .78);
       /* Less "pretty" than the corporate UI: softer + dirtier */
-      box-shadow: 0 0 22px rgba(238,255,94,.10), 0 0 58px rgba(238,255,94,.06);
+      box-shadow: 0 0 22px rgba(var(--hackRGB), .10), 0 0 58px rgba(var(--hackRGB), .06);
       padding: 14px 16px 16px;
       position: relative;
       clip-path: polygon(0 18px, 18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
@@ -1639,7 +2079,7 @@
       content:"";
       position:absolute;
       inset:-2px -3px;
-      border: 1px solid rgba(238,255,94,.24);
+      border: 1px solid rgba(var(--hackRGB), .24);
       transform: translate3d(1px,-1px,0) skewX(-.6deg);
       clip-path: polygon(0 18px, 18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
       pointer-events:none;
@@ -1649,8 +2089,8 @@
       font-weight: 900;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: rgba(238,255,94,.92);
-      text-shadow: 0 0 14px rgba(238,255,94,.16);
+      color: rgba(var(--hackRGB), .92);
+      text-shadow: 0 0 14px rgba(var(--hackRGB), .16);
       margin-bottom: 10px;
       font-size: 14px;
     }
@@ -1676,22 +2116,95 @@
       height: 34px;
       display:grid;
       place-items:center;
-      border: 1px solid rgba(238,255,94,.42);
+      border: 1px solid rgba(var(--hackRGB), .42);
       background: rgba(0,0,0,.42);
-      color: rgba(238,255,94,.92);
+      color: rgba(var(--hackRGB), .92);
       font-size: 16px;
       letter-spacing: 1px;
-      text-shadow: 0 0 12px rgba(238,255,94,.12);
+      text-shadow: 0 0 12px rgba(var(--hackRGB), .12);
     }
     .counterhack-win .slot.ok{
-      border: 2px solid rgba(238,255,94,.92);
-      background: rgba(238,255,94,.08);
-      color: var(--yl);
+      border: 2px solid rgba(var(--hackRGB), .92);
+      background: rgba(var(--hackRGB), .08);
+      color: rgb(var(--hackRGB));
       font-weight: 900;
-      text-shadow: 0 0 14px rgba(238,255,94,.22);
+      text-shadow: 0 0 14px rgba(var(--hackRGB), .22);
       box-shadow:
-        0 0 18px rgba(238,255,94,.10),
-        inset 0 0 18px rgba(238,255,94,.08);
+        0 0 18px rgba(var(--hackRGB), .10),
+        inset 0 0 18px rgba(var(--hackRGB), .08);
+    }
+
+    /* Generic restricted hack: keep the window steady; glitch the background instead */
+    body.restricted-hack-active .counterhack-win{
+      pointer-events: none;
+      animation: none !important;
+    }
+    body.restricted-hack-active .counterhack-win .frame{
+      box-shadow:
+        0 0 26px rgba(var(--ylRGB), .14),
+        0 0 70px rgba(var(--ylRGB), .08);
+    }
+    body.restricted-hack-active .counterhack-win .frame::before{
+      content:"";
+      position:absolute;
+      inset: 0;
+      pointer-events:none;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.05), rgba(255,255,255,.05) 1px, transparent 1px, transparent 10px),
+        linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+      mix-blend-mode: screen;
+      opacity: .18;
+      animation: intelGlitch 1.05s steps(2, start) infinite;
+      clip-path: inherit;
+    }
+
+    /* Screen background glitch during generic restricted hacks and while viewing unlocked restricted intel (tinted by restricted theme) */
+    body.restricted-hack-active #screenGlitch.on,
+    body.restricted-unlocked-view #screenGlitch.on{ opacity: calc(0.10 + (var(--g, 0) * 0.60)); }
+    body.restricted-hack-active #screenGlitch::before,
+    body.restricted-unlocked-view #screenGlitch::before{
+      background:
+        repeating-linear-gradient(
+          180deg,
+          rgba(0,0,0,.00) 0px,
+          rgba(0,0,0,.00) 2px,
+          rgba(var(--restrictedRGBHot), .065) 3px,
+          rgba(0,0,0,.00) 4px
+        ),
+        linear-gradient(90deg,
+          rgba(var(--restrictedRGBHot), .08),
+          rgba(0,0,0,0) 35%,
+          rgba(var(--restrictedRGBHot), .055) 70%,
+          rgba(0,0,0,0)
+        );
+      opacity: calc(0.18 + (var(--g, 0) * 0.70));
+    }
+    body.restricted-hack-active #screenGlitch::after,
+    body.restricted-unlocked-view #screenGlitch::after{
+      background:
+        linear-gradient(0deg,
+          transparent 0%,
+          rgba(var(--restrictedRGBHot), .00) 18%,
+          rgba(var(--restrictedRGBHot), .18) 22%,
+          rgba(var(--restrictedRGBHot), .00) 26%,
+          rgba(0,0,0,0) 100%
+        ),
+        repeating-linear-gradient(90deg,
+          rgba(var(--restrictedRGBHot), .10) 0px,
+          rgba(var(--restrictedRGBHot), .10) 1px,
+          rgba(0,0,0,0) 1px,
+          rgba(0,0,0,0) 7px
+        ),
+        radial-gradient(circle at 18% 34%, rgba(var(--restrictedRGBHot), .12), transparent 40%),
+        radial-gradient(circle at 72% 68%, rgba(var(--restrictedRGBHot), .08), transparent 42%);
+      opacity: calc(0.10 + (var(--g, 0) * 0.62));
+    }
+    body.restricted-hack-active .counterhack-win .instr,
+    body.restricted-hack-active .counterhack-win .hint{
+      color: rgba(215,230,255,.78);
+    }
+    body.restricted-hack-active .counterhack-win .slot{
+      box-shadow: inset 0 0 18px rgba(var(--hackRGB), .06);
     }
 
     /* Counterhack success flash */
@@ -1702,7 +2215,7 @@
       pointer-events: none;
       display: none;
       opacity: 0;
-      background: rgba(238,255,94,.92);
+      background: rgba(var(--ylRGB), .92);
     }
     .counterhack-fx.on{
       display: block;
@@ -2136,10 +2649,11 @@
     #svgHost .region.dimmed{ opacity: .14; }
     #svgHost .region.hidden{ display: none !important; }
 
+    /* In outline-only mode, never boost opacity or add glow for "dimmed" regions.
+       The base/hover/selected stroke-opacity ramps handle visibility. */
     #svgHost.dimmedOthers .region:not(.selected):not(.wall){
-      opacity: .46;
-      filter:
-        drop-shadow(0 0 4px rgba(0,0,0,.18));
+      opacity: 1 !important;
+      filter: none !important;
     }
 
     /* WALLS: no fill, slightly stronger outline */
@@ -2178,7 +2692,7 @@
       pointer-events: none !important;
       filter:
         drop-shadow(0 0 6px rgba(0,0,0,.9))
-        drop-shadow(0 0 16px rgba(238,255,94,.35)) !important;
+        drop-shadow(0 0 16px rgba(var(--ylRGB), .35)) !important;
     }
 
     /* Wasteline labels at ends */
@@ -2196,7 +2710,7 @@
       fill: var(--yl);
       filter:
         drop-shadow(0 0 6px rgba(0,0,0,.9))
-        drop-shadow(0 0 16px rgba(238,255,94,.35));
+        drop-shadow(0 0 16px rgba(var(--ylRGB), .35));
     }
     .wastelineEndLabel.sub{
       font-size: 26px;
@@ -2219,7 +2733,7 @@
       filter:
         drop-shadow(0 0 3px rgba(0,0,0,.95))
         drop-shadow(0 0 26px rgba(0,0,0,.85))
-        drop-shadow(0 0 18px rgba(238,255,94,.12)) !important;
+        drop-shadow(0 0 18px rgba(var(--ylRGB), .12)) !important;
     }
     /* Ensure no stroke and correct fill on marquee descendants (wall rules can override) */
     #svgHost #wastelineMarqueeLayer .wastelineMarqueeText, #svgHost #wastelineMarqueeLayer .wastelineMarqueeText *{
@@ -2244,9 +2758,9 @@
       --bootBlack: 0;
       background:
         radial-gradient(900px 600px at 30% 20%, rgba(96,143,255,.18), transparent 60%),
-        radial-gradient(700px 500px at 70% 70%, rgba(238,255,94,.10), transparent 62%),
+        radial-gradient(700px 500px at 70% 70%, rgba(var(--ylRGB), .10), transparent 62%),
         linear-gradient(180deg, rgba(3,5,12,.95), rgba(6,10,22,.92));
-      border-top: 2px solid rgba(238,255,94,.55);
+      border-top: 2px solid rgba(var(--ylRGB), .55);
       border-bottom: 2px solid rgba(96,143,255,.35);
       opacity: 1;
       transition: opacity .6s ease;
@@ -2310,28 +2824,28 @@
     .boot-mid{ padding: 14px 16px 16px; }
     .boot-lines{
       height: 220px;
-      border: 1px solid rgba(238,255,94,.18);
+      border: 1px solid rgba(var(--ylRGB), .18);
       background: rgba(4,7,16,.45);
       overflow: hidden;
       padding: 10px 12px;
       font-family: inherit;
       font-size: 12px;
       line-height: 1.35;
-      color: rgba(238,255,94,.85);
+      color: rgba(var(--ylRGB), .85);
     }
     .boot-line{ opacity:.92; padding: 2px 0; }
     .boot-line.dim{ opacity:.65; color: rgba(215,230,255,.55); }
     .boot-bar{
       margin-top: 12px;
       height: 10px;
-      border: 1px solid rgba(238,255,94,.25);
+      border: 1px solid rgba(var(--ylRGB), .25);
       background: rgba(4,7,16,.35);
       overflow:hidden;
     }
     .boot-bar-fill{
       width: 0%;
       height: 100%;
-      background: rgba(238,255,94,.85);
+      background: rgba(var(--ylRGB), .85);
       box-shadow: var(--glowY);
       transition: width .18s linear;
     }
@@ -2488,6 +3002,16 @@
 
   <!-- AREA DETAILS (POPUP WINDOW) -->
   <section class="hudpopup" id="popupDetails" aria-live="polite">
+    <svg viewBox="0 0 600 420" class="pdSvg" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <defs>
+        <pattern id="pdScanlines" width="12" height="12" patternUnits="userSpaceOnUse">
+          <rect x="0" y="0" width="12" height="1" class="pdScan" />
+        </pattern>
+      </defs>
+      <polygon class="pdOutline" points="18,2 582,2 598,18 598,402 582,418 2,418 2,18" />
+      <polygon class="pdFill" points="26,10 574,10 590,26 590,394 574,410 10,410 10,26" />
+      <polygon class="pdLines" points="26,10 574,10 590,26 590,394 574,410 10,410 10,26" />
+    </svg>
     <div class="hudhead">
       <span class="hudtitle">AREA DETAILS</span>
       <div class="hudhead-actions">
@@ -2521,28 +3045,41 @@
     </div>
 
     <div class="hudfoot">
-      <span>MAP/INTEL</span><span id="detailFoot">waiting</span>
+      <span>MAP/INTEL</span>
+      <div id="detailFoot"><div class="intelDim">waiting</div></div>
     </div>
   </section>
 
-  <!-- TERMINAL (BOTTOM) -->
-  <footer class="termDock" aria-label="Terminal">
-    <section class="hudpanel" id="panelTerm">
-      <div class="hudhead">
-        <span class="hudtitle">TERMINAL</span>
-        <span class="hudmeta">RX</span>
-      </div>
-      <div class="hudbody term" id="termLog">
-        <div class="termline">[BOOT] initializing map interface…</div>
-        <div class="termline">[NET] handshake ok • data stream stable</div>
-        <div class="termline">[SVG] awaiting payload…</div>
-      </div>
-      <div class="hudfoot">
-        <span>LOAD: <span id="loadState">pending</span></span>
-        <span>PAN: <span id="panReadout">0,0</span></span>
-      </div>
-    </section>
-  </footer>
+  <!-- RESTRICTED HACK PROMPT (shown next to Area Details) -->
+  <div class="hackPrompt" id="hackPrompt" aria-hidden="true">
+    <button class="btn" id="btnHackRestricted" type="button">
+      <svg viewBox="-3 -3 606 126" class="bpSvg" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <defs>
+          <pattern id="bpScanlines" width="12" height="12" patternUnits="userSpaceOnUse">
+            <rect x="0" y="0" width="12" height="1" class="bpScan" />
+          </pattern>
+        </defs>
+        <!-- outer outline (reference shape: top-left tab + angled bottom-left + right chamfer) -->
+        <polygon class="bpOutline" points="0,0 168,0 226,40 594,40 600,46 600,106 572,120 92,120 46,82 0,82" />
+        <!-- main interior fill -->
+        <polygon class="bpFill" points="3,3 165,3 223,43 591,43 597,49 597,103 569,117 95,117 49,79 3,79" />
+        <!-- subtle scanlines overlay inside fill -->
+        <polygon class="bpLines" points="3,3 165,3 223,43 591,43 597,49 597,103 569,117 95,117 49,79 3,79" />
+        <!-- top-left tab overlay (separate color) + separator and tag text -->
+        <polygon class="bpTab" points="0,0 168,0 226,40 0,40" />
+        <path class="bpTabSep" d="M0 40 H226 M168 0 L226 40" />
+        <text class="bpTagText" x="12" y="30">SIMPLEHACK</text>
+      </svg>
+
+      <span class="bpContent">
+        <span class="bpTitle">BREACH PROTOCOL</span>
+        <span class="bpStatus">READY</span>
+      </span>
+    </button>
+  </div>
+
+  <!-- COMMAND FEED (BOTTOM-LEFT) -->
+  <div class="cmdFeed" id="cmdFeed" aria-live="polite" aria-label="Command feed"></div>
 
   <!-- BOOT OVERLAY -->
   <div class="boot" id="boot">
@@ -2682,7 +3219,15 @@
 
       clip.replaceChildren();
 
-      const candidates = Array.from(svgEl.querySelectorAll(".region.restricted:not(.wall):not(.hidden)"));
+      // Blur all restricted regions EXCEPT those explicitly unlocked via generic hacks.
+      const candidates = Array.from(svgEl.querySelectorAll(".region.restricted:not(.wall):not(.hidden)"))
+        .filter((src) => {
+          const k = normalizeRegionKey(src?.id || src?.getAttribute?.("data-name") || "");
+          if(!k) return true;
+          // SecuroServ: keep blurred until *fully* unlocked (post-counterhack second-stage hack).
+          if(isSecuroservKey(k)) return !(securoservBypassedThisSession && unlockedRestrictedIntel.has(k));
+          return !unlockedRestrictedIntel.has(k);
+        });
       for(const src of candidates){
         try{
           const clone = src.cloneNode(true);
@@ -2826,18 +3371,42 @@
     let selectionGlowAnimation = null;
 
     function term(msg, opts = null){
+      // Text-only bottom-left feed (no terminal panel)
+      const feed = document.getElementById("cmdFeed");
+      if(feed){
+        const div = document.createElement("div");
+        div.className = "cmdline";
+        div.textContent = msg;
+        if(opts && opts.glitch) div.classList.add("glitch");
+
+        feed.appendChild(div);
+        // trigger entrance transition
+        requestAnimationFrame(() => div.classList.add("on"));
+
+        // Keep only a small stack visible
+        const MAX_LINES = 10;
+        while(feed.childElementCount > MAX_LINES){
+          feed.removeChild(feed.firstElementChild);
+        }
+
+        // Auto-expire
+        const lifeMs = 5200;
+        const fadeMs = 650;
+        setTimeout(() => div.classList.add("off"), Math.max(0, lifeMs - fadeMs));
+        setTimeout(() => { try{ div.remove(); }catch{} }, lifeMs);
+        return;
+      }
+
+      // Legacy fallback (in case a future edit re-adds it)
       const log = document.getElementById("termLog");
-      const div = document.createElement("div");
-      div.className = "termline";
-      div.textContent = msg;
-
-      if(opts && opts.glitch) div.classList.add("glitch");
-
-      log.appendChild(div);
-      log.scrollTop = log.scrollHeight;
-
-      // Keep popup offset in sync with dock size
-      if(typeof updateDockMetrics === "function") updateDockMetrics();
+      if(log){
+        const div = document.createElement("div");
+        div.className = "termline";
+        div.textContent = msg;
+        if(opts && opts.glitch) div.classList.add("glitch");
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+      }
     }
 
     // =========================
@@ -2887,6 +3456,495 @@
       VESPUCCI: "TEMPLATE VESPUCCI — Beachfront strip; replace intel.",
       VINEWOOD_HILLS: "TEMPLATE VINEWOOD_HILLS — Hills + media mansions; replace intel.",
     };
+
+    // =========================
+    // MAP/INTEL (GANGS)
+    // =========================
+    const GANGS = {
+      THE_LEX: { name: "THE LEX", iconFiles: ["LEX.png", "lex.png"] },
+      NCPD: { name: "NCPD", iconFiles: ["NEON_CITY_PRISON.png", "neon_city_prison.png"] },
+      TACMED: { name: "TACMED", iconFiles: ["tacmed.png", "TACMED.png"] },
+    };
+    const REGION_GANGS = {
+      SOUTH_SIDE: ["THE_LEX"],
+      NEON_CORE: ["NCPD", "TACMED"],
+    };
+
+    // Restricted intel unlock state (session only)
+    const unlockedRestrictedIntel = new Set();
+    function isHackableRestrictedKey(normKey){
+      const k = normalizeRegionKey(normKey);
+      if(k === "MERRYWEATHER_BASE") return true;
+      if(k === "NEON_CITY_PRISON") return true;
+      if(k === "APEX" || k === "APEX_HQ" || k.startsWith("APEX_")) return true;
+      // SecuroServ: second-stage hack is only available AFTER counterhack bypass.
+      if(k === "SECUROSERV_PORT" || k === "SECUROSERVE_PORT" || k.startsWith("SECUROSERV_")) return true;
+      return false;
+    }
+    function isRestrictedIntelUnlockedFor(el){
+      if(!el) return false;
+      if(!(el.classList && el.classList.contains("restricted"))) return true;
+
+      const k = normalizeRegionKey(el.id || el.getAttribute("data-name") || "");
+      // SecuroServ is two-stage:
+      // 1) Counterhack bypass stops countermeasures (does NOT reveal intel)
+      // 2) Second-stage hack (unlockedRestrictedIntel) reveals intel + removes blur
+      if(k === "SECUROSERV_PORT" || k === "SECUROSERVE_PORT" || k.startsWith("SECUROSERV_")){
+        return Boolean(securoservBypassedThisSession && unlockedRestrictedIntel.has(k));
+      }
+      return unlockedRestrictedIntel.has(k);
+    }
+
+    // Generic restricted-area hack (reuses the SecuroServ counterhack window, but with an in-window timer)
+    let restrictedHackActive = false;
+    let restrictedHackKey = "";
+    let restrictedHackEndsAt = 0;
+    let restrictedHackTimer = null;
+
+    function ssChallengeEls(){
+      const root = document.getElementById("securoservChallenge");
+      return {
+        root,
+        label: root?.querySelector?.(".label") || null,
+        instrSpans: root ? Array.from(root.querySelectorAll(".instr span")) : [],
+        hintSpans: root ? Array.from(root.querySelectorAll(".hint span")) : [],
+      };
+    }
+
+    function fmtMs(ms){
+      const s = Math.max(0, Math.ceil(ms / 1000));
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`;
+    }
+
+    function glitchInHackingUI(){
+      const w = document.getElementById("securoservChallenge");
+      if(!w) return;
+      try{ w.classList.remove("glitch-in"); void w.offsetWidth; w.classList.add("glitch-in"); }catch{}
+
+      // Spike the global screen glitch briefly (keeps existing state if it was already on).
+      try{
+        const sg = document.getElementById("screenGlitch");
+        if(sg){
+          const wasOn = sg.classList.contains("on");
+          const prevG = sg.style.getPropertyValue("--g");
+          sg.style.setProperty("--g", "0.98");
+          sg.classList.add("on");
+          setTimeout(() => {
+            try{
+              if(prevG) sg.style.setProperty("--g", prevG);
+              else sg.style.removeProperty("--g");
+              if(!wasOn) sg.classList.remove("on");
+            }catch{}
+          }, 520);
+        }
+      }catch{}
+
+      setTimeout(() => { try{ w.classList.remove("glitch-in"); }catch{} }, 720);
+    }
+
+    function stopRestrictedHack(){
+      restrictedHackActive = false;
+      restrictedHackKey = "";
+      restrictedHackEndsAt = 0;
+      document.body?.classList?.remove?.("restricted-hack-active");
+      document.body?.classList?.remove?.("simplehack-securosserv");
+
+      // Turn off the temporary background glitch overlay
+      try{
+        const screenGlitch = document.getElementById("screenGlitch");
+        if(screenGlitch){
+          screenGlitch.classList.remove("on");
+          screenGlitch.style.removeProperty("--g");
+        }
+      }catch{}
+
+      if(restrictedHackTimer){
+        clearInterval(restrictedHackTimer);
+        restrictedHackTimer = null;
+      }
+
+      // Hide the shared counterhack window
+      try{ stopSecuroservChallenge(); }catch{}
+
+      // Remove the temporary keydown wrapper if present
+      try{
+        if(window._restrictedHackKeydown){
+          window.removeEventListener("keydown", window._restrictedHackKeydown, true);
+          delete window._restrictedHackKeydown;
+        }
+      }catch{}
+    }
+
+    function abortSimplehackToNeutral(msg = "SIMPLEHACK FAILED"){
+      // Show failure overlay, then return to a neutral centered view with no selection.
+      try{
+        counterhackFxShow(msg);
+        setTimeout(() => counterhackFxFadeOutAndHide(2300), 700);
+      }catch{}
+      try{ term(`[HACK] ${msg}`); }catch{}
+
+      // If we are inside SecuroServ mode, use its dedicated cleanup to guarantee
+      // all timers/blocks are removed and the UI returns to a stable default.
+      try{
+        if(document.body?.classList?.contains?.("securosserv-mode")){
+          cleanupSecuroservToDefault();
+          return;
+        }
+      }catch{}
+
+      try{ clearSelection(); }catch{}
+      try{ cameraFlyToFitCenter(1100); }catch{}
+    }
+
+    function failRestrictedHack(){
+      stopRestrictedHack();
+      abortSimplehackToNeutral("SIMPLEHACK FAILED");
+    }
+
+    function succeedRestrictedHack(normKey){
+      const k = normalizeRegionKey(normKey);
+      unlockedRestrictedIntel.add(k);
+      stopRestrictedHack();
+      counterhackFxShow("hack succesfull");
+      setTimeout(() => counterhackFxFadeOutAndHide(2300), 700);
+      term(`[HACK] success • intel unlocked: ${k}`);
+      // Remove restricted blur for this zone and update restricted UI state immediately.
+      try{ rebuildRestrictedBlurClip(); }catch{}
+      try{ updateRestrictedOverlayState(); }catch{}
+      try{
+        if(selectedEl){
+          const selK = normalizeRegionKey(selectedEl.id || selectedEl.getAttribute("data-name") || "");
+          if(selK === k){
+            setRestrictedWallVisibleForRegion(selectedEl, false);
+            setStripeThicknessForRegion(selectedEl, "base");
+            updateSelectionGlowColor(null);
+          }
+        }
+      }catch{}
+      // Refresh the MAP/INTEL footer immediately
+      try{ renderMapIntelFor(selectedEl); }catch{}
+      try{ updateHackPromptForSelection(); }catch{}
+    }
+
+    function startRestrictedHackForKey(normKey){
+      const k = normalizeRegionKey(normKey);
+      if(!k) return;
+      if(!isHackableRestrictedKey(k)) return;
+      if(unlockedRestrictedIntel.has(k)) return;
+      // SecuroServ second-stage hack requires counterhack bypass first.
+      if(isSecuroservKey(k) && !securoservBypassedThisSession) return;
+      if(securoservShutdownInProgress || securoservCounterhackResolving) return;
+      if(restrictedHackActive) return;
+      // Do not allow this while SecuroServ countermeasures are active
+      if(document.body?.classList?.contains?.("securosserv-mode") && !securoservBypassedThisSession) return;
+
+      restrictedHackActive = true;
+      restrictedHackKey = k;
+      restrictedHackEndsAt = performance.now() + 15000;
+      document.body?.classList?.add?.("restricted-hack-active");
+
+      // If this is the SecuroServ second-stage BREACH, theme the hack UI to match SecuroServ counterhack.
+      if(isSecuroservKey(k)){
+        document.body?.classList?.add?.("simplehack-securosserv");
+      }
+
+      // Enable background glitch overlay for the duration of this hack
+      try{
+        const screenGlitch = document.getElementById("screenGlitch");
+        if(screenGlitch){
+          screenGlitch.style.setProperty("--g", "0.65");
+          screenGlitch.classList.add("on");
+        }
+      }catch{}
+
+      // Reuse the existing symbol challenge mechanics, but change the window copy
+      const { root, label, instrSpans, hintSpans } = ssChallengeEls();
+      if(root) root.setAttribute("aria-hidden", "false");
+      glitchInHackingUI();
+      if(label) label.textContent = isSecuroservKey(k) ? "BREACH PROTOCOL:// COUNTERHACK" : "USER OVERRIDE:// HACK";
+      if(instrSpans[0]) instrSpans[0].textContent = "TYPE THE SYMBOLS LEFT → RIGHT";
+      if(instrSpans[1]) instrSpans[1].textContent = "TIME LEFT: 00:15";
+      if(hintSpans[0]) hintSpans[0].textContent = "UNLOCK MAP/INTEL ON SUCCESS";
+      if(hintSpans[1]) hintSpans[1].textContent = "FAILURE ABORTS SIMPLEHACK";
+
+      // Initialize the shared symbol slots state
+      securoservChallengeSolved = false;
+      securoservChallengeActive = true;
+      securoservChallengeIndex = 0;
+      securoservChallengeSymbols = Array.from({length:6}, () => ssRandomSymbol());
+      renderSecuroservChallenge();
+
+      // Shuffle remaining symbols every 2 seconds (same as SecuroServ)
+      if(securoservChallengeShuffleTimer){
+        clearInterval(securoservChallengeShuffleTimer);
+        securoservChallengeShuffleTimer = null;
+      }
+      securoservChallengeShuffleTimer = setInterval(() => {
+        if(!restrictedHackActive) return;
+        for(let i=securoservChallengeIndex;i<6;i++){
+          securoservChallengeSymbols[i] = ssRandomSymbol();
+        }
+        renderSecuroservChallenge();
+      }, 2000);
+
+      // Timer tick
+      if(restrictedHackTimer){
+        clearInterval(restrictedHackTimer);
+        restrictedHackTimer = null;
+      }
+      restrictedHackTimer = setInterval(() => {
+        if(!restrictedHackActive) return;
+        const left = restrictedHackEndsAt - performance.now();
+        if(instrSpans[1]) instrSpans[1].textContent = "TIME LEFT: " + fmtMs(left);
+        if(left <= 0 && !securoservChallengeSolved){
+          failRestrictedHack();
+        }
+      }, 120);
+
+      // Use the same keydown handler, but intercept success
+      const wrapped = (e) => {
+        if(!restrictedHackActive) return;
+        handleSecuroservChallengeKeydown(e);
+        if(securoservChallengeSolved && restrictedHackActive){
+          succeedRestrictedHack(restrictedHackKey);
+        }
+      };
+      // store reference for removal
+      window._restrictedHackKeydown = wrapped;
+      window.addEventListener("keydown", wrapped, true);
+    }
+
+    // Hack prompt button
+    document.getElementById("btnHackRestricted")?.addEventListener("click", () => {
+      if(!selectedEl) return;
+      const k = normalizeRegionKey(selectedEl.id || selectedEl.getAttribute("data-name") || "");
+      startRestrictedHackForKey(k);
+    });
+
+    // Delay the prompt so it appears a beat after selection (more immersive).
+    let hackPromptDelayTimer = null;
+    let hackPromptDelayKey = "";
+
+    function hideHackPrompt(){
+      const hp = document.getElementById("hackPrompt");
+      if(!hp) return;
+      hp.classList.remove("on");
+      hp.setAttribute("aria-hidden", "true");
+
+      if(hackPromptDelayTimer){
+        clearTimeout(hackPromptDelayTimer);
+        hackPromptDelayTimer = null;
+      }
+      hackPromptDelayKey = "";
+    }
+
+    function positionHackPrompt(){
+      const hp = document.getElementById("hackPrompt");
+      const panel = document.getElementById("popupDetails");
+      if(!hp || !panel) return;
+      const r = panel.getBoundingClientRect();
+      // Place to the right of the panel, aligned near the header
+      const left = Math.min(window.innerWidth - 10, r.right + 12);
+      const top = Math.max(10, r.top + 38);
+      hp.style.left = left + "px";
+      hp.style.top = top + "px";
+    }
+
+    function updatePopupDetailsFrame(){
+      const panel = document.getElementById("popupDetails");
+      if(!panel || !panel.classList.contains("on")) return;
+
+      const svg = panel.querySelector(".pdSvg");
+      if(!svg) return;
+
+      const w = panel.clientWidth;
+      const h = panel.clientHeight;
+      if(!w || !h) return;
+
+      const cut = (parseFloat(getComputedStyle(panel).getPropertyValue("--cut")) || 16);
+      const inset = 6;
+      const pad = 2; // keeps outline stroke from being clipped
+
+      svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+
+      const outline = svg.querySelector(".pdOutline");
+      const fill = svg.querySelector(".pdFill");
+      const lines = svg.querySelector(".pdLines");
+
+      const outerPts = [
+        `${cut + pad},${pad}`,
+        `${w - cut - pad},${pad}`,
+        `${w - pad},${cut + pad}`,
+        `${w - pad},${h - cut - pad}`,
+        `${w - cut - pad},${h - pad}`,
+        `${pad},${h - pad}`,
+        `${pad},${cut + pad}`,
+      ].join(" ");
+
+      const innerPts = [
+        `${cut + inset},${inset}`,
+        `${w - cut - inset},${inset}`,
+        `${w - inset},${cut + inset}`,
+        `${w - inset},${h - cut - inset}`,
+        `${w - cut - inset},${h - inset}`,
+        `${inset},${h - inset}`,
+        `${inset},${cut + inset}`,
+      ].join(" ");
+
+      if(outline) outline.setAttribute("points", outerPts);
+      if(fill) fill.setAttribute("points", innerPts);
+      if(lines) lines.setAttribute("points", innerPts);
+    }
+
+    function updateHackPromptForSelection(){
+      const hp = document.getElementById("hackPrompt");
+      const panel = document.getElementById("popupDetails");
+      if(!hp || !panel) return;
+
+      // Always start hidden; show after a short delay if eligible.
+      hideHackPrompt();
+
+      if(!selectedEl) return;
+      if(!(selectedEl.classList && selectedEl.classList.contains("restricted"))) return;
+
+      const k = normalizeRegionKey(selectedEl.id || selectedEl.getAttribute("data-name") || "");
+
+      const eligibleNow = (() => {
+        if(!panel.classList.contains("on")) return false;
+
+        // SecuroServ: before bypass, it uses the counterhack flow (no prompt).
+        // After bypass, allow a second-stage "BREACH PROTOCOL" to fully unlock SecuroServ.
+        if(k === "SECUROSERV_PORT" || k === "SECUROSERVE_PORT" || k.startsWith("SECUROSERV_")){
+          if(!securoservBypassedThisSession) return false;
+          if(unlockedRestrictedIntel.has(k)) return false;
+          return true;
+        }
+
+        if(!isHackableRestrictedKey(k)) return false;
+        if(unlockedRestrictedIntel.has(k)) return false;
+        return true;
+      })();
+
+      if(!eligibleNow) return;
+
+      hackPromptDelayKey = k;
+      hackPromptDelayTimer = setTimeout(() => {
+        hackPromptDelayTimer = null;
+
+        if(!selectedEl) return;
+        const currentK = normalizeRegionKey(selectedEl.id || selectedEl.getAttribute("data-name") || "");
+        if(currentK !== hackPromptDelayKey) return;
+        if(!(selectedEl.classList && selectedEl.classList.contains("restricted"))) return;
+        if(!panel.classList.contains("on")) return;
+
+        // Re-check eligibility after delay.
+        if(currentK === "SECUROSERV_PORT" || currentK === "SECUROSERVE_PORT" || currentK.startsWith("SECUROSERV_")){
+          if(!securoservBypassedThisSession) return;
+          if(unlockedRestrictedIntel.has(currentK)) return;
+        }else{
+          if(!isHackableRestrictedKey(currentK)) return;
+          if(unlockedRestrictedIntel.has(currentK)) return;
+        }
+
+        hp.classList.add("on");
+        hp.setAttribute("aria-hidden", "false");
+        positionHackPrompt();
+      }, 1000);
+    }
+
+    window.addEventListener("resize", () => { try{ positionHackPrompt(); }catch{} });
+    window.addEventListener("resize", () => { try{ updatePopupDetailsFrame(); }catch{} });
+
+    function renderMapIntelFor(el){
+      const foot = document.getElementById("detailFoot");
+      if(!foot) return;
+
+      foot.replaceChildren();
+
+      if(!el){
+        const dim = document.createElement("div");
+        dim.className = "intelDim";
+        dim.textContent = "waiting";
+        foot.appendChild(dim);
+        return;
+      }
+
+      // Restricted areas: show classified warning until unlocked.
+      if(el.classList && el.classList.contains("restricted") && !isRestrictedIntelUnlockedFor(el)){
+        const label = document.createElement("div");
+        label.className = "intelLabel";
+        label.textContent = "INTEL";
+        foot.appendChild(label);
+
+        const warn = document.createElement("div");
+        warn.className = "intelWarning";
+
+        const title = document.createElement("div");
+        title.className = "intelWarnTitle";
+        title.textContent = "WARNING";
+
+        const body = document.createElement("div");
+        body.className = "intelWarnBody";
+        body.innerHTML =
+          `<div class="hard">DATA CLASSIFIED</div>` +
+          `<div>Access level insufficient • feed blocked</div>` +
+          `<div class="stamp">NOFORN / EYES ONLY</div>`;
+
+        warn.appendChild(title);
+        warn.appendChild(body);
+        foot.appendChild(warn);
+        return;
+      }
+
+      const normKey = normalizeRegionKey(el.id || el.getAttribute("data-name") || "");
+      const gangIds = (REGION_GANGS[normKey] || []).filter(Boolean);
+
+      const label = document.createElement("div");
+      label.className = "intelLabel";
+      label.textContent = "ACTIVE GANGS";
+      foot.appendChild(label);
+
+      const list = document.createElement("div");
+      list.className = "intelList";
+
+      if(gangIds.length === 0){
+        const none = document.createElement("div");
+        none.className = "intelDim";
+        none.textContent = "none detected";
+        list.appendChild(none);
+      }else{
+        for(const gid of gangIds){
+          const g = GANGS[gid];
+          if(!g) continue;
+          const row = document.createElement("div");
+          row.className = "intelRow";
+
+          const img = document.createElement("img");
+          img.className = "intelLogo";
+          img.alt = "";
+          img.draggable = false;
+          // Try multiple candidate paths (case-sensitive) using the same logic as other logos
+          setImgCandidates(img, expandLogoPaths(g.iconFiles || []));
+          img.addEventListener("error", () => {
+            if(!advanceImgCandidate(img, "GANGLOGO")){
+              try{ img.remove(); }catch{}
+            }
+          });
+
+          const name = document.createElement("div");
+          name.className = "intelName";
+          name.textContent = g.name;
+
+          row.appendChild(img);
+          row.appendChild(name);
+          list.appendChild(row);
+        }
+      }
+
+      foot.appendChild(list);
+    }
 
     function setAreaNotesFor(el){
       const box = document.getElementById("dNotes");
@@ -3045,10 +4103,8 @@
     new ResizeObserver(updateViewport).observe(mapwrap);
 
     function updateDockMetrics(){
-      const panel = document.getElementById("panelTerm");
-      if(!panel) return;
-      const h = Math.round(panel.getBoundingClientRect().height);
-      document.documentElement.style.setProperty("--dockH", h + "px");
+      // Terminal dock removed; ensure dependent offsets resolve to 0
+      document.documentElement.style.setProperty("--dockH", "0px");
 
       const toggles = document.getElementById("layerToggles");
       if(toggles){
@@ -3103,7 +4159,8 @@
       mapStack.style.transform =
         `translate3d(${cx}px, ${cy}px, 0) scale(${camera.zoom}) translate(${-camera.x}px, ${-camera.y}px)`;
       if(zoomReadout) zoomReadout.textContent = `ZOOM: ${Math.round(camera.zoom * 100)}%`;
-      document.getElementById("panReadout").textContent = `${Math.round(camera.x)},${Math.round(camera.y)}`;
+      const panEl = document.getElementById("panReadout");
+      if(panEl) panEl.textContent = `${Math.round(camera.x)},${Math.round(camera.y)}`;
       if(logosLayer){
         const scale = camera.zoom > 0 ? 1 / camera.zoom : 1;
         logosLayer.style.setProperty('--logoZoomScale', String(scale));
@@ -3602,25 +4659,16 @@
         if(effective?.stroke){
           r.style.stroke = effective.stroke;
         }else if(accent || restricted){
-          const strokeCol = accent || `rgba(96,143,255,.65)`;
+          const strokeCol = accent || `rgb(96,143,255)`;
           r.style.stroke = strokeCol;
         }else{
           r.style.removeProperty("stroke");
         }
 
-        // Fill:
-        // - Default: invisible (keep a tiny fill so regions remain easy to click)
-        // - Only show district fill when selected
-        // - Restricted default: dense scrolling "RESTRICTED" wall-of-text (only when selected)
+        // Fill: always invisible (outline-only mode). Keep a tiny fill so regions remain clickable.
         r.removeAttribute("data-stripe-pat");
-        if(restricted){
-          // Hide the text-wall until this region is selected.
-          setRestrictedWallVisibleForRegion(r, r === selectedEl);
-        }else if(r === selectedEl && effective?.fill){
-          r.style.fill = effective.fill;
-        }else{
-          r.style.fill = INVISIBLE_FILL;
-        }
+        if(restricted) setRestrictedWallVisibleForRegion(r, false);
+        r.style.fill = INVISIBLE_FILL;
       });
 
       // Keep restricted blur mask in sync with current visibility/state
@@ -4627,7 +5675,8 @@
             requestAnimationFrame(updateDockMetrics);
           }
         }, 250);
-        document.getElementById("loadState").textContent = "ready";
+        const loadEl = document.getElementById("loadState");
+        if(loadEl) loadEl.textContent = "ready";
         term("[SVG] ready • " + regions.length + " regions loaded");
 
       }catch(err){
@@ -5094,6 +6143,8 @@
         // Ensure all digits show as correct, then pause briefly before success overlay.
         securoservChallengeIndex = 6;
         try{ renderSecuroservChallenge(); }catch{}
+        // Generic restricted-area hacks reuse this window, but must NOT trigger the SecuroServ success pipeline.
+        if(typeof restrictedHackActive !== "undefined" && restrictedHackActive) return;
         queueSecuroservCounterhackSuccess();
       }
     }
@@ -5110,6 +6161,7 @@
       if(!document.body.classList.contains("securosserv-mode")) return;
 
       if(challenge) challenge.setAttribute("aria-hidden", "false");
+      glitchInHackingUI();
 
       securoservChallengeSolved = false;
       securoservChallengeActive = true;
@@ -5158,9 +6210,15 @@
       window.removeEventListener("keydown", handleSecuroservChallengeKeydown, true);
     }
 
-    function counterhackFxShow(){
+    function counterhackFxShow(text = null){
       const fx = document.getElementById("counterhackFx");
       if(!fx) return;
+      try{
+        const msg = fx.querySelector('.msg');
+        if(msg){
+          msg.textContent = (typeof text === 'string' && text.length) ? text : "COUNTERHACK SUCCESFULL";
+        }
+      }catch{}
       if(counterhackFxOffTimer){
         clearTimeout(counterhackFxOffTimer);
         counterhackFxOffTimer = null;
@@ -6124,9 +7182,11 @@
       selectedEl = el;
       if(selectedEl) selectedEl.classList.add("selected");
 
-      // Show wall-of-text only when a restricted zone is selected.
+      // Show wall-of-text only when a restricted zone is selected AND still locked.
       if(selectedEl && selectedEl.classList.contains('restricted')){
-        setRestrictedWallVisibleForRegion(selectedEl, true);
+        const normKey = normalizeRegionKey(selectedEl.id || selectedEl.getAttribute("data-name") || "");
+        const genericUnlocked = Boolean(normKey && !isSecuroservKey(normKey) && unlockedRestrictedIntel.has(normKey));
+        setRestrictedWallVisibleForRegion(selectedEl, !genericUnlocked);
       }
 
       // Ensure selection stays top even if the click happened during hover.
@@ -6144,10 +7204,10 @@
 
         // Requested mapping:
         // - Merryweather base: yellow
-        // - APEX + PRISON: blue
+        // - APEX + PRISON: yellow
         // - SecuroServ: red
         if(k === "MERRYWEATHER_BASE") return { theme: "yellow", glow: { r: 255, g: 238, b: 152 } };
-        if(k === "NEON_CITY_PRISON" || k === "APEX" || k === "APEX_HQ" || k.startsWith("APEX_")) return { theme: "blue", glow: { r: 96, g: 143, b: 255 } };
+        if(k === "NEON_CITY_PRISON" || k === "APEX" || k === "APEX_HQ" || k.startsWith("APEX_")) return { theme: "yellow", glow: { r: 255, g: 238, b: 152 } };
         if(k === "SECUROSERV_PORT" || k === "SECUROSERVE_PORT" || k.startsWith("SECUROSERV_")) return { theme: "red", glow: { r: 255, g: 65, b: 65 } };
 
         // Default restricted theme (keeps existing look)
@@ -6158,8 +7218,14 @@
         const isRestricted = selectedEl.classList.contains("restricted");
         if(isRestricted){
           const normKey = normalizeRegionKey(selectedEl.id || selectedEl.getAttribute("data-name") || "");
-          const themed = getRestrictedThemeForKey(normKey);
-          updateSelectionGlowColor(boostGlowColor(themed.glow));
+          const genericUnlocked = Boolean(normKey && !isSecuroservKey(normKey) && unlockedRestrictedIntel.has(normKey));
+          if(genericUnlocked){
+            // Unlocked restricted areas should not have the restricted glow.
+            updateSelectionGlowColor(null);
+          }else{
+            const themed = getRestrictedThemeForKey(normKey);
+            updateSelectionGlowColor(boostGlowColor(themed.glow));
+          }
         }else{
           const strokeColor = getComputedStyle(selectedEl).stroke || "";
           const glow = parseCssColorToRgb(strokeColor);
@@ -6173,7 +7239,9 @@
         setStripeThicknessForRegion(prev, "base");
       }
       if(selectedEl && selectedEl.classList.contains("restricted")){
-        setStripeThicknessForRegion(selectedEl, "selected");
+        const normKey = normalizeRegionKey(selectedEl.id || selectedEl.getAttribute("data-name") || "");
+        const genericUnlocked = Boolean(normKey && !isSecuroservKey(normKey) && unlockedRestrictedIntel.has(normKey));
+        setStripeThicknessForRegion(selectedEl, genericUnlocked ? "base" : "selected");
       }
 
       refreshHoverTab();
@@ -6196,6 +7264,9 @@
       // Notes: read-only + only if present in AREA_NOTES
       setAreaNotesFor(selectedEl);
 
+      // MAP/INTEL
+      renderMapIntelFor(selectedEl);
+
       // Pop the window when a district is selected
       const detailPanel = document.getElementById("popupDetails");
       if(detailPanel){
@@ -6204,6 +7275,16 @@
         }else{
           detailPanel.classList.add("on");
         }
+
+        // SVG frame needs the panel to be visible to measure correctly.
+        try{ updatePopupDetailsFrame(); }catch{}
+
+        // Hack prompt depends on the panel being visible; update after toggling.
+        updateHackPromptForSelection();
+        requestAnimationFrame(() => {
+          try{ updateHackPromptForSelection(); }catch{}
+          try{ updatePopupDetailsFrame(); }catch{}
+        });
       }
 
       const { name, id, zone } = regionLabel(el);
@@ -6217,7 +7298,8 @@
       document.getElementById("dType").textContent = type;
       document.getElementById("dZone").textContent = zone || "—";
       document.getElementById("dBounds").textContent = bounds;
-      document.getElementById("detailFoot").textContent = "active";
+      // MAP/INTEL footer now renders structured intel; keep status in command feed instead.
+      term("[INTEL] panel updated");
 
       // Animate camera to selected sector (lore terminal vibe)
       if(el.classList.contains("region") && !el.classList.contains("wall")){
@@ -6249,12 +7331,39 @@
       const isSecuroservRestricted = activeRestricted && isSecuroservKey(normKey);
       const isSecuroservHackActive = isSecuroservRestricted && !securoservBypassedThisSession;
 
+      // Restricted intel can be unlocked.
+      // - Generic restricted zones: unlocked via per-area hack.
+      // - SecuroServ: first counterhack bypass, then optional second-stage hack to fully unlock.
+      const genericUnlocked = Boolean(activeRestricted && !isSecuroservRestricted && unlockedRestrictedIntel.has(normKey));
+      const securoservFullyUnlocked = Boolean(activeRestricted && isSecuroservRestricted && securoservBypassedThisSession && unlockedRestrictedIntel.has(normKey));
+      const activeRestrictedVisual = Boolean(activeRestricted && !(genericUnlocked || securoservFullyUnlocked));
+
+      document.body?.classList?.toggle?.("restricted-unlocked-view", Boolean(genericUnlocked || securoservFullyUnlocked));
+
       const restrictedTheme = activeRestricted ? (function(){
         if(normKey === "MERRYWEATHER_BASE") return "yellow";
-        if(normKey === "NEON_CITY_PRISON" || normKey === "APEX" || normKey === "APEX_HQ" || normKey.startsWith("APEX_")) return "blue";
+        if(normKey === "NEON_CITY_PRISON" || normKey === "APEX" || normKey === "APEX_HQ" || normKey.startsWith("APEX_")) return "yellow";
         if(normKey === "SECUROSERV_PORT" || normKey === "SECUROSERVE_PORT" || normKey.startsWith("SECUROSERV_")) return "red";
         return "yellow";
       })() : "yellow";
+
+      // Expose active restricted theme as body-scoped CSS vars so sibling UI (e.g. BREACH PROTOCOL HUD)
+      // can correctly color its SVG stroke/text.
+      try{
+        const themeMap = {
+          yellow: { rgb: "255, 238, 152", hot: "255, 196, 44" },
+          blue: { rgb: "96, 143, 255", hot: "96, 143, 255" },
+          red: { rgb: "255, 65, 65", hot: "255, 65, 65" },
+        };
+        const t = themeMap[restrictedTheme] || themeMap.yellow;
+        if(activeRestricted){
+          document.body?.style?.setProperty?.("--activeRestrictedRGB", t.rgb);
+          document.body?.style?.setProperty?.("--activeRestrictedRGBHot", t.hot);
+        }else{
+          document.body?.style?.removeProperty?.("--activeRestrictedRGB");
+          document.body?.style?.removeProperty?.("--activeRestrictedRGBHot");
+        }
+      }catch{}
 
       // SecuroServ hack mode is only allowed before bypass. After bypass, keep UI red,
       // but do not enable any hack overlays or input blocking.
@@ -6263,10 +7372,18 @@
 
       const screenGlitch = document.getElementById("screenGlitch");
       if(screenGlitch){
-        const on = isSecuroservHackActive;
+        const on = Boolean(isSecuroservHackActive || (typeof restrictedHackActive !== "undefined" && restrictedHackActive) || genericUnlocked || securoservFullyUnlocked);
         screenGlitch.classList.toggle("on", on);
-        if(on) startSecuroservEscalation();
+
+        // Only run SecuroServ escalation in actual SecuroServ hack mode.
+        if(isSecuroservHackActive) startSecuroservEscalation();
         else stopSecuroservEscalation();
+
+        // Provide a steady glitch level when just viewing an unlocked restricted area.
+        if(!isSecuroservHackActive && !(typeof restrictedHackActive !== "undefined" && restrictedHackActive)){
+          if(genericUnlocked || securoservFullyUnlocked) screenGlitch.style.setProperty("--g", "0.55");
+          else screenGlitch.style.removeProperty("--g");
+        }
       }
 
       const chaos = document.getElementById("securoservChaos");
@@ -6292,20 +7409,20 @@
 
       const overlay = document.getElementById("restrictedOverlay");
       if(overlay){
-        overlay.classList.toggle("on", activeRestricted);
+        overlay.classList.toggle("on", activeRestrictedVisual);
 
         overlay.classList.remove("theme-blue", "theme-red");
-        if(activeRestricted){
+        if(activeRestrictedVisual){
           if(restrictedTheme === "blue") overlay.classList.add("theme-blue");
           if(restrictedTheme === "red") overlay.classList.add("theme-red");
         }
       }
       const detailPanel = document.getElementById("popupDetails");
       if(detailPanel){
-        detailPanel.classList.toggle("restricted", activeRestricted);
+        detailPanel.classList.toggle("restricted", activeRestrictedVisual);
 
         detailPanel.classList.remove("theme-blue", "theme-red");
-        if(activeRestricted){
+        if(activeRestrictedVisual){
           if(restrictedTheme === "blue"){
             detailPanel.classList.add("theme-blue");
           }else if(restrictedTheme === "red"){
@@ -6353,6 +7470,7 @@
 
       setDetailLogoFor(null);
       setAreaNotesFor(null);
+      renderMapIntelFor(null);
 
       // Reset right panel
       document.getElementById("detailState").textContent = "NO TARGET";
@@ -6361,7 +7479,9 @@
       document.getElementById("dType").textContent = "—";
       document.getElementById("dZone").textContent = "—";
       document.getElementById("dBounds").textContent = "—";
-      document.getElementById("detailFoot").textContent = "waiting";
+      // footer intel already reset by renderMapIntelFor(null)
+      hideHackPrompt();
+      stopRestrictedHack();
 
       term("[CLEAR] selection cleared");
     }
