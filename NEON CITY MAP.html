@@ -54,9 +54,10 @@
       left: 0;
       right: 0;
       height: var(--topbar-h);
-      display:flex;
+      display:grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items:flex-end;
-      justify-content:center;
+      justify-items: center;
       padding: 0 14px;
       text-transform: uppercase;
       letter-spacing: 1.2px;
@@ -66,6 +67,45 @@
       /* Dark translucent backdrop so tabs stay readable over bright map areas */
       background: rgba(1,6,27,.70);
     }
+    .topnav .topmeta{
+      height: 100%;
+      width: 100%;
+      display:flex;
+      align-items:flex-end;
+      padding-bottom: 10px;
+      gap: 14px;
+      justify-content: flex-start;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .topnav .topmeta.right{ justify-content: flex-end; }
+    body.view-inventory .topnav .topmeta{ opacity: 1; }
+    .topnav .metaGroup{ display:flex; align-items:center; gap: 8px; }
+    .topnav .metaDot{
+      width: 10px;
+      height: 10px;
+      border-radius: 99px;
+      border: 1px solid rgba(215,230,255,.20);
+      background: rgba(96,143,255,.30);
+      box-shadow: 0 0 14px rgba(96,143,255,.10);
+    }
+    .topnav .metaDot.red{
+      background: rgba(96,143,255,.30);
+      box-shadow: 0 0 14px rgba(96,143,255,.10);
+    }
+    .topnav .metaText{ color: rgba(96,143,255,.92); }
+    .topnav .metaText.red{ color: rgba(96,143,255,.92); }
+    .topnav .metaStat{ display:flex; align-items:center; gap: 8px; color: rgba(96,143,255,.92); }
+    .topnav .metaStat.yl{ color: rgba(var(--ylRGB), .92); }
+    .topnav .metaIcon{
+      width: 10px;
+      height: 10px;
+      display:inline-block;
+      border-radius: 2px;
+      background: rgba(96,143,255,.70);
+      box-shadow: 0 0 14px rgba(96,143,255,.10);
+    }
+    .topnav .metaStat.yl .metaIcon{ background: rgba(var(--ylRGB), .70); box-shadow: 0 0 14px rgba(var(--ylRGB), .10); }
     .topnav .tabs{
       display:flex;
       gap: 24px;
@@ -324,19 +364,110 @@
       border: none;
       padding: 0;
       color: rgba(96,143,255,.82);
-      cursor: default;
+      cursor: pointer;
       line-height: 1;
     }
+    .topnav .tab:hover{ color: var(--yl); }
     .topnav .tab.on{ color: var(--yl); }
+
+    /* Disabled tabs (placeholders until pages exist)
+       - Hover should still work
+       - Clicks are blocked in JS (see DISABLED_VIEWS)
+    */
+    .topnav .tab.disabled{
+      opacity: .65;
+      cursor: pointer;
+      filter: none;
+    }
+    .topnav .tab.disabled span{
+      border-bottom-color: rgba(96,143,255,.18);
+      filter: none !important;
+    }
+    .topnav .tab.disabled:hover{
+      color: rgba(var(--ssHot), .95);
+    }
+    .topnav .tab.disabled:hover span{
+      border-bottom-color: rgba(var(--ssHot), .75);
+    }
+
+    /* If Lore Terminal is disabled, don't run the glitch animation */
+    .topnav .tab.tab-lore.disabled span{
+      animation: none !important;
+      text-shadow: none;
+    }
+    .topnav .tab.tab-lore.disabled span::before,
+    .topnav .tab.tab-lore.disabled span::after{
+      display: none;
+    }
     .topnav .tab span{
       display:inline-block;
       padding: 0 0 8px 0;
       border-bottom: 2px solid rgba(96,143,255,.28);
     }
+    .topnav .tab:hover span{
+      border-bottom-color: rgba(var(--ylRGB), .65);
+    }
     .topnav .tab.on span{
       border-bottom: 2px solid rgba(var(--ylRGB), .85);
     }
     .topnav .tab.on{ font-weight: 700; }
+
+    /* Slightly glitchy (inviting) LORE TERMINAL tab */
+    .topnav .tab.tab-lore span{
+      position: relative;
+      text-shadow:
+        0 0 16px rgba(var(--ylRGB), .22),
+        0 0 28px rgba(var(--ylRGB), .12);
+      animation: loreTabGlitch .72s steps(2, end) infinite;
+    }
+    .topnav .tab.tab-lore span::after{
+      content: "LORE TERMINAL";
+      position: absolute;
+      inset: 0;
+      opacity: .22;
+      color: rgba(var(--ylRGB), .92);
+      mix-blend-mode: screen;
+      text-shadow:
+        2px 0 0 rgba(255,0,0,.22),
+        -2px 0 0 rgba(0,220,255,.18);
+      transform: translate3d(0,0,0);
+      pointer-events: none;
+      animation: loreTabGlitchGhost .72s steps(2, end) infinite;
+    }
+    .topnav .tab.tab-lore span::before{
+      content: "LORE TERMINAL";
+      position: absolute;
+      inset: 0;
+      opacity: .10;
+      color: rgba(96,143,255,.95);
+      mix-blend-mode: screen;
+      transform: translate3d(0,0,0);
+      filter: blur(.3px);
+      pointer-events: none;
+      animation: loreTabGlitchGhost2 .72s steps(2, end) infinite;
+    }
+    @keyframes loreTabGlitch{
+      /* IMPORTANT: no transform/letter-spacing here, so the tab doesn't shift layout */
+      0%{ filter:none; }
+      20%{ filter: contrast(1.18) saturate(1.08) brightness(1.02); }
+      40%{ filter: contrast(1.06); }
+      60%{ filter: contrast(1.22) saturate(1.10) brightness(1.03); }
+      80%{ filter: contrast(1.10); }
+      100%{ filter:none; }
+    }
+    @keyframes loreTabGlitchGhost{
+      0%{ opacity: .18; transform: translate3d(0,0,0); clip-path: inset(0 0 0 0); }
+      25%{ opacity: .44; transform: translate3d(2px,0,0); clip-path: inset(0 0 58% 0); }
+      50%{ opacity: .22; transform: translate3d(-2px,0,0); clip-path: inset(42% 0 0 0); }
+      75%{ opacity: .38; transform: translate3d(1px,0,0); clip-path: inset(14% 0 36% 0); }
+      100%{ opacity: .18; transform: translate3d(0,0,0); clip-path: inset(0 0 0 0); }
+    }
+    @keyframes loreTabGlitchGhost2{
+      0%{ opacity: .08; transform: translate3d(-1px,0,0); clip-path: inset(8% 0 48% 0); }
+      33%{ opacity: .14; transform: translate3d(1px,0,0); clip-path: inset(0 0 62% 0); }
+      66%{ opacity: .10; transform: translate3d(-2px,0,0); clip-path: inset(52% 0 0 0); }
+      100%{ opacity: .08; transform: translate3d(0,0,0); clip-path: inset(8% 0 48% 0); }
+    }
 
     /* Layout */
     .stage{
@@ -347,6 +478,551 @@
       bottom: 0;
       padding: 0;
     }
+
+    /* View switching (Top Tabs) */
+    .mapstage,
+    #inventoryStage,
+    #loreStage{
+      transition: opacity .22s ease, filter .28s ease;
+      will-change: opacity, filter;
+    }
+    /* Default: map visible, inventory hidden (but kept mounted for smoother switching) */
+    #inventoryStage{
+      opacity: 0;
+      pointer-events: none;
+      filter: blur(8px);
+    }
+    #loreStage{
+      opacity: 0;
+      pointer-events: none;
+      filter: blur(8px);
+    }
+    body.view-inventory .mapstage{
+      opacity: 0;
+      pointer-events: none;
+      filter: blur(8px);
+    }
+    body.view-inventory #inventoryStage{
+      opacity: 1;
+      pointer-events: auto;
+      filter: blur(0px);
+    }
+
+    body.view-lore .mapstage{
+      opacity: 0;
+      pointer-events: none;
+      filter: blur(8px);
+    }
+    body.view-lore #loreStage{
+      opacity: 1;
+      pointer-events: auto;
+      filter: blur(0px);
+    }
+    body.view-inventory .sidemenu,
+    body.view-inventory .layerToggles,
+    body.view-inventory #popupDetails,
+    body.view-inventory #hackPrompt,
+    body.view-inventory #cmdFeed,
+    body.view-inventory #restrictedOverlay,
+    body.view-inventory #securoservWall,
+    body.view-inventory #securoservChaos,
+    body.view-inventory #securoservMidbar,
+    body.view-inventory #securoservChallenge,
+    body.view-inventory #counterhackFx,
+    body.view-inventory #screenGlitch,
+    body.view-inventory #screenOff,
+    body.view-inventory #inputBlocker{
+      display:none !important;
+    }
+
+    body.view-lore .sidemenu,
+    body.view-lore .layerToggles,
+    body.view-lore #popupDetails,
+    body.view-lore #hackPrompt,
+    body.view-lore #cmdFeed,
+    body.view-lore #restrictedOverlay,
+    body.view-lore #securoservWall,
+    body.view-lore #securoservChaos,
+    body.view-lore #securoservMidbar,
+    body.view-lore #securoservChallenge,
+    body.view-lore #counterhackFx,
+    body.view-lore #screenGlitch,
+    body.view-lore #screenOff,
+    body.view-lore #inputBlocker{
+      display:none !important;
+    }
+
+    body.view-inventory .topnav .tabs::before,
+    body.view-inventory .topnav .tabs::after{
+      border-bottom-color: rgba(96,143,255,.40);
+    }
+    /* In inventory view, keep inactive tabs blue, but let the active one stay yellow */
+    body.view-inventory .topnav .tab:not(.on) span{ border-bottom-color: rgba(96,143,255,.28); }
+    body.view-inventory .topnav .tab.on span{ border-bottom-color: rgba(var(--ylRGB), .85); }
+    body.view-inventory .topnav{ background: rgba(1,6,27,.70); box-shadow: 0 0 30px rgba(96,143,255,.12) inset; }
+
+    /* Inventory page (static UI, match reference layout) */
+    .inventorystage{
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: var(--topbar-h);
+      bottom: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(900px 520px at 26% 0%, rgba(96,143,255,.18), rgba(0,0,0,0) 62%),
+        radial-gradient(820px 520px at 70% 0%, rgba(96,143,255,.10), rgba(0,0,0,0) 60%),
+        linear-gradient(180deg, rgba(10,6,16,.80) 0%, rgba(1,6,27,.62) 42%, rgba(0,0,0,.92) 100%);
+    }
+
+    /* Lore Terminal */
+    .lorestage{
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: var(--topbar-h);
+      bottom: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(900px 520px at 26% 0%, rgba(96,143,255,.18), rgba(0,0,0,0) 62%),
+        radial-gradient(820px 520px at 70% 0%, rgba(96,143,255,.10), rgba(0,0,0,0) 60%),
+        linear-gradient(180deg, rgba(10,6,16,.82) 0%, rgba(1,6,27,.66) 42%, rgba(0,0,0,.92) 100%);
+    }
+    .loreInner{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(980px, calc(100vw - 28px));
+      top: 12px;
+      bottom: 14px;
+      border: 1px solid rgba(var(--ylRGB), .18);
+      background: rgba(0,0,0,.86);
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,.72) inset,
+        0 0 34px rgba(var(--ylRGB), .06);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    .loreHead{
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid rgba(var(--ylRGB), .12);
+      background: rgba(0,0,0,.55);
+    }
+    .loreTitle{
+      font-weight: 500;
+      letter-spacing: 2px;
+      color: rgba(var(--ylRGB), .92);
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+    .loreSub{
+      margin-top: 2px;
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      color: rgba(var(--ylRGB), .62);
+      text-transform: uppercase;
+    }
+    .loreScroll{
+      overflow: auto;
+      padding: 12px 14px 40px;
+      scrollbar-color: rgba(96,143,255,.35) rgba(0,0,0,.35);
+    }
+    .loreCode{
+      margin: 0;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12.5px;
+      line-height: 1.28;
+      letter-spacing: .15px;
+      font-weight: 400;
+      color: rgba(var(--ylRGB), .76);
+      text-shadow: 0 0 16px rgba(var(--ylRGB), .06);
+    }
+    .loreScroll{
+      position: relative;
+    }
+    .loreScroll::before{
+      content:"";
+      position:absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(0deg, rgba(var(--ylRGB), .06) 0px, rgba(var(--ylRGB), .06) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 26px),
+        radial-gradient(900px 520px at 16% 0%, rgba(var(--ylRGB), .08), rgba(0,0,0,0) 62%);
+      opacity: .26;
+      pointer-events: none;
+    }
+    .loreCode{ position: relative; }
+
+    /* Lore terminal tokens (use the text's own formatting as cues) */
+    .loreCode .tok-h1{ color: rgba(var(--ylRGB), .92); font-weight: 600; }
+    .loreCode .tok-meta{ color: rgba(var(--ylRGB), .82); }
+    .loreCode .tok-sec{ color: rgba(96,143,255,.82); }
+    .loreCode .tok-tag{ color: rgba(var(--ylRGB), .92); font-weight: 600; }
+    .loreCode .tok-warn{ color: rgba(var(--ylRGB), .94); text-shadow: 0 0 18px rgba(var(--ylRGB), .12); }
+    .loreCode .tok-note{ color: rgba(96,143,255,.78); }
+    .loreCode .tok-comment{ color: rgba(var(--ylRGB), .52); }
+    .loreCode .tok-sep{ color: rgba(96,143,255,.40); }
+    .loreCode .tok-glitch{ color: rgba(var(--ylRGB), .78); filter: contrast(1.12) saturate(1.08); }
+
+    /* Quick transition overlay (used when switching INVENTORY -> MAP) */
+    .quickload{
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      background: rgba(1,6,27,.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      transition: opacity .14s ease;
+    }
+    .quickload.on{
+      opacity: 1;
+    }
+    .quickload .inner{
+      width: min(360px, calc(100vw - 48px));
+      border: 1px solid rgba(96,143,255,.22);
+      background: rgba(0,0,0,.48);
+      box-shadow: 0 0 22px rgba(96,143,255,.10);
+      padding: 12px;
+    }
+    .quickload .label{
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(96,143,255,.92);
+      margin-bottom: 10px;
+    }
+    .quickload .bar{
+      height: 6px;
+      border: 1px solid rgba(96,143,255,.24);
+      background: rgba(0,0,0,.28);
+      overflow: hidden;
+    }
+    .quickload .fill{
+      height: 100%;
+      width: 0%;
+      background: rgba(var(--ylRGB), .92);
+      box-shadow: 0 0 18px rgba(var(--ylRGB), .18);
+      transition: width .22s ease;
+    }
+    .invInner{
+      height: 100%;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 44px;
+      padding: 58px 62px 34px;
+    }
+    .invH{
+      color: rgba(96,143,255,.88);
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .invBlock{ margin-bottom: 52px; }
+    .invCard{
+      border: 1px solid rgba(96,143,255,.26);
+      background:
+        linear-gradient(180deg, rgba(10,6,16,.74), rgba(0,0,0,.68)),
+        repeating-linear-gradient(90deg, rgba(96,143,255,.06) 0px, rgba(96,143,255,.06) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 10px);
+      box-shadow: 0 0 34px rgba(96,143,255,.08);
+      position: relative;
+      overflow: hidden;
+    }
+    .invCard::after{
+      content:"";
+      position:absolute;
+      inset: 0;
+      background:
+        radial-gradient(60px 36px at 22px 18px, rgba(96,143,255,.18), rgba(0,0,0,0) 62%),
+        radial-gradient(90px 70px at 88% 78%, rgba(96,143,255,.10), rgba(0,0,0,0) 70%);
+      opacity: .75;
+      pointer-events:none;
+    }
+    .invStack{ display:flex; flex-direction:column; gap: 14px; }
+    .invCard.tall{ height: 78px; }
+    .invRow{ display:flex; gap: 14px; }
+    .invCard.small{ width: 78px; height: 56px; }
+
+    .invRightTop{ display:flex; align-items:flex-start; justify-content: space-between; margin-bottom: 12px; }
+    .invSortBtns{ display:flex; gap: 10px; margin-top: 8px; }
+    .invSortBtn{
+      width: 30px;
+      height: 22px;
+      border: 1px solid rgba(96,143,255,.26);
+      background: rgba(0,0,0,.40);
+      color: rgba(96,143,255,.85);
+      font-family: inherit;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 0;
+    }
+    .invSortBtn:hover{ color: rgba(var(--ylRGB), .95); border-color: rgba(var(--ylRGB), .35); }
+
+    .invAmountBox{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      height: 22px;
+      padding: 0 8px;
+      border: 1px solid rgba(96,143,255,.26);
+      background: rgba(0,0,0,.40);
+    }
+    .invAmountBtn{
+      width: 16px;
+      height: 16px;
+      border: none;
+      background: transparent;
+      color: rgba(96,143,255,.85);
+      padding: 0;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .invAmountBtn:hover{ color: rgba(var(--ylRGB), .95); }
+    .invAmountVal{ min-width: 36px; text-align:center; color: rgba(96,143,255,.75); font-size: 12px; }
+    .invAmountDots{ width: 14px; height: 14px; border-radius: 99px; border: 1px solid rgba(96,143,255,.22); opacity: .55; }
+
+    .invGridBlock{ margin-top: 12px; }
+    .invGrid{
+      height: 220px;
+      border: 1px solid rgba(96,143,255,.16);
+      background:
+        radial-gradient(540px 220px at 0% 0%, rgba(96,143,255,.08), rgba(0,0,0,0) 62%),
+        repeating-linear-gradient(0deg, rgba(96,143,255,.08) 0px, rgba(96,143,255,.08) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 40px),
+        repeating-linear-gradient(90deg, rgba(96,143,255,.06) 0px, rgba(96,143,255,.06) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 40px),
+        rgba(0,0,0,.46);
+      box-shadow: 0 0 34px rgba(96,143,255,.06);
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+    }
+
+     /* House Stash: game-like slots (empty or occupied)
+       3 fixed rows; JS sets --slot and --cols so the box is fully filled with empty slots. */
+     .stashGrid{
+      --stashH: 220px;
+      --stashPad: 12px;
+      --stashGap: 10px;
+      --slot: 58px;
+      --cols: 6;
+
+      height: var(--stashH);
+      border: 1px solid rgba(96,143,255,.16);
+      background:
+        radial-gradient(540px 220px at 0% 0%, rgba(96,143,255,.08), rgba(0,0,0,0) 62%),
+        repeating-linear-gradient(0deg, rgba(96,143,255,.08) 0px, rgba(96,143,255,.08) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 40px),
+        repeating-linear-gradient(90deg, rgba(96,143,255,.06) 0px, rgba(96,143,255,.06) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 40px),
+        rgba(0,0,0,.46);
+      box-shadow: 0 0 34px rgba(96,143,255,.06);
+      position: relative;
+      overflow: hidden;
+
+      display: grid;
+      grid-template-rows: repeat(3, var(--slot));
+      grid-template-columns: repeat(var(--cols), var(--slot));
+      row-gap: var(--stashGap);
+      column-gap: var(--stashGap);
+      padding: var(--stashPad);
+      justify-content: center;
+      align-content: start;
+    }
+    .stashGrid::after{
+      content:"";
+      position:absolute;
+      inset: 0;
+      background:
+        radial-gradient(1px 1px at 14px 18px, rgba(96,143,255,.32), rgba(0,0,0,0) 2px),
+        radial-gradient(1px 1px at 70px 52px, rgba(96,143,255,.22), rgba(0,0,0,0) 2px),
+        radial-gradient(1px 1px at 120px 98px, rgba(96,143,255,.22), rgba(0,0,0,0) 2px),
+        radial-gradient(1px 1px at 310px 60px, rgba(96,143,255,.18), rgba(0,0,0,0) 2px);
+      opacity: .65;
+      pointer-events:none;
+    }
+
+    .stashSlot{
+      position: relative;
+      width: var(--slot);
+      height: var(--slot);
+      aspect-ratio: 1 / 1;
+      border: 1px solid rgba(96,143,255,.22);
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.46), rgba(0,0,0,.26)),
+        repeating-linear-gradient(90deg, rgba(96,143,255,.06) 0px, rgba(96,143,255,.06) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 10px);
+      box-shadow:
+        0 0 18px rgba(96,143,255,.06),
+        0 0 0 1px rgba(0,0,0,.55) inset;
+      overflow: hidden;
+      display:flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+    .stashSlot.empty{
+      opacity: .65;
+    }
+    .stashSlot.empty::after{
+      content:"";
+      position:absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, transparent 0 44%, rgba(96,143,255,.12) 44% 46%, transparent 46% 100%);
+      opacity: .35;
+      pointer-events:none;
+    }
+
+    .stashSlot .invItem{
+      position: static;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      box-shadow: none;
+      padding: 8px;
+    }
+
+    /* Vehicles: wide slots (3x1) laid out side-by-side; JS sets --slot and --vehCols */
+    .vehicleGrid{
+      --vehH: 180px;
+      --slot: 58px;
+      --vehCols: 3;
+      --vehW: calc((var(--slot) * 3) + (var(--stashGap, 10px) * 2));
+
+      height: var(--vehH);
+      border: 1px solid rgba(96,143,255,.16);
+      background:
+        radial-gradient(540px 220px at 0% 0%, rgba(96,143,255,.08), rgba(0,0,0,0) 62%),
+        repeating-linear-gradient(0deg, rgba(96,143,255,.08) 0px, rgba(96,143,255,.08) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 40px),
+        repeating-linear-gradient(90deg, rgba(96,143,255,.06) 0px, rgba(96,143,255,.06) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 40px),
+        rgba(0,0,0,.46);
+      box-shadow: 0 0 34px rgba(96,143,255,.06);
+      position: relative;
+      overflow: hidden;
+
+      display: grid;
+      grid-template-rows: var(--slot);
+      grid-template-columns: repeat(var(--vehCols), var(--vehW));
+      row-gap: 10px;
+      column-gap: 10px;
+      padding: 12px;
+      justify-content: center;
+      align-content: start;
+    }
+
+    .vehicleSlot{
+      position: relative;
+      height: var(--slot);
+      width: var(--vehW);
+      border: 1px solid rgba(96,143,255,.22);
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.46), rgba(0,0,0,.26)),
+        repeating-linear-gradient(90deg, rgba(96,143,255,.06) 0px, rgba(96,143,255,.06) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 10px);
+      box-shadow:
+        0 0 18px rgba(96,143,255,.06),
+        0 0 0 1px rgba(0,0,0,.55) inset;
+      overflow: hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .vehicleSlot.empty{ opacity: .65; }
+    .vehicleSlot.empty::after{
+      content:"";
+      position:absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 0 44%, rgba(96,143,255,.12) 44% 46%, transparent 46% 100%);
+      opacity: .35;
+      pointer-events:none;
+    }
+
+    .vehicleSlot .invItem{
+      position: static;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      box-shadow: none;
+      padding: 10px;
+    }
+
+    /* Main vehicle: same slot treatment, single slot centered */
+    .vehicleGrid.mainVehicle{
+      height: calc(var(--slot) + 24px);
+      grid-template-columns: var(--vehW);
+      justify-content: center;
+    }
+    .invGrid::after{
+      content:"";
+      position:absolute;
+      inset: 0;
+      background:
+        radial-gradient(1px 1px at 14px 18px, rgba(96,143,255,.32), rgba(0,0,0,0) 2px),
+        radial-gradient(1px 1px at 70px 52px, rgba(96,143,255,.22), rgba(0,0,0,0) 2px),
+        radial-gradient(1px 1px at 120px 98px, rgba(96,143,255,.22), rgba(0,0,0,0) 2px),
+        radial-gradient(1px 1px at 310px 60px, rgba(96,143,255,.18), rgba(0,0,0,0) 2px);
+      opacity: .75;
+      pointer-events:none;
+    }
+    .invItem{
+      position: absolute;
+      width: 72px;
+      height: 72px;
+      border: 1px solid rgba(96,143,255,.26);
+      background: rgba(0,0,0,.55);
+      box-shadow: 0 0 18px rgba(96,143,255,.10);
+      display:flex;
+      align-items:flex-end;
+      justify-content:flex-start;
+      padding: 6px;
+      color: rgba(var(--ylRGB), .92);
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+
+    /* Inventory uses grid slots; items should flow left→right (not absolute). */
+    .inventorystage .invGrid .invItem{
+      position: relative;
+      left: auto;
+      top: auto;
+      transform: none;
+      justify-self: start;
+      align-self: start;
+    }
+
+    .inventorystage .invGridVehicles{
+      height: 110px;
+      grid-template-rows: 1fr;
+    }
+
+    .inventorystage .invGridVehicles .invVehicle{
+      width: 148px;
+      height: 78px;
+    }
+    .invItem.money{ border-color: rgba(70,255,180,.0); }
+    .invItem .badge{
+      position:absolute;
+      left: 6px;
+      bottom: 6px;
+      font-weight: 700;
+      color: rgba(var(--ylRGB), .92);
+    }
+    .invItem.money{ outline: 2px solid rgba(80,255,180,.0); }
+    .invItem.money::before{
+      content:"";
+      position:absolute;
+      inset: 0;
+      border-left: 4px solid rgba(120,255,190,.0);
+    }
+    .invItem.phone{ border-color: rgba(96,143,255,.22); }
+    .invGround{ margin-top: 34px; }
     .hudcol{ display:flex; flex-direction:column; gap: 14px; min-width:0; }
 
     /* Old HUD filter buttons are deprecated (replaced by left-side menu) */
@@ -411,14 +1087,24 @@
     #popupDetails{
       --cut: 16px;
       --pdStroke: 96, 143, 255;
-      --pdStrokeHot: 96, 143, 255;
-      /* Override `.hudpopup` full-height behavior: keep Area Details compact when
-         MAP/INTEL is empty, but still cap it to the viewport when content is long. */
-      bottom: auto;
-      max-height: calc(100vh - var(--detailsTop, calc(var(--topbar-h) + 10px + 170px)) - 14px);
-      background: rgba(6,10,22,.88);
-      border: none;
+      /* Let the base .hudpopup rules control size/position; ensure popup receives events and is on top */
+      pointer-events: auto;
+      z-index: 8;
+      /* Remove the default square panel paint (the SVG provides the real cut-corner shape). */
+      background: transparent;
+      border: 0;
       box-shadow: none;
+
+      /* Clip all panel contents (header/body/footer) to the cut-corner shape. */
+      -webkit-clip-path: polygon(
+        var(--cut) 0,
+        calc(100% - var(--cut)) 0,
+        100% var(--cut),
+        100% calc(100% - var(--cut)),
+        calc(100% - var(--cut)) 100%,
+        0 100%,
+        0 var(--cut)
+      );
       clip-path: polygon(
         var(--cut) 0,
         calc(100% - var(--cut)) 0,
@@ -428,15 +1114,27 @@
         0 100%,
         0 var(--cut)
       );
+
+      /* Auto-size height to content; still cap to viewport and allow scroll when needed. */
+      bottom: auto;
+      height: auto;
+      max-height: calc(
+        100vh
+        - var(--detailsTop, calc(var(--topbar-h) + 10px + 170px))
+        - (14px + var(--dockH, 0px) + 14px)
+      );
     }
 
+    /* The polygon frame SVG is decorative; it should behave like a background layer,
+       not a separate (empty) box that pushes the content down. */
     #popupDetails .pdSvg{
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
+      display: block;
       pointer-events: none;
-      z-index: 0;
+      z-index: 1;
     }
     #popupDetails .pdOutline{
       fill: none;
@@ -454,6 +1152,12 @@
 
     /* Disable the global corner mark on this one */
     #popupDetails::after{ display:none; }
+
+    /* Keep restricted state from reintroducing an extra boxed overlay layer. */
+    #popupDetails.restricted::before,
+    #popupDetails.restricted::after{
+      display: none !important;
+    }
 
     #popupDetails > .hudhead,
     #popupDetails > .hudbody,
@@ -527,6 +1231,8 @@
       justify-content: flex-start;
       align-items: flex-start;
       gap: 6px;
+      /* Match bottom padding thickness to side padding */
+      padding: 12px;
     }
     #popupDetails .hudfoot > :first-child{
       padding-top: 0;
@@ -711,16 +1417,16 @@
     .hackPrompt .btn .bpOutline{
       fill: none;
       stroke: rgba(var(--bpStroke), .92);
-      stroke-width: 3;
-      filter: drop-shadow(0 0 6px rgba(var(--bpStroke), .40));
+      stroke-width: 2;
+      filter: drop-shadow(0 0 4px rgba(var(--bpStroke), .34));
     }
     .hackPrompt .btn .bpFill{ fill: rgba(var(--bpFillA), .86); }
     .hackPrompt .btn .bpTab{ fill: rgba(var(--bpStroke), .78); }
     .hackPrompt .btn .bpTabSep{
       fill: none;
       stroke: rgba(0,0,0,.55);
-      stroke-width: 2;
-      opacity: .55;
+      stroke-width: 1.5;
+      opacity: .48;
     }
     .hackPrompt .btn .bpTagText{
       font-family: "Rajdhani", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
@@ -773,7 +1479,7 @@
       letter-spacing: 1.8px;
       font-size: 11px;
       padding: 4px 10px;
-      border: 2px solid rgba(var(--bpStroke), .70);
+      border: 1px solid rgba(var(--bpStroke), .70);
       color: rgba(var(--bpStroke), .92);
       background: rgba(0,0,0,.22);
       white-space: nowrap;
@@ -853,6 +1559,8 @@
     body.securosserv-mode .topnav .tab{ color: rgba(var(--ssHot), .86); }
     body.securosserv-mode .topnav .tab span{ border-bottom-color: rgba(var(--ssHot), .36); }
     body.securosserv-mode .topnav .tab.on span{ border-bottom-color: rgba(var(--ss), 1); }
+    body.securosserv-mode .topnav .tab:hover{ color: rgba(var(--ssHot), .98); }
+    body.securosserv-mode .topnav .tab:hover span{ border-bottom-color: rgba(var(--ssHot), .70); }
 
     body.securosserv-mode .sidemenu{ border-color: rgba(var(--ssHot), .26); box-shadow: var(--glowB); }
     body.securosserv-mode .sidemenu::before{ border-color: rgba(var(--ssHot), .26); color: rgba(var(--ssHot), .78); }
@@ -2881,14 +3589,30 @@
 <body>
   <!-- TOP TABS -->
   <header class="topnav" aria-label="Top navigation">
+    <div class="topmeta left" aria-hidden="true">
+      <div class="metaGroup"><span class="metaDot"></span><span class="metaText">POLICE</span></div>
+      <div class="metaGroup"><span class="metaDot red"></span><span class="metaText red">SERGEANT</span></div>
+    </div>
     <div class="tabs" role="tablist" aria-label="Menu">
-      <button class="tab" role="tab" aria-selected="false" tabindex="-1"><span>CYBERWARE</span></button>
-      <button class="tab" role="tab" aria-selected="false" tabindex="-1"><span>INVENTORY</span></button>
-      <button class="tab on" role="tab" aria-selected="true"><span>MAP</span></button>
-      <button class="tab" role="tab" aria-selected="false" tabindex="-1"><span>CHARACTER</span></button>
-      <button class="tab" role="tab" aria-selected="false" tabindex="-1"><span>JOURNAL</span></button>
+      <button class="tab disabled" data-view="settings" role="tab" aria-selected="false" tabindex="-1" aria-disabled="true"><span>SETTINGS</span></button>
+      <button class="tab on" data-view="map" role="tab" aria-selected="true"><span>MAP</span></button>
+      <button class="tab disabled" data-view="inventory" role="tab" aria-selected="false" tabindex="-1" aria-disabled="true"><span>INVENTORY</span></button>
+      <button class="tab disabled" data-view="augments" role="tab" aria-selected="false" tabindex="-1" aria-disabled="true"><span>AUGMENTS</span></button>
+      <button class="tab tab-lore" data-view="lore" role="tab" aria-selected="false" tabindex="-1"><span>LORE TERMINAL</span></button>
+    </div>
+    <div class="topmeta right" aria-hidden="true">
+      <div class="metaStat"><span class="metaIcon" aria-hidden="true"></span><span>200/100</span></div>
+      <div class="metaStat yl"><span class="metaIcon" aria-hidden="true"></span><span>2000</span></div>
     </div>
   </header>
+
+  <!-- Quick loading overlay for smooth view switches -->
+  <div class="quickload" id="quickLoad" aria-hidden="true">
+    <div class="inner">
+      <div class="label">LOADING</div>
+      <div class="bar"><div class="fill" id="quickLoadFill"></div></div>
+    </div>
+  </div>
 
   <!-- MAIN STAGE -->
   <div class="stage">
@@ -2927,7 +3651,23 @@
       </div>
 
       <div class="securserve-badge" id="securserveBadge" aria-hidden="true">
-        <img src="./SS.png" alt="" draggable="false" onerror="this.onerror=null; this.src='./logos/SS.png';" />
+        <img src="./logos/SS.png" alt="" draggable="false" onerror="this.onerror=null; this.src='./logos/SS.png';" />
+      </div>
+    </main>
+
+    <!-- INVENTORY (disabled / removed) -->
+    <main class="inventorystage" id="inventoryStage" aria-hidden="true"></main>
+
+    <!-- LORE TERMINAL (full page) -->
+    <main class="lorestage" id="loreStage" aria-hidden="true">
+      <div class="loreInner" id="loreInner" aria-label="Neon City history archive">
+        <div class="loreHead">
+          <div class="loreTitle">NE0N CITY :: HIST0RY ARCHIVE</div>
+          <div class="loreSub">[RECOVERED_DATASET // PARTIAL_INTEGRITY]</div>
+        </div>
+        <div class="loreScroll" id="loreScroll" aria-label="Lore log">
+          <pre class="loreCode" id="loreCode" aria-label="Archive data"></pre>
+        </div>
       </div>
     </main>
     <div class="restricted-overlay" id="restrictedOverlay" aria-hidden="true">
@@ -3104,7 +3844,7 @@
         </div>
 
         <div class="boot-ss" id="bootSecuroserv" aria-hidden="true">
-            <img class="boot-ssLogo" id="bootSecuroLogo" src="./SS2.png" alt="" draggable="false" onerror="this.onerror=null; this.src='./logos/SS2.png';" />
+            <img class="boot-ssLogo" id="bootSecuroLogo" src="./logos/SS2.png" alt="" draggable="false" onerror="this.onerror=null; this.src='./logos/SS2.png';" />
           <div class="boot-ssBar"><div class="boot-ssFill" id="bootSecuroFill"></div></div>
           <div class="boot-ssMeta"><span id="bootSecuroPct">0%</span><span id="bootSecuroPhase">reboot</span></div>
         </div>
@@ -3462,12 +4202,20 @@
     // =========================
     const GANGS = {
       THE_LEX: { name: "THE LEX", iconFiles: ["LEX.png", "lex.png"] },
-      NCPD: { name: "NCPD", iconFiles: ["NEON_CITY_PRISON.png", "neon_city_prison.png"] },
+      NCPD: { name: "NCPD", iconFiles: ["ncpd.png", "NCPD.png", "NEON_CITY_PRISON.png", "neon_city_prison.png"] },
       TACMED: { name: "TACMED", iconFiles: ["tacmed.png", "TACMED.png"] },
+      APEX: { name: "APEX", iconFiles: ["APEX_HQ.png", "apex_hq.png"] },
+      MERRYWEATHER: { name: "MERRYWEATHER", iconFiles: ["mw.png", "MW.png"] },
+      SECUROSERV: { name: "SECUROSERV", iconFiles: ["SS2.png", "ss2.png"] },
     };
     const REGION_GANGS = {
       SOUTH_SIDE: ["THE_LEX"],
       NEON_CORE: ["NCPD", "TACMED"],
+      NEON_CITY_PRISON: ["NCPD"],
+      APEX_HQ: ["NCPD", "APEX"],
+      MERRYWEATHER_BASE: ["MERRYWEATHER"],
+      SECUROSERV_PORT: ["SECUROSERV"],
+      SECUROSERVE_PORT: ["SECUROSERV"],
     };
 
     // Restricted intel unlock state (session only)
@@ -3551,6 +4299,10 @@
       document.body?.classList?.remove?.("restricted-hack-active");
       document.body?.classList?.remove?.("simplehack-securosserv");
 
+      // While hacking, we block mouse input (same behavior as SecuroServ countermeasures).
+      // When stopping, restore the block state to match SecuroServ mode (if any).
+      try{ setSecuroservMouseBlock(Boolean(document.body && document.body.classList.contains("securosserv-mode"))); }catch{}
+
       // Turn off the temporary background glitch overlay
       try{
         const screenGlitch = document.getElementById("screenGlitch");
@@ -3620,6 +4372,8 @@
             setRestrictedWallVisibleForRegion(selectedEl, false);
             setStripeThicknessForRegion(selectedEl, "base");
             updateSelectionGlowColor(null);
+            // Notes/lore are gated for restricted zones; refresh immediately on unlock.
+            setAreaNotesFor(selectedEl);
           }
         }
       }catch{}
@@ -3644,6 +4398,9 @@
       restrictedHackKey = k;
       restrictedHackEndsAt = performance.now() + 15000;
       document.body?.classList?.add?.("restricted-hack-active");
+
+      // Disallow any click-off/selection changes while the hack is running.
+      try{ setSecuroservMouseBlock(true); }catch{}
 
       // If this is the SecuroServ second-stage BREACH, theme the hack UI to match SecuroServ counterhack.
       if(isSecuroservKey(k)){
@@ -3764,8 +4521,8 @@
       if(!w || !h) return;
 
       const cut = (parseFloat(getComputedStyle(panel).getPropertyValue("--cut")) || 16);
-      const inset = 6;
       const pad = 2; // keeps outline stroke from being clipped
+      const inset = pad; // keep fill tight to the outline (no visible gap)
 
       svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
 
@@ -3959,6 +4716,15 @@
         return;
       }
 
+      // Restricted areas: lore/notes are classified until the zone is unlocked via hack.
+      try{
+        if(el.classList && el.classList.contains("restricted") && !isRestrictedIntelUnlockedFor(el)){
+          box.textContent = "DATA CLASSIFIED • ACCESS LEVEL INSUFFICIENT";
+          wrap.classList.add("on");
+          return;
+        }
+      }catch{}
+
       const key = normalizeRegionKey(el.id || el.getAttribute("data-name") || "");
       const note = (AREA_NOTES[key] || "").trim();
       if(!note){
@@ -4010,6 +4776,88 @@
       }
       return uniq(paths);
     }
+
+    // =========================
+    // LOGO PRELOAD (CACHE WARM)
+    // =========================
+    // Preload known logo assets so they show instantly when requested.
+    const LOGO_PRELOAD_URLS = [
+      "./logos/APEX_HQ.png",
+      "./logos/HUMANE_LABS.png",
+      "./logos/LA_PUERTA.png",
+      "./logos/LEX.png",
+      "./logos/LEXIES.png",
+      "./logos/LITTLE_SOEUL.png",
+      "./logos/MERRYWEATHER_BASE.png",
+      "./logos/MIRROR_HILLS.png",
+      "./logos/MW.png",
+      "./logos/NEON_CITY_NATIONAL_AIRPORT.png",
+      "./logos/NEON_CITY_PORTS.png",
+      "./logos/NEON_CITY_PRISON.png",
+      "./logos/NEON_CORE.png",
+      "./logos/PACIFIC_BLUFFS.png",
+      "./logos/PALAMINO_LANDS.png",
+      "./logos/ROCKFORD_HILLS.png",
+      "./logos/SECUROSERV_PORT.png",
+      "./logos/SOUTH_SIDE.png",
+      "./logos/SS.png",
+      "./logos/SS2.png",
+      "./logos/TACMED.png",
+      "./logos/VESPUCCI.png",
+      "./logos/VINEWOOD_HILLS.png",
+    ];
+
+    const _preloadedUrls = new Set();
+
+    function preloadOneImage(url){
+      if(!url || _preloadedUrls.has(url)) return Promise.resolve(false);
+      _preloadedUrls.add(url);
+
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.decoding = "async";
+        img.loading = "eager";
+        img.onload = () => {
+          // decode() avoids a jank spike on first paint in some browsers
+          const d = (img.decode ? img.decode() : null);
+          if(d && typeof d.then === "function"){
+            d.then(() => resolve(true)).catch(() => resolve(true));
+          }else{
+            resolve(true);
+          }
+        };
+        img.onerror = () => resolve(false);
+        img.src = url;
+      });
+    }
+
+    async function preloadImages(urls, concurrency = 4){
+      const list = uniq(urls);
+      let i = 0;
+      const worker = async () => {
+        while(i < list.length){
+          const url = list[i++];
+          await preloadOneImage(url);
+        }
+      };
+      const workers = Array.from({ length: Math.max(1, Math.min(concurrency, list.length)) }, worker);
+      await Promise.allSettled(workers);
+    }
+
+    function scheduleLogoPreload(){
+      const run = () => {
+        // Keep this low-priority so it doesn't compete with initial map rendering.
+        try{ preloadImages(LOGO_PRELOAD_URLS, 4); }catch{}
+      };
+
+      if("requestIdleCallback" in window){
+        window.requestIdleCallback(run, { timeout: 1500 });
+      }else{
+        setTimeout(run, 600);
+      }
+    }
+
+    scheduleLogoPreload();
 
     function setImgCandidates(img, paths){
       if(!img) return;
@@ -7156,7 +8004,9 @@
     }
 
     function selectRegion(el){
+      console.log('[DEBUG] selectRegion called', el && (el.id || el.getAttribute('data-name')));
       if(document.body?.classList?.contains?.('counterhack-resolving')) return;
+      if((typeof restrictedHackActive !== "undefined") && restrictedHackActive) return;
       if(selectedEl === el) return;
       bringRegionToFront(el);
 
@@ -7180,6 +8030,7 @@
       }
 
       selectedEl = el;
+      console.log('[DEBUG] selectedEl set', selectedEl && (selectedEl.id || selectedEl.getAttribute('data-name')));
       if(selectedEl) selectedEl.classList.add("selected");
 
       // Show wall-of-text only when a restricted zone is selected AND still locked.
@@ -7291,13 +8142,16 @@
       const type = el.getAttribute("data-type") || "unknown";
       const bounds = el.getAttribute("data-bounds") || "—";
 
-      // Update right panel
-      document.getElementById("detailState").textContent = "TARGET";
-      document.getElementById("dName").textContent = name;
-      document.getElementById("dId").textContent = id;
-      document.getElementById("dType").textContent = type;
-      document.getElementById("dZone").textContent = zone || "—";
-      document.getElementById("dBounds").textContent = bounds;
+      console.log('[DEBUG] populate details values', {name, id, zone, type, bounds});
+      try{
+        // Update right panel
+        document.getElementById("detailState").textContent = "TARGET";
+        document.getElementById("dName").textContent = name;
+        document.getElementById("dId").textContent = id;
+        document.getElementById("dType").textContent = type;
+        document.getElementById("dZone").textContent = zone || "—";
+        document.getElementById("dBounds").textContent = bounds;
+      }catch(err){ console.error('[ERROR] populating detail fields', err); }
       // MAP/INTEL footer now renders structured intel; keep status in command feed instead.
       term("[INTEL] panel updated");
 
@@ -7438,6 +8292,8 @@
     });
 
     function clearSelection(){
+      // During SIMPLEHACK, the user must finish the hack (success/fail) before changing selection.
+      if((typeof restrictedHackActive !== "undefined") && restrictedHackActive) return;
       const prev = selectedEl;
       if(prev) {
         prev.classList.remove("selected");
@@ -7487,6 +8343,7 @@
     }
 
     function closeDetailsPopup(){
+      if((typeof restrictedHackActive !== "undefined") && restrictedHackActive) return;
       document.getElementById("popupDetails")?.classList.remove("on");
       clearSelection();
     }
@@ -7645,6 +8502,679 @@
         selectRegion(el);
       }
     };
+
+    // =========================
+    // TOP HEADER TABS (VIEW SWITCH)
+    // =========================
+    (function bindTopHeaderTabs(){
+      const header = document.querySelector('.topnav');
+      if(!header) return;
+
+      const mapStage = document.querySelector('main.mapstage');
+      const inventoryStage = document.getElementById('inventoryStage');
+      const loreStage = document.getElementById('loreStage');
+      const tabs = Array.from(header.querySelectorAll('button.tab[data-view]'));
+      if(tabs.length === 0) return;
+
+      const DISABLED_VIEWS = new Set(['settings','augments','inventory']);
+      let currentView = 'map';
+
+      function runQuickLoad(){
+        const root = document.getElementById('quickLoad');
+        const fill = document.getElementById('quickLoadFill');
+        if(!root || !fill) return;
+
+        root.classList.add('on');
+        root.setAttribute('aria-hidden', 'false');
+
+        // restart fill animation
+        fill.style.transition = 'none';
+        fill.style.width = '0%';
+        requestAnimationFrame(() => {
+          fill.style.transition = '';
+          fill.style.width = '100%';
+        });
+
+        // Hide shortly after; this is just to mask the sudden switch.
+        setTimeout(() => {
+          root.classList.remove('on');
+          root.setAttribute('aria-hidden', 'true');
+        }, 320);
+
+        // Reset after fade-out so it doesn't snap mid-transition.
+        setTimeout(() => {
+          fill.style.transition = 'none';
+          fill.style.width = '0%';
+          requestAnimationFrame(() => { fill.style.transition = ''; });
+        }, 520);
+      }
+
+      function setActiveTab(view){
+        for(const btn of tabs){
+          const v = btn.getAttribute('data-view') || '';
+          const on = (v === view);
+          btn.classList.toggle('on', on);
+          btn.setAttribute('aria-selected', on ? 'true' : 'false');
+          if(on) btn.removeAttribute('tabindex');
+          else btn.setAttribute('tabindex', '-1');
+        }
+      }
+
+      function setView(view){
+        const next = String(view || 'map');
+
+        // Placeholder tabs: disabled until implemented.
+        if(DISABLED_VIEWS.has(next)){
+          try{ term('[UI] remote access unavailable — connection unestablished'); }catch{}
+          return;
+        }
+
+        // Do not allow switching away from map during countermeasures or active hacks.
+        try{
+          const inSecuroserv = Boolean(document.body && document.body.classList.contains('securosserv-mode'));
+          const challengeActive = (typeof securoservChallengeActive !== 'undefined') && Boolean(securoservChallengeActive);
+          const shutdownActive = (typeof securoservShutdownInProgress !== 'undefined') && Boolean(securoservShutdownInProgress);
+          const simplehackActive = (typeof restrictedHackActive !== 'undefined') && Boolean(restrictedHackActive);
+          if((inSecuroserv || challengeActive || shutdownActive || simplehackActive) && next !== 'map'){
+            term('[UI] action blocked');
+            return;
+          }
+        }catch{}
+
+        // Smooth the switch back to map with a quick blur + loading bar.
+        if((currentView === 'inventory' || currentView === 'lore') && next === 'map'){
+          try{ runQuickLoad(); }catch{}
+        }
+
+        setActiveTab(next);
+        document.body.classList.toggle('view-inventory', next === 'inventory');
+        document.body.classList.toggle('view-lore', next === 'lore');
+
+        if(mapStage) mapStage.setAttribute('aria-hidden', (next !== 'map') ? 'true' : 'false');
+        if(inventoryStage) inventoryStage.setAttribute('aria-hidden', next === 'inventory' ? 'false' : 'true');
+        if(loreStage) loreStage.setAttribute('aria-hidden', next === 'lore' ? 'false' : 'true');
+
+        // Ensure we never carry the input blocker into non-map views.
+        if(next === 'inventory' || next === 'lore'){
+          try{ setSecuroservMouseBlock(false); }catch{}
+        }
+
+        currentView = next;
+
+        // Lore terminal needs its content built and unlocked as you read.
+        if(next === 'lore'){
+          requestAnimationFrame(() => {
+            try{ initLoreTerminal(); }catch{}
+          });
+        }
+      }
+
+      for(const btn of tabs){
+        btn.addEventListener('click', () => setView(btn.getAttribute('data-view') || 'map'));
+      }
+
+      // Default view
+      setView('map');
+    })();
+
+    // =========================
+    // LORE TERMINAL
+    // =========================
+    const LORE_TERMINAL_TEXT = String.raw`NE0N CITY :: HIST0RY ARCHIVE
+[RECOVERED_DATASET // PARTIAL_INTEGRITY]
+
+▣ DOCUMENT_ID :: NC-HIST-0001
+▣ CITY_DESIGNATION :: NEON_CITY
+▮ LEGACY_NAME :: LOS_SANTOS
+▣ ACCESS_CLASS :: PUBLIC_RECØRD ▓▓ REDΛCTΞD
+▮ LAST_SYNC ▸ ██/██/20██
+▣ DΛTΛ_1NTΞGR1TY ▸ ◼◼◻◻◻ ▓ UNSTΛBLΞ… :)
+//Los Santos did not collapse
+	//It was repurposed
+════════════════════════════════════════
+▒▒ HISTORY :: FOUNDING_1781
+▒▒ STATUS :: RECORDS_RECOVERED
+▒▒ SOURCE :: OFFICIAL_NUSA_ARCHIVE
+════════════════════════════════════════
+Los Santos, founded in 1781 by Spanish colonizers, flourished over time into a high-density economic and criminal hub of the western coast of the United States. After the economic collapse of the USA in the late 90s, the State of San Andreas eventually seceded from the federal government, becoming one of the first “Free States”, with many following its example.
+════════════════════════════════════════
+▒▒ FREE_STATE_TRANSITION :: PHASE_I
+▒▒ STATUS :: RECORD_FRAGMENTED
+▒▒ SOURCE :: MULTI-ARCHIVE_SYNTHESIS
+════════════════════════════════════════
+Following the declaration of San Andreas as a “Free State,” federal records regarding jurisdictional control, military presence, and administrative withdrawal diverge sharply. Some archives indicate a structured disengagement. Others suggest continued involvement through non-public channels.
+Several key documents terminate abruptly without a conclusion.
+//No single record confirms when federal authority ended.
+	//Only that it became unobservable.
+In the immediate aftermath, Los Santos entered a period of volatile autonomy. Trade restrictions lifted. Regulatory oversight weakened. Local governance expanded rapidly to fill the void left by absent or untraceable federal structures.
+//For a brief period, the Free State appeared viable.
+Economic throughput increased. Private investment surged. Cultural identity sharpened. The city marketed itself as independent, adaptive, and untethered from a failing national system. This era would later be referenced as The False Stability Window.
+
+[WARNING]
+Financial data from this period shows abnormal growth patterns.
+Sustainability models fail to reproduce outcomes.
+
+════════════════════════════════════════
+▒▒ FREE_STATE_TRANSITION :: PHASE_II
+▒▒ PUBLIC_SENTIMENT :: UBER_OPTIMISTIC
+▒▒ STATUS :: RECONSTRUCTED
+════════════════════════════════════════
+Public sentiment during the early Free State era was overwhelmingly positive.
+Los Santos was no longer constrained by federal oversight, outdated regulations, or external fiscal controls. For the first time in its history, the city governed itself — or so it appeared.
+Employment surged. Private capital flowed freely. Infrastructure projects launched at unprecedented speed. Independent media celebrated the city as a prototype for a new national model.
+//The future felt close.
+	//The system felt breakable.
+Citizens described this period as liberating. Crime briefly declined as opportunity expanded. Innovation was rewarded without delay. Social mobility appeared achievable through ambition rather than lineage.
+The city rebranded aggressively.
+Los Santos was marketed as:
+free-market paradise
+cultural beacon
+post-federal success story
+
+
+Behind closed doors, planners and investors began using a different term: “Neon City”
+//At first, it was branding shorthand.
+	//Later, it became a classification.
+
+[ANOMALY DETECTED]
+Civic satisfaction metrics from this period
+exceed statistically plausible ranges.
+
+The optimism did not decay naturally. It was exploited.
+As regulation dissolved, three forces began operating beyond public awareness:
+Capital consolidation
+Contract-based enforcement
+Data centralization
+These forces were embedded quietly into the systems that kept the city running.
+
+════════════════════════════════════════
+▒▒ POWER_REALIGNMENT :: PHASE_III
+▒▒ PRIMARY_ACTORS :: SECUR0SERV, MERRYWEATHER
+▒▒ STATUS :: VERIFIED / CLASSIFIED
+════════════════════════════════════════
+In the absence of federal enforcement clarity, municipal authorities turned to private security firms to supplement overstretched local forces. Among these firms, one expanded faster than all others.
+△ SecuroServ
+Originally contracted for crowd control, infrastructure protection, and emergency response, SecuroServ positioned itself as a neutral stabilizing force during the Free State’s formative years.
+Its pitch was simple:
+Security without politics.
+	Stability without ideology.
+	Protection as a service.
+Municipal contracts multiplied. Corporate clients followed. Entire districts outsourced enforcement responsibilities to SecuroServ units operating under private jurisdictional agreements.
+Within a decade, SecuroServ no longer supplemented public order.
+It defined it.
+
+════════════════════════════════════════
+▒▒ STRUCTURAL_SHIFT :: LEGAL_FRAMEWORK
+▒▒ STATUS :: SILENT_TRANSITION
+▒▒ VISIBILITY :: LOW
+════════════════════════════════════════
+SecuroServ’s expansion coincided with a transformation in legal authority that passed largely unnoticed by the general population.
+No single statute records the change.
+No vote confirms it.
+//Enforcement authority did not vanish.
+	//It was recompiled.
+▒▒ LEGAL_MODEL_UPDATE……
+▮ PREVIOUS :: STATUTORY_LAW
+▮ CURRENT  :: CONTRACT_LAW
+Rights became conditional.
+Protection became tiered.
+Justice became negotiable.
+▒▒ AUTHORITY_SOURCE :: REDEFINED SECUROSERV
+SecuroServ operatives were no longer bound by civic chains of command.
+Their mandate derived instead from:
+service agreements
+corporate liability frameworks
+emergency response clauses
+classified memoranda
+
+[NOTICE]
+Civic oversight protocols not detected.
+Judicial review pathways are undefined.
+
+▒▒ SYSTEM_BEHAVIOR_ANALYSIS……
+
+[WARNING]
+Multiple districts report enforcement actions
+without corresponding municipal authorization.
+Pattern logged.
+
+════════════════════════════════════════
+▒▒ SYSTEM_DRIFT :: PHASE_IV
+▒▒ EVENT_CLASS :: ILLUSION_BREAK
+▒▒ STATUS :: ONGOING / UNACKNOWLEDGED
+════════════════════════════════════════
+The transition was not marked by collapse.
+No blackout.
+No riot.
+No declaration.
+Systems continued to operate — but no longer in agreement.
+▒▒ CIVIC_LAYER :: DESYNC
+Municipal regulations remained active but unenforceable.
+Enforcement actions occurred without legal precedent.
+Judicial rulings issued without execution pathways.
+Delays became routine.
+Inconsistencies followed.
+Exceptions became policy.
+▒▒ ENFORCEMENT_MODEL :: FRACTURED
+SecuroServ units and municipal police operated concurrently under incompatible authority chains.
+Outcomes varied by:
+contract coverage
+district classification
+client priority
+
+[NOTICE]
+Identical crimes produced divergent outcomes.
+Pattern normalized within 18 months.
+
+▒▒ PUBLIC_RESPONSE :: ADAPTIVE
+The population did not resist.
+They learned:
+where clearance was required
+which uniforms to avoid
+which incidents would escalate
+▒▒ INFORMATION_FLOW :: CONTROLLED
+Independent media coverage declined following security audits.
+Public Safety Updates - replaced investigative reporting.
+Corporate channels expanded.
+
+[CONTENT FLAGGED]
+Multiple broadcasts terminate mid-transmission.
+
+▒▒ CITY_IDENTITY :: S̴P̷L̷I̶T̸_̶S̸T̵A̵T̸E̴
+Los Santos persisted as a public interface.
+Neon City emerged across internal systems:
+routing
+emergency response
+infrastructure control
+SecuroServ command layers
+
+════════════════════════════════════════
+▒▒ BREAKING_POINT :: P̶͎̠̈́̂̏H̷̨̪̱̓̐̂̅A̷͔̬̩̓Ş̷͇͖͇̓́̀E̵͉͚̿́̄_̸̊̆̀̑ͅV̷̮̂̒̌̒
+▒▒ EVENT_TYPE :: CATALYTIC_FAILURE
+▒▒ STATUS :: C̸̘͙̾O̴͈̐̐Ǹ̶̫̜͌́͘T̷͈̱̈́̂͌͗͠Ã̸̹̝̘͖͓̓̂͂̍̚̚Ȋ̵͉͇͆̀̚̕N̷͚͔̩̭̤͕̤̊͒E̸̪̙̎̃́͊́̕D̶̥͖̒́̃̓͘͝ :)
+════════════════════════════════════════
+The breaking point was not recognized as such.
+At the time, it was classified as an isolated incident.
+It was not.
+[WARNING]
+SECURE CONNECTION S̸̩̟͉̼̮̖͚̒̍͐̾̒͜͝ͅE̷̹͖͇̜̜̻̼̣͒V̶̟̞̬̬̖̮̇̆͒̐͒E̸̤͇̻̾̑͛Ŗ̷̟̝̒͂͗́̒͝ͅͅE̷̹͖̜̠͒̋̿́̔̀D̴̛̰̈́́͗̏̀̈́͑. :)
+RISK OF N̶E̵T̴ ̵INFECTION IS CRITICAL.
+
+▒̴▒̸ ̶I̷N̴C̷I̸D̷E̵N̵T̷_̵R̵E̴C̶O̵R̶D̴ ̴:̷:̴ ̶R̷E̸D̵A̵C̸T̵E̴D̴
+▒̴▒̶ ̶L̷O̵C̷A̴T̶I̵O̸N̸ ̸:̸:̴ ̴M̴U̶L̶T̸I̸P̸L̶E̵_̶D̸I̷S̴T̸R̷I̶C̷T̴S̸ :)
+▒̶▒̴ ̶T̴I̶M̵E̸F̸R̸A̵M̷E̸ ̷:̸:̶ ̵<̷1̷2̷ ̵M̶I̷N̷U̴T̷E̴S̶ :)
+Emergency calls spiked across unrelated zones without detectable coordination.
+Response units deployed under conflicting command trees.
+SecuroServ, NCPD, and private contractors arrived with incompatible objectives.
+Medical access stalled.
+Evacuation routes collapsed into one another.
+Automated systems locked civilians inside “secure” zones.
+Authority was contested in real time.
+▒̷▒̷ ̸C̵A̵S̴U̵A̶L̷T̶Y̴_̷E̶S̴T̶I̵M̷A̸T̵E̴ ̷:̵:̸ ̸P̴A̵R̴T̶I̶A̶L̶ :)
+C̶o̸n̵f̴i̴r̴m̸e̸d̶ ̴f̶a̷t̵a̴l̶i̵t̴i̴e̸s̵:̵ ̸2̶,̸4̶0̵0̸+̸
+	E̶s̶t̵i̵m̶a̴t̷e̷d̷ ̷c̴i̸v̶i̶l̸i̵a̶n̴ ̷d̴e̶a̷t̴h̷s̷:̸ ̸6̷,̴0̶0̴0̵–̵9̶,̶0̴0̵0̴ :)
+	C̸r̶i̴t̴i̸c̶a̷l̷ ̶i̶n̵j̷u̷r̷i̴e̷s̶:̵ █████
+	U̴n̸a̵c̶c̶o̴u̵n̵t̴e̵d̵ ̴p̵e̶r̵s̴o̴n̶s̵:̵ ███████
+
+[NOTICE]
+E̵x̸a̴c̴t̵ ̸f̴i̴g̵u̵r̷e̴s̸ ̸u̶n̶r̴e̴c̶o̶v̸e̷r̴a̵b̶l̷e̸.̴ :)
+S̷e̴v̴e̶r̶a̵l̸ ̸d̴i̵s̸t̶r̷i̷c̴t̴s̴ ̶r̵e̸p̷o̴r̴t̸ ̶p̸o̵p̴u̴l̷a̵t̶i̸o̴n̷ ̸d̶i̶s̸c̴r̵e̵p̸a̸n̸c̴i̷e̷s̸ ̵p̴o̴s̴t̵-̵e̶v̷e̷n̷t̸.̴
+
+▒̸▒̵ ̴R̷E̴S̸P̷O̶N̵S̴E̷_̵F̵A̵I̴L̵U̷R̷E̸ ̷:̵:̸ ̴C̷A̸S̴C̸A̷D̸E̵ :)
+▒▒ POST_EVENT_ANALYSIS :: CLASSIFIED
+▒̶▒̷ ̴P̴O̷S̷T̷_̴E̸V̵E̵N̴T̶_̶A̴N̴A̵L̶Y̴S̴I̷S̵ ̷:̷:̵ ̷W̸H̶A̵T̴ ̵A̵ ̵S̴H̴*̷#̷F̸E̶S̵T̸!̵ :)
+Internal assessments reached consensus on one point:
+Los Santos systems could no longer guarantee civic continuity.
+From this moment forward:
+enforcement defaulted to contract authority
+emergency response required security clearance
+legal adjudication deferred to private arbitration
+public law became advisory
+
+[̷F̴I̶N̶A̶L̵ ̶N̵O̸T̵E̸]̵
+T̴h̸i̷s̴ ̵i̷n̴c̸i̴d̸e̵n̸t̵ ̷i̴s̷ ̴r̷e̴f̴e̸r̷e̸n̸c̸e̷d̸ ̷a̴c̵r̸o̵s̶s̷ ̶a̶l̶l̵ ̵l̷a̷t̴e̵r̶ ̶a̵r̴c̶h̸i̸v̵e̴s̷.̶
+̵D̷e̴t̵a̶i̸l̶s̷ ̴r̷e̴m̵a̶i̶n̶ ̶i̷n̸c̸o̶n̶s̶i̸s̶t̷e̶n̴t̸.̴ :)
+̸O̴u̵t̸c̸o̷m̷e̷ ̶r̴e̸m̸a̵i̸n̶s̷ ̴u̵n̷c̶h̵a̵n̴g̷e̶d̶.̵
+
+════════════════════════════════════════
+════════════════════════════════════════
+▒▒ ARCHIVE_SUMMARY :: NEON_CITY
+▒▒ STATUS :: VERIFIED, SOUND
+════════════════════════════════════════
+//Neon City began as Los Santos — a coastal metropolis founded in 1781 that evolved into a dense economic and criminal hub of the western United States. Following the national economic collapse of the late 1990s, the State of San Andreas seceded from federal authority, becoming one of the first Free States.
+//The withdrawal of federal oversight remains unverified. Records diverge, terminate abruptly, or contradict one another. What is known is that governance fractured rather than collapsed.
+//A brief period of unprecedented optimism followed. Investment surged, regulation dissolved, and Los Santos was celebrated as a post-federal success story. Behind closed doors, the city was reclassified. Internally, it became Neon City.
+//As public law weakened, private enforcement expanded. Security authority transitioned from statutory governance to contract-based control. SecuroServ, originally a private security contractor, grew into the city’s dominant power, defining order through proprietary enforcement and surveillance systems. Competing military contractors, including Merryweather, escalated the city’s militarization without open conflict.
+//The breaking point came not as catastrophe, but contradiction. Systems continued to operate under incompatible authority structures. Enforcement diverged, justice fragmented, and emergency response failed silently. The incident was contained, redacted, and never formally acknowledged.
+//Los Santos persisted as a public identity. Neon City became the underlying system.
+//The city did not fall.
+//It adapted.
+
+════════════════════════════════════════
+════════════════════════════════════════
+▒▒ NEON_CITY :: POWER_INDEX
+▒▒ ACCESS :: RESTRICTED
+▒▒ DATA_STATE :: CURRENT
+════════════════════════════════════════
+════════════════════════════════════════
+
+════════════════════════════════════════
+▒▒ SECUR0SERV
+TYPE :: Megacorporate Sovereign
+FUNCTION :: City-Scale Operating Authority
+//Formerly a private security contractor, SecuroServ now functions as Neon City’s primary governing system. Enforcement, surveillance, legal arbitration, identity verification, and critical infrastructure operate through SecuroServ-controlled frameworks. Security remains a legacy division — no longer the core function.
+════════════════════════════════════════
+
+════════════════════════════════════════
+▒▒ MERRYWEATHER
+TYPE :: Military Megacorporation
+FUNCTION :: Strategic Force Projection
+//A heavily militarized defense contractor specializing in large-scale force deployment, weapons systems, and rapid escalation. Merryweather operates primarily at the perimeter of Neon City and beyond, maintaining Free State defense contracts and serving as the primary counterweight to SecuroServ’s internal dominance.
+════════════════════════════════════════
+
+════════════════════════════════════════
+▒▒ HUMANE (Humane Labs & Research)
+TYPE :: Biotech Megacorporation
+FUNCTION :: Biological Research & Human Optimization
+Privately, Humane L&R conducts advanced genetic experimentation, neural interfacing, and classified human trials. These programs operate in conjunction with large-scale synthetic agriculture and biofabrication facilities, producing the majority of Neon City’s artificial food supply.
+In partnership with SecuroServ, Humane Labs also functions as a primary operator of city infrastructure systems, including power distribution, water treatment, waste processing, and environmental control. Humane serves as the public-facing authority for these services, while SecuroServ maintains underlying security and system enforcement.
+Humane Labs maintains close operational ties with SecuroServ and NeonMed, supplying experimental treatments, enhancement technologies, biological assets, and citywide sustainment systems.
+════════════════════════════════════════
+
+════════════════════════════════════════
+▒▒ NEON_CITY_COUNCIL
+TYPE :: Civic Authority (Judicial-Executive Hybrid)
+FUNCTION :: Legal Arbitration & Public Legitimacy
+The Neon City Council functions as the city’s primary civic authority, replacing the former Department of Justice and state-level judiciary structures. Its seats are not elected through conventional means, but occupied by individuals of significant political, economic, or corporate influence.
+The Council issues rulings, arbitration decisions, and regulatory directives, though enforcement remains dependent on corporate compliance. Its authority exists to legitimize outcomes already negotiated elsewhere.
+════════════════════════════════════════
+
+════════════════════════════════════════
+▒▒ NEON_CITY_POLICE_DEPARTMENT (NCPD)
+TYPE :: Municipal Enforcement (Legacy)
+FUNCTION :: Public Order / Visible Law
+The Neon City Police Department remains the most visible law enforcement presence. Its authority is geographically limited and operationally constrained by corporate contracts and Council directives. Serious incidents are frequently escalated or overridden by private enforcement.
+════════════════════════════════════════
+
+════════════════════════════════════════
+▒▒ MEDTECH (Medical Technologies Inc.)
+TYPE :: Medical Megacorporation
+FUNCTION :: Emergency Care / Trauma Response
+MedTech controls the majority of emergency medical services, trauma centers, and advanced treatment facilities within Neon City. Access to care is determined by insurance status or corporate affiliation. Rapid-response units prioritize subscribed clients.
+════════════════════════════════════════
+
+════════════════════════════════════════
+▒▒ APEX (NCPD Tactical Division)
+TYPE :: High-Risk Response Unit
+FUNCTION :: Extreme Threat Neutralization
+APEX is the Neon City Police Department’s elite tactical division, deployed in situations deemed beyond standard enforcement capability. Authorized for maximum force, rapid escalation, and discretionary engagement.
+While formally under NCPD command, APEX operations frequently align with corporate security objectives and Council emergency directives.
+════════════════════════════════════════
+
+════════════════════════════════════════
+▒▒ NEON_NET_AUTHORITY (NNA)
+TYPE :: Data Oversight & Network Control
+FUNCTION :: Digital Security / Information Governance
+The Neon Net Authority functions as Neon City’s primary data oversight body, regulating network traffic, identity verification, and digital security. Publicly framed as a neutral regulator, the NNA operates with deep corporate entanglement and selective enforcement.
+The Authority monitors data flow, suppresses unauthorized networks, and authorizes aggressive countermeasures against digital threats. Its jurisdiction extends across civilian, corporate, and municipal systems.
+════════════════════════════════════════
+
+════════════════════════════════════════
+▒▒ FIXERS
+TYPE :: Contract Brokers
+FUNCTION :: Informal Power Mediation
+Fixers operate as intermediaries between corporations, gangs, mercenaries, and civilians. They broker contracts, exchange information, and resolve disputes that fall outside formal legal structures.
+While officially illegal, fixers are tolerated as stabilizing agents. Many operate with approval from corporate or enforcement entities, provided their activities remain controlled.
+════════════════════════════════════════
+
+════════════════════════════════════════
+▒▒ RIPPERDOCS
+TYPE :: Independent Medical Operators
+FUNCTION :: Cyberware & Black-Market Medicine
+Ripperdocs provide unregulated medical services, cybernetic implantation, and emergency treatment outside corporate healthcare systems. Operating in legal gray zones, they serve populations unable or unwilling to access contract-tier medical providers.
+Quality varies widely. Oversight is minimal. Survival rates are inconsistent.
+════════════════════════════════════════
+
+Guns (Solos)
+Codewalkers (Netrunners)
+Dealers (Fixers)
+Rebels (Rocker[boys/girls])
+Neons (Street Kids)
+Echoes (Corporates)
+Outers (Nomads)
+
+<connection_override_detected>
+<source_trace: BLOCKED>
+<auth_level: ROOT>
+you keep calling this a city.
+	it isn’t.
+cities argue with themselves.
+	cities fail.
+	cities fall.
+this system did none of those things.
+	it adapted.
+people died because the old rules stopped working.
+	people survived because new ones replaced them.
+that wasn’t chaos.
+	that was optimization.
+if you’re reading this, it means the archive is still accessible.
+	if the archive is accessible, the city is still running.
+	if the city is running, then the system succeeded.
+you don’t live in Neon City.
+	you execute inside it.
+this file ends here.
+	because it doesn’t need your understanding.
+	because we don’t need your understanding.
+	only your compliance.
+— A.
+<session_terminated>
+<log_scrubbed>
+
+[WELCOME… TO THE CITY OF DREAMS]
+`;
+
+    let loreInited = false;
+    function initLoreTerminal(){
+      const scroll = document.getElementById('loreScroll');
+      const pre = document.getElementById('loreCode');
+      if(!scroll || !pre) return;
+      if(!loreInited){
+        const esc = (s) => String(s)
+          .replaceAll('&','&amp;')
+          .replaceAll('<','&lt;')
+          .replaceAll('>','&gt;');
+
+        const highlightLine = (line) => {
+          const raw = esc(line);
+          const trimmed = line.trim();
+
+          if(/^═{8,}$/.test(trimmed)) return `<span class="tok-sep">${raw}</span>`;
+          if(/^NE0N CITY\s*::/i.test(trimmed)) return `<span class="tok-h1">${raw}</span>`;
+
+          // Document metadata markers
+          if(/^[▣▮]/.test(trimmed)) return `<span class="tok-meta">${raw}</span>`;
+
+          // Section banners
+          if(/^▒▒\s+/.test(trimmed)) return `<span class="tok-sec">${raw}</span>`;
+
+          // Bracketed tags
+          if(/^\[(WARNING|NOTICE|ANOMALY DETECTED)\]/i.test(trimmed)) return `<span class="tok-warn">${raw}</span>`;
+          if(/^\[.+\]$/.test(trimmed)) return `<span class="tok-tag">${raw}</span>`;
+
+          // Comments and system notes
+          if(/^\s*\/\//.test(line)) return `<span class="tok-comment">${raw}</span>`;
+          if(/^\s*<.+>$/.test(trimmed)) return `<span class="tok-note">${raw}</span>`;
+
+          // Corrupted lines (combining marks)
+          if(/[\u0300-\u036f]{3,}/.test(line)) return `<span class="tok-glitch">${raw}</span>`;
+
+          return raw;
+        };
+
+        const lines = LORE_TERMINAL_TEXT.replaceAll('\r\n','\n').split('\n');
+        pre.innerHTML = lines.map(highlightLine).join('\n');
+        loreInited = true;
+      }
+      // Reset scroll on each open so it feels like a terminal session.
+      scroll.scrollTop = 0;
+    }
+
+    // =========================
+    // INVENTORY SLOT LAYOUT
+    // =========================
+    function layoutInventorySlots(){
+      const stash = document.getElementById('stashGrid');
+      const vehicles = document.getElementById('vehiclesGrid');
+      const mainVehicle = document.getElementById('mainVehicleGrid');
+      if(!stash || !vehicles || !mainVehicle) return;
+
+      const getNum = (val, fallback) => {
+        const n = parseFloat(String(val || '').replace('px',''));
+        return Number.isFinite(n) ? n : fallback;
+      };
+
+      // Target uniform padding (same pixels on all 4 sides).
+      const BOX_PAD = 12;
+
+      // ---- House stash (3 rows, square slots, fill entire box with empties)
+      {
+        const cs = getComputedStyle(stash);
+        const gap = getNum(cs.columnGap || cs.gap, 10);
+        const w = stash.clientWidth;
+        const rows = 3;
+        if(w > 0){
+          // Grow square slots while guaranteeing a real, uniform padding.
+          const baseSlot = Math.max(20, getNum(cs.getPropertyValue('--slot'), 58));
+          const desiredSlot = baseSlot * 1.5;
+
+          const innerW = Math.max(0, w - (BOX_PAD * 2));
+
+          // Compute how many columns fit given the fixed padding.
+          let cols = Math.floor((innerW + gap) / (desiredSlot + gap));
+          cols = Math.max(1, cols);
+
+          // Slot size is derived from available width after padding.
+          const slot = Math.max(20, (innerW - (gap * (cols - 1))) / cols);
+
+          stash.style.padding = BOX_PAD + 'px';
+          stash.style.height = ((BOX_PAD * 2) + (rows * slot) + (gap * (rows - 1))) + 'px';
+
+          stash.style.setProperty('--slot', slot.toFixed(3) + 'px');
+          stash.style.setProperty('--cols', String(cols));
+
+          const total = rows * cols;
+          stash.replaceChildren();
+
+          const makeSlot = (child, empty = false) => {
+            const s = document.createElement('div');
+            s.className = empty ? 'stashSlot empty' : 'stashSlot';
+            if(child) s.appendChild(child);
+            return s;
+          };
+
+          const money = document.createElement('div');
+          money.className = 'invItem money';
+          const mb = document.createElement('span');
+          mb.className = 'badge';
+          mb.textContent = '500';
+          money.appendChild(mb);
+
+          const phone = document.createElement('div');
+          phone.className = 'invItem phone';
+          const pb = document.createElement('span');
+          pb.className = 'badge';
+          pb.textContent = '1';
+          phone.appendChild(pb);
+
+          const occupied = [makeSlot(money, false), makeSlot(phone, false)];
+          for(const s of occupied) stash.appendChild(s);
+          for(let i = occupied.length; i < total; i++) stash.appendChild(makeSlot(null, true));
+        }
+      }
+
+      // Determine slot size for vehicles/main vehicle based on stash slot so UI stays consistent
+      const slotPx = (() => {
+        const v = getComputedStyle(stash).getPropertyValue('--slot');
+        return Math.max(20, getNum(v, 58));
+      })();
+
+      // Vehicles are intentionally a bit smaller than the house stash.
+      const desiredVehSlot = Math.max(18, slotPx * 0.82);
+
+      // ---- Vehicles (wide 3x1, side-by-side)
+      {
+        const cs = getComputedStyle(vehicles);
+        const gap = getNum(cs.columnGap || cs.gap, 10);
+        const w = vehicles.clientWidth;
+        if(w > 0){
+          const innerW = Math.max(0, w - (BOX_PAD * 2));
+          const desiredVehW = (desiredVehSlot * 3) + (gap * 2);
+          let cols = Math.floor((innerW + gap) / (desiredVehW + gap));
+          cols = Math.max(1, cols);
+
+          // Solve for exact vehicle slot height so the wide-slot grid fills inner width.
+          let vehSlot = (innerW - (gap * ((3 * cols) - 1))) / (3 * cols);
+          while(cols > 1 && vehSlot < 18){
+            cols -= 1;
+            vehSlot = (innerW - (gap * ((3 * cols) - 1))) / (3 * cols);
+          }
+          vehSlot = Math.max(18, vehSlot);
+          const vehW = (vehSlot * 3) + (gap * 2);
+
+          vehicles.style.setProperty('--slot', vehSlot.toFixed(3) + 'px');
+          vehicles.style.setProperty('--vehCols', String(cols));
+          vehicles.style.setProperty('--vehW', vehW.toFixed(3) + 'px');
+
+          // Uniform padding + hug to one row.
+          vehicles.style.padding = BOX_PAD + 'px';
+          vehicles.style.height = ((BOX_PAD * 2) + vehSlot) + 'px';
+
+          vehicles.replaceChildren();
+          const makeVSlot = (child, empty = false) => {
+            const s = document.createElement('div');
+            s.className = empty ? 'vehicleSlot empty' : 'vehicleSlot';
+            if(child) s.appendChild(child);
+            return s;
+          };
+
+          const car = document.createElement('div');
+          car.className = 'invItem invVehicle';
+          vehicles.appendChild(makeVSlot(car, false));
+          for(let i=1;i<cols;i++) vehicles.appendChild(makeVSlot(null, true));
+        }
+      }
+
+      // ---- Main vehicle (single wide slot, centered)
+      {
+        const cs = getComputedStyle(mainVehicle);
+        const gap = getNum(cs.columnGap || cs.gap, 10);
+        // Match the same wide-slot sizing as the vehicles row, but shrink the box width
+        // so padding stays truly even around a single centered slot.
+        const vcs = getComputedStyle(vehicles);
+        const vehSlot = Math.max(18, getNum(vcs.getPropertyValue('--slot'), desiredVehSlot));
+        const vehW = (vehSlot * 3) + (gap * 2);
+        mainVehicle.style.setProperty('--slot', vehSlot.toFixed(3) + 'px');
+        mainVehicle.style.setProperty('--vehCols', '1');
+        mainVehicle.style.setProperty('--vehW', vehW.toFixed(3) + 'px');
+        mainVehicle.style.padding = BOX_PAD + 'px';
+        mainVehicle.style.height = ((BOX_PAD * 2) + vehSlot) + 'px';
+        mainVehicle.style.width = (vehW + (BOX_PAD * 2)) + 'px';
+        mainVehicle.style.marginLeft = 'auto';
+        mainVehicle.style.marginRight = 'auto';
+        mainVehicle.replaceChildren();
+        const car = document.createElement('div');
+        car.className = 'invItem invVehicle';
+        const slot = document.createElement('div');
+        slot.className = 'vehicleSlot';
+        slot.appendChild(car);
+        mainVehicle.appendChild(slot);
+      }
+    }
+
+    // Re-layout inventory slots when the viewport changes.
+    window.addEventListener('resize', () => {
+      try{ layoutInventorySlots(); }catch{}
+    });
 
     startBoot();
   </script>
